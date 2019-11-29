@@ -5,7 +5,7 @@
 
 	<groupId>ca.bc.gov.educ.api.student</groupId>
 	<artifactId>student-api</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1.SNAPSHOT</version>
 	<name>student-api</name>
 	<description>Student CRU API</description>
 
