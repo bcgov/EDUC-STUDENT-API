@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  */
 
 @RestController
-@RequestMapping("student")
+@RequestMapping("/")
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableResourceServer
 public class StudentController {
@@ -48,7 +48,7 @@ public class StudentController {
     }
 
     @PutMapping()
-    //@PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")
+    @PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")
     public StudentEntity updateStudent(@Validated @RequestBody StudentEntity student) throws Exception {
         return service.updateStudent(student);
     }
