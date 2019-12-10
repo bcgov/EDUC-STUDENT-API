@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import javax.transaction.Transactional;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -48,7 +49,7 @@ public class StudentServiceTest {
     @Test
     public void createDigitalIdThrowsExceptionWhenIDGivenTest() throws ParseException{
         StudentEntity student = new StudentEntity();
-        student.setStudentID(new Long(1123));
+        student.setStudentID(UUID.fromString("00000000-8000-0000-000e-000000000000"));
         student.setPen("987654321");
         student.setLegalFirstName("John");
         student.setLegalMiddleNames("Duke");
@@ -138,7 +139,7 @@ public class StudentServiceTest {
     @Test
     public void retrieveInvalidStudentIdTest(){
         assertThrows(EntityNotFoundException.class, () -> {
-            service.retrieveStudent(new Long(99999));
+            service.retrieveStudent(UUID.fromString("00000000-8000-0000-000e-000000000000"));
         });
     }
 
