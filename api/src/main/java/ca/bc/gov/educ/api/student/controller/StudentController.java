@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.UUID;
+
 
 /**
  * Student controller
@@ -37,7 +39,7 @@ public class StudentController {
 
     @GetMapping("/{studentID}")
     @PreAuthorize("#oauth2.hasScope('READ_STUDENT')")
-    public StudentEntity readStudent(@PathVariable Long studentID) throws Exception {
+    public StudentEntity readStudent(@PathVariable UUID studentID) throws Exception {
         return service.retrieveStudent(studentID);
     }
 

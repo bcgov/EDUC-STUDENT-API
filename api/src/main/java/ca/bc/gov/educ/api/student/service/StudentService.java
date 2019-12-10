@@ -5,16 +5,14 @@ import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.props.ApplicationProperties;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * StudentService
@@ -36,7 +34,7 @@ public class StudentService {
      * @return
      * @throws EntityNotFoundException
      */
-    public StudentEntity retrieveStudent(Long studentID) throws EntityNotFoundException {
+    public StudentEntity retrieveStudent(UUID studentID) throws EntityNotFoundException {
         Optional<StudentEntity> result =  repository.findById(studentID);
         if(result.isPresent()) {
             return result.get();

@@ -1,22 +1,34 @@
 package ca.bc.gov.educ.api.student.model;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PastOrPresent;
 import java.util.Date;
+import java.util.UUID;
 
 @Data
 @Entity
 @Table(name = "student")
 public class StudentEntity {
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
-    @Column(name = "student_id", unique = true, updatable = false)
-    Long studentID;
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator",
+            parameters = {
+                    @Parameter(
+                            name = "uuid_gen_strategy_class",
+                            value = "org.hibernate.id.uuid.CustomVersionOneStrategy"
+                    )
+            }
+    )
+    @Column(name = "student_id", unique = true, updatable = false, columnDefinition = "BINARY(16)")
+    UUID studentID;
     @NotNull(message="pen cannot be null")
     @Column(name = "pen")
     String pen;
