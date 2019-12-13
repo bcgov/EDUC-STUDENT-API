@@ -35,7 +35,7 @@ pipeline{
     }
 	stage('Add client jar to m2 repo') {
 		steps {	
-	        sh "mvn install:install-file -Dfile=./api/target/student-api-0.0.1.SNAPSHOT-client.jar -DgroupId=ca.bc.gov.educ.api.student -DartifactId=student-api-client -Dversion=0.0.1 -Dpackaging=jar"
+	        sh "mvn install:install-file -Dfile=./api/target/student-api-${POM_VERSION}-client.jar -DgroupId=ca.bc.gov.educ.api.student -DartifactId=student-api-client -Dversion=${POM_VERSION} -Dpackaging=jar"
         }
     }
     stage('Create Image Builder') {
@@ -58,7 +58,7 @@ pipeline{
       steps {
         script {
           openshift.withCluster() {
-            openshift.selector("bc", "educ-student-api-master").startBuild("--from-file=./api/target/student-api-0.0.1.SNAPSHOT.jar", "--wait")
+            openshift.selector("bc", "educ-student-api-master").startBuild("--from-file=./api/target/student-api-${POM_VERSION}.jar", "--wait")
           }
         }
       }
