@@ -92,8 +92,10 @@ pipeline{
     }
 	  stage('Add client jar to m2 repo') {
 		  steps {	
-        def addJar = $//bin/bash -c "mvn install:install-file -Dfile=./api/target/student-api-${VERSION}-client.jar -DgroupId=ca.bc.gov.educ.api.student -DartifactId=student-api-client -Dversion=${VERSION} -Dpackaging=jar"/$
-        sh addJar
+        script {
+          def addJar = $//bin/bash -c "mvn install:install-file -Dfile=./api/target/student-api-${VERSION}-client.jar -DgroupId=ca.bc.gov.educ.api.student -DartifactId=student-api-client -Dversion=${VERSION} -Dpackaging=jar"/$
+          sh addJar
+        }
       }
     }
     stage('Create Image Builder') {
