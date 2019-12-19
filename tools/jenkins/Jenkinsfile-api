@@ -37,6 +37,16 @@ pipeline{
                 configMapKeyRef:
                   name: 'unit-test-db'
                   key: password
+            - name: SONARQUBE_HOSTNAME
+              valueFrom:
+                secretKeyRef:
+                  name: 'student-api-secrets'
+                  key: sonarqube-host
+            - name: SONARQUBE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: 'student-api-secrets'
+                  key: sonarqube-token
             volumeMounts:
             - mountPath: '/home/jenkins/.m2'
               name: pvc
@@ -81,7 +91,10 @@ pipeline{
 
           //Env variable is to fix issue where special characters in password were not being escaped properly
           def command = $//bin/bash -c "mvn -f ./api/pom.xml clean test -DORACLE_PASSWORD=${TMP_ORACLE_PASSWORD}"/$
-          sh command
+          sh """
+            set +x
+            $command
+          """
         }
       }
     }
