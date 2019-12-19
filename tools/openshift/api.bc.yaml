@@ -15,11 +15,10 @@ objects:
     namespace: c2mvws-tools
   spec:
     source:
-      contextDir: api
       git:
         ref: master
         uri: 'https://github.com/bcgov/EDUC-STUDENT-API'
       type: Git
     strategy:
       jenkinsPipelineStrategy:
-        jenkinsfilePath: jenkinsfile
+        jenkinsfilePath: tools/jenkins/Jenkinsfile-api
