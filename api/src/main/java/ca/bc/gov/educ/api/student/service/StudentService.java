@@ -49,12 +49,8 @@ public class StudentService {
      * @throws InvalidParameterException
      */
     public StudentEntity createStudent(StudentEntity student) {
-
         validateParameters(student);
 
-        if(student.getStudentID()!=null){
-            throw new InvalidParameterException(STUDENT_ID_ATTRIBUTE);
-        }
         student.setUpdateDate(new Date());
         student.setCreateDate(new Date());
 
@@ -103,6 +99,8 @@ public class StudentService {
     }
 
     private void validateParameters(StudentEntity studentEntity)  {
+        if(studentEntity.getStudentID()!=null)
+            throw new InvalidParameterException(STUDENT_ID_ATTRIBUTE);
         if(studentEntity.getCreateDate()!=null)
             throw new InvalidParameterException("createDate");
         if(studentEntity.getUpdateDate()!=null)

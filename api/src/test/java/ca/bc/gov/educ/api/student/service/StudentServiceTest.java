@@ -1,20 +1,22 @@
 package ca.bc.gov.educ.api.student.service;
 
-import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
-import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.UUID;
+
+import javax.transaction.Transactional;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
 
-import javax.transaction.Transactional;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
+import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
 
 @SpringBootTest
 @Transactional
@@ -70,7 +72,7 @@ public class StudentServiceTest {
     }
 
     @Test
-    public void createDigitalIdThrowsExceptionWhenCreateUserGivenTest() throws ParseException{
+    public void createDigitalIdThrowsExceptionWhenCreateDateGivenTest() throws ParseException{
         StudentEntity student = new StudentEntity();
         student.setPen("987654321");
         student.setLegalFirstName("John");
@@ -86,6 +88,7 @@ public class StudentServiceTest {
         student.setEmail("theduke@someplace.com");
         student.setDeceasedDate(formatter.parse("1979-06-11"));
         student.setCreateUser("USER");
+        student.setCreateDate(new Date());
 
         assertThrows(InvalidParameterException.class, () -> {
             service.createStudent(student);
