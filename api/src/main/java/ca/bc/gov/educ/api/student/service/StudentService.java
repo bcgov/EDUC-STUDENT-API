@@ -1,18 +1,16 @@
 package ca.bc.gov.educ.api.student.service;
 
-import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
-import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.props.ApplicationProperties;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
+import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.repository.StudentRepository;
 
 /**
  * StudentService
@@ -22,7 +20,7 @@ import java.util.UUID;
 
 @Service
 public class StudentService {
-    private static final Log logger = LogFactory.getLog(StudentService.class);
+    private static final String STUDENT_ID_ATTRIBUTE = "studentID";
 
     @Autowired
     private StudentRepository repository;
@@ -34,12 +32,12 @@ public class StudentService {
      * @return
      * @throws EntityNotFoundException
      */
-    public StudentEntity retrieveStudent(UUID studentID) throws EntityNotFoundException {
+    public StudentEntity retrieveStudent(UUID studentID)  {
         Optional<StudentEntity> result =  repository.findById(studentID);
         if(result.isPresent()) {
             return result.get();
         } else {
-            throw new EntityNotFoundException(StudentEntity.class, "studentID", studentID.toString());
+            throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, studentID.toString());
         }
     }
 
@@ -50,16 +48,14 @@ public class StudentService {
      * @return
      * @throws InvalidParameterException
      */
-    public StudentEntity createStudent(StudentEntity student) throws InvalidParameterException {
+    public StudentEntity createStudent(StudentEntity student) {
 
         validateParameters(student);
 
         if(student.getStudentID()!=null){
-            throw new InvalidParameterException("studentID");
+            throw new InvalidParameterException(STUDENT_ID_ATTRIBUTE);
         }
-        student.setUpdateUser(ApplicationProperties.CLIENT_ID);
         student.setUpdateDate(new Date());
-        student.setCreateUser(ApplicationProperties.CLIENT_ID);
         student.setCreateDate(new Date());
 
         return repository.save(student);
@@ -72,7 +68,7 @@ public class StudentService {
      * @return
      * @throws Exception
      */
-    public StudentEntity updateStudent(StudentEntity student) throws EntityNotFoundException, InvalidParameterException {
+    public StudentEntity updateStudent(StudentEntity student) {
 
         validateParameters(student);
 
@@ -96,25 +92,20 @@ public class StudentService {
             newStudentEntity.setUsualLastName(student.getUsualLastName());
             newStudentEntity.setEmail(student.getEmail());
             newStudentEntity.setDeceasedDate(student.getDeceasedDate());
-            newStudentEntity.setUpdateUser(ApplicationProperties.CLIENT_ID);
+            newStudentEntity.setUpdateUser(student.getUpdateUser());
             newStudentEntity.setUpdateDate(new Date());
             newStudentEntity = repository.save(newStudentEntity);
 
             return newStudentEntity;
         } else {
-            throw new EntityNotFoundException(StudentEntity.class, "studentID", student.getStudentID().toString());
+            throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, student.getStudentID().toString());
         }
     }
 
-    private void validateParameters(StudentEntity studentEntity) throws InvalidParameterException {
-
+    private void validateParameters(StudentEntity studentEntity)  {
         if(studentEntity.getCreateDate()!=null)
             throw new InvalidParameterException("createDate");
-        if(studentEntity.getCreateUser()!=null)
-            throw new InvalidParameterException("createUser");
         if(studentEntity.getUpdateDate()!=null)
             throw new InvalidParameterException("updateDate");
-        if(studentEntity.getUpdateUser()!=null)
-            throw new InvalidParameterException("updateUser");
     }
 }
