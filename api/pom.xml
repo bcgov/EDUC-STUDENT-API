@@ -7,7 +7,7 @@
     <artifactId>student-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>student-api</name>
-    <description>Student CRUD API</description>
+    <description>Student CRU API</description>
 
     <properties>
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
