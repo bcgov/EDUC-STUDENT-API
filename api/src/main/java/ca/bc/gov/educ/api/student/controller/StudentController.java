@@ -1,22 +1,17 @@
 package ca.bc.gov.educ.api.student.controller;
 
-import java.util.UUID;
-
+import ca.bc.gov.educ.api.student.endpoint.StudentEndpoint;
+import ca.bc.gov.educ.api.student.mappers.StudentMapper;
+import ca.bc.gov.educ.api.student.service.StudentService;
+import ca.bc.gov.educ.api.student.struct.Student;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.service.StudentService;
+import java.util.UUID;
 
 
 /**
@@ -26,33 +21,33 @@ import ca.bc.gov.educ.api.student.service.StudentService;
  */
 
 @RestController
-@RequestMapping("/")
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableResourceServer
-public class StudentController {
+@Slf4j
+public class StudentController implements StudentEndpoint {
 
-    @Autowired
-    private StudentService service;
+  @Getter(AccessLevel.PRIVATE)
+  private final StudentService service;
+  private final StudentMapper mapper = StudentMapper.mapper;
 
-    StudentController(StudentService studentService){
-        this.service = studentService;
-    }
+  StudentController(@Autowired final StudentService studentService) {
+    this.service = studentService;
+  }
 
-    @GetMapping("/{studentID}")
-    @PreAuthorize("#oauth2.hasScope('READ_STUDENT')")
-    public StudentEntity readStudent(@PathVariable UUID studentID)  {
-        return service.retrieveStudent(studentID);
-    }
+  public Student readStudent(String studentID) {
+    return mapper.toStructure(service.retrieveStudent(UUID.fromString(studentID)));
+  }
 
-    @PostMapping()
-    @PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")
-    public StudentEntity createStudent(@Validated @RequestBody StudentEntity student)  {
-        return service.createStudent(student);
-    }
+  public Student createStudent(Student student) {
+    return mapper.toStructure(service.createStudent(mapper.toModel(student)));
+  }
 
-    @PutMapping()
-    @PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")
-    public StudentEntity updateStudent(@Validated @RequestBody StudentEntity student)  {
-        return service.updateStudent(student);
-    }
+  public Student updateStudent(Student student) {
+    return mapper.toStructure(service.updateStudent(mapper.toModel(student)));
+  }
+
+  @Override
+  public String health() {
+    log.info("Health Check OK, returning OK");
+    return "OK";
+  }
 }
