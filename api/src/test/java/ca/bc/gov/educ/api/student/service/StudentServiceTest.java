@@ -71,29 +71,6 @@ public class StudentServiceTest {
         });
     }
 
-    @Test
-    public void createDigitalIdThrowsExceptionWhenCreateDateGivenTest() throws ParseException{
-        StudentEntity student = new StudentEntity();
-        student.setPen("987654321");
-        student.setLegalFirstName("John");
-        student.setLegalMiddleNames("Duke");
-        student.setLegalLastName("Wayne");
-        student.setDob(formatter.parse("1907-05-26"));
-        student.setGenderCode('M');
-        student.setSexCode('M');
-        student.setDataSourceCode("MYED");
-        student.setUsualFirstName("Johnny");
-        student.setUsualMiddleNames("Duke");
-        student.setUsualLastName("Wayne");
-        student.setEmail("theduke@someplace.com");
-        student.setDeceasedDate(formatter.parse("1979-06-11"));
-        student.setCreateUser("USER");
-        student.setCreateDate(new Date());
-
-        assertThrows(InvalidParameterException.class, () -> {
-            service.createStudent(student);
-        });
-    }
 
     @Test
     public void retrieveValidStudentIdTest() throws ParseException{
