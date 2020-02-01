@@ -20,9 +20,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static ca.bc.gov.educ.api.student.constant.CodeTableConstants.DATA_SOURCE_API_BASE_PATH;
+import static ca.bc.gov.educ.api.student.constant.CodeTableConstants.GENDER_CODE_API_BASE_PATH;
+
 @Service
 public class CodeTableService {
 
+  public static final String PARAMETERS = "parameters";
   @Getter(AccessLevel.PRIVATE)
   private final RestUtils restUtils;
   private static Map<String, DataSourceCode> dataSourceCodeMap = new ConcurrentHashMap<>();
@@ -52,7 +56,7 @@ public class CodeTableService {
     HttpHeaders headers = new HttpHeaders();
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
     ResponseEntity<DataSourceCode[]> dataSourceCodeResponse;
-    dataSourceCodeResponse = restTemplate.exchange(props.getCodetableApiURL() + "/dataSource", HttpMethod.GET, new HttpEntity<>("parameters", headers), DataSourceCode[].class);
+    dataSourceCodeResponse = restTemplate.exchange(props.getCodetableApiURL() + DATA_SOURCE_API_BASE_PATH.getValue(), HttpMethod.GET, new HttpEntity<>(PARAMETERS, headers), DataSourceCode[].class);
     if (dataSourceCodeResponse.getBody() != null) {
       dataSourceCodeMap = Arrays.stream(dataSourceCodeResponse.getBody()).collect(Collectors.toMap(DataSourceCode::getDataSourceCode, dataSource -> dataSource));
     }
@@ -63,7 +67,7 @@ public class CodeTableService {
     HttpHeaders headers = new HttpHeaders();
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
     ResponseEntity<GenderCode[]> genderCodeResponse;
-    genderCodeResponse = restTemplate.exchange(props.getCodetableApiURL() + "/gender", HttpMethod.GET, new HttpEntity<>("parameters", headers), GenderCode[].class);
+    genderCodeResponse = restTemplate.exchange(props.getCodetableApiURL() + GENDER_CODE_API_BASE_PATH.getValue(), HttpMethod.GET, new HttpEntity<>(PARAMETERS, headers), GenderCode[].class);
     if (genderCodeResponse.getBody() != null) {
       genderCodeMap = Arrays.stream(genderCodeResponse.getBody()).collect(Collectors.toMap(GenderCode::getGenderCode, genderCode -> genderCode));
     }
