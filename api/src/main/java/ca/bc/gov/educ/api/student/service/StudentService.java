@@ -6,6 +6,7 @@ import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.val;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,16 @@ public class StudentService {
   }
 
   /**
+   * Search for StudentEntity by PEN
+   *
+   * @param pen the unique PEN for a given student.
+   * @return the Student entity if found.
+   */
+  public Optional<StudentEntity> retrieveStudentByPen(String pen) {
+    return repository.findStudentEntityByPen(pen);
+  }
+
+  /**
    * Creates a StudentEntity
    *
    * @param student the payload which will create the student record.
@@ -80,13 +91,20 @@ public class StudentService {
 
     if (curStudentEntity.isPresent()) {
       final StudentEntity newStudentEntity = curStudentEntity.get();
+      val createUser = newStudentEntity.getCreateUser();
+      val createDate = newStudentEntity.getCreateDate();
       BeanUtils.copyProperties(student, newStudentEntity);
       newStudentEntity.setUpdateUser(STUDENT_API);
       newStudentEntity.setUpdateDate(new Date());
+      newStudentEntity.setCreateUser(createUser);
+      newStudentEntity.setCreateDate(createDate);
       return repository.save(newStudentEntity);
     } else {
       throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, student.getStudentID().toString());
     }
   }
 
+  public Optional<StudentEntity> retrieveStudentByEmail(String email) {
+    return repository.findStudentEntityByEmail(email);
+  }
 }
