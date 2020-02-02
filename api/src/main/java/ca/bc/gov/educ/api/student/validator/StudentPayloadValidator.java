@@ -38,7 +38,7 @@ public class StudentPayloadValidator {
     return apiValidationErrors;
   }
 
-  private void validateGenderCode(Student student, List<FieldError> apiValidationErrors) {
+  protected void validateGenderCode(Student student, List<FieldError> apiValidationErrors) {
     final GenderCode genderCode = codeTableService.findGenderCode(student.getGenderCode());
     if (genderCode == null) {
       apiValidationErrors.add(createFieldError("genderCode", student.getGenderCode(), "Invalid Gender Code."));
@@ -49,7 +49,7 @@ public class StudentPayloadValidator {
     }
   }
 
-  private void validateDataSourceCode(Student student, List<FieldError> apiValidationErrors) {
+  protected void validateDataSourceCode(Student student, List<FieldError> apiValidationErrors) {
     final DataSourceCode dataSourceCode = codeTableService.findDataSourceCode(student.getDataSourceCode());
     if (dataSourceCode == null) {
       apiValidationErrors.add(createFieldError("dataSourceCode", student.getDataSourceCode(), "Invalid Data Source Code."));
@@ -60,7 +60,7 @@ public class StudentPayloadValidator {
     }
   }
 
-  private void validatePEN(Student student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {
+  protected void validatePEN(Student student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {
     Optional<StudentEntity> studentEntity = getStudentService().retrieveStudentByPen(student.getPen());
     if (isCreateOperation && studentEntity.isPresent()) {
       apiValidationErrors.add(createFieldError("pen", student.getPen(), "PEN is already associated to a student."));
@@ -69,7 +69,7 @@ public class StudentPayloadValidator {
     }
   }
 
-  private void validateEmail(Student student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {
+  protected void validateEmail(Student student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {
     if (StringUtils.isNotBlank(student.getEmail())) {
       Optional<StudentEntity> studentEntityByEmail = getStudentService().retrieveStudentByEmail(student.getEmail());
       if (isCreateOperation && studentEntityByEmail.isPresent()) {

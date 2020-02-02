@@ -29,7 +29,7 @@ public class StudentService {
   @Getter(AccessLevel.PRIVATE)
   private final StudentRepository repository;
 
-  StudentService(@Autowired final StudentRepository repository) {
+  public StudentService(@Autowired final StudentRepository repository) {
     this.repository = repository;
   }
 
