@@ -58,7 +58,7 @@ public class CodeTableService {
     ResponseEntity<DataSourceCode[]> dataSourceCodeResponse;
     dataSourceCodeResponse = restTemplate.exchange(props.getCodetableApiURL() + DATA_SOURCE_API_BASE_PATH.getValue(), HttpMethod.GET, new HttpEntity<>(PARAMETERS, headers), DataSourceCode[].class);
     if (dataSourceCodeResponse.getBody() != null) {
-      dataSourceCodeMap = Arrays.stream(dataSourceCodeResponse.getBody()).collect(Collectors.toMap(DataSourceCode::getDataSourceCode, dataSource -> dataSource));
+      dataSourceCodeMap.putAll(Arrays.stream(dataSourceCodeResponse.getBody()).collect(Collectors.toMap(DataSourceCode::getDataSourceCode, dataSource -> dataSource)));
     }
   }
 
@@ -69,7 +69,7 @@ public class CodeTableService {
     ResponseEntity<GenderCode[]> genderCodeResponse;
     genderCodeResponse = restTemplate.exchange(props.getCodetableApiURL() + GENDER_CODE_API_BASE_PATH.getValue(), HttpMethod.GET, new HttpEntity<>(PARAMETERS, headers), GenderCode[].class);
     if (genderCodeResponse.getBody() != null) {
-      genderCodeMap = Arrays.stream(genderCodeResponse.getBody()).collect(Collectors.toMap(GenderCode::getGenderCode, genderCode -> genderCode));
+      genderCodeMap.putAll(Arrays.stream(genderCodeResponse.getBody()).collect(Collectors.toMap(GenderCode::getGenderCode, genderCode -> genderCode)));
     }
   }
 

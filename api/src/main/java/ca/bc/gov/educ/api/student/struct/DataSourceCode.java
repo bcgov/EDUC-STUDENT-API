@@ -1,14 +1,14 @@
 package ca.bc.gov.educ.api.student.struct;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.Date;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DataSourceCode {
   String dataSourceCode;
   String label;
