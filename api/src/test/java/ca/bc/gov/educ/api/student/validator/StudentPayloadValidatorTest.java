@@ -191,6 +191,17 @@ public class StudentPayloadValidatorTest {
     assertEquals(1, errorList.size());
   }
 
+  @Test
+  public void testValidatePayload_WhenAllTheFieldsAreInvalidForCreate_ShouldAddAllTheErrorsTOTheReturnedList() {
+    isCreateOperation = true;
+    final String pen = "123456789";
+    when(repository.findStudentEntityByEmail("abc@gmail.com")).thenReturn(createDummyStudentRecordForInsertOperation(pen));
+    when(codeTableService.findDataSourceCode("MY_ED")).thenReturn(null);
+    when(codeTableService.findGenderCode("M")).thenReturn(null);
+    when(repository.findStudentEntityByPen(pen)).thenReturn(createDummyStudentRecordForInsertOperation(pen));
+    List<FieldError> errorList = studentPayloadValidator.validatePayload(Student.builder().studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").email("abc@gmail.com").genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), isCreateOperation);
+    assertEquals(4, errorList.size());
+  }
   private DataSourceCode createDummyDataSource(String dataSourceCode) {
     return DataSourceCode.builder().dataSourceCode(dataSourceCode).effectiveDate(new Date()).expiryDate(new GregorianCalendar(2099, Calendar.FEBRUARY, 1).getTime()).build();
   }
