@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.exception.errors;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ApiError {
+@SuppressWarnings("squid:S1948")
+public class ApiError implements Serializable {
 
   private HttpStatus status;
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")

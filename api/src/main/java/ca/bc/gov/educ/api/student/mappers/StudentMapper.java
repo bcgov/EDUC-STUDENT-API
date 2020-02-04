@@ -6,6 +6,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
 @Mapper(uses = UUIDMapper.class)
+@SuppressWarnings("squid:S1214")
 public interface StudentMapper {
 
   StudentMapper mapper = Mappers.getMapper(StudentMapper.class);
