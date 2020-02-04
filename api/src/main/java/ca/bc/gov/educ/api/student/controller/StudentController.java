@@ -12,7 +12,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,7 +39,7 @@ public class StudentController implements StudentEndpoint {
 
   @Getter(AccessLevel.PRIVATE)
   private final StudentPayloadValidator payloadValidator;
-  private final StudentMapper mapper = StudentMapper.mapper;
+  private static final StudentMapper mapper = StudentMapper.mapper;
 
   @Autowired
   StudentController(final StudentService studentService, StudentPayloadValidator payloadValidator) {
