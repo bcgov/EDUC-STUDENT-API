@@ -11,6 +11,7 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@SuppressWarnings("squid:S1700")
 public class DataSourceCode {
   String dataSourceCode;
   String label;

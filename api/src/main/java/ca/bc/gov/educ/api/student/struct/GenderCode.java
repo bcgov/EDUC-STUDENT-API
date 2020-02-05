@@ -11,6 +11,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@SuppressWarnings("squid:S1700")
 public class GenderCode {
   String genderCode;
   String label;

@@ -7,6 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 @Builder
+@SuppressWarnings("squid:S1948")
 public class ApiValidationError implements ApiSubError {
   private String object;
   private String field;
