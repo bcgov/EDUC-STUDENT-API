@@ -1,8 +1,8 @@
 package ca.bc.gov.educ.api.student.constant;
 
 public enum CodeTableConstants {
-  DATA_SOURCE_API_BASE_PATH("/datasource"),
-  GENDER_CODE_API_BASE_PATH("/gender");
+  DATA_SOURCE_API_BASE_PATH("/datasource-codes"),
+  GENDER_CODE_API_BASE_PATH("/gender-codes");
 
   private final String basePath;
 
