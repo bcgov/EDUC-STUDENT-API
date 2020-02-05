@@ -2,16 +2,16 @@
 apiVersion: v1
 kind: Template
 labels:
-  template: 'educ-student-api-template'
+  template: 'student-api-template'
 metadata:
-  name: 'educ-student-api-template'
+  name: 'student-api-template'
 objects:
 - apiVersion: v1
   kind: BuildConfig
   metadata:
     labels:
-      build: educ-student-api-pipeline
-    name: educ-student-api-pipeline
+      build: student-api-pipeline
+    name: student-api-pipeline
     namespace: c2mvws-tools
   spec:
     source:
