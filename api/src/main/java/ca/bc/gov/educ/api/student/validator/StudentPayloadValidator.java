@@ -42,7 +42,7 @@ public class StudentPayloadValidator {
   }
 
   protected void validateGenderCode(Student student, List<FieldError> apiValidationErrors) {
-    final GenderCode genderCode = codeTableService.findGenderCode(student.getGenderCode());
+    final GenderCode genderCode = getCodeTableService().findGenderCode(student.getGenderCode());
     if (genderCode == null) {
       apiValidationErrors.add(createFieldError(GENDER_CODE, student.getGenderCode(), "Invalid Gender Code."));
     } else if (genderCode.getEffectiveDate() != null && new Date().before(genderCode.getEffectiveDate())) {
@@ -53,7 +53,7 @@ public class StudentPayloadValidator {
   }
 
   protected void validateDataSourceCode(Student student, List<FieldError> apiValidationErrors) {
-    final DataSourceCode dataSourceCode = codeTableService.findDataSourceCode(student.getDataSourceCode());
+    final DataSourceCode dataSourceCode = getCodeTableService().findDataSourceCode(student.getDataSourceCode());
     if (dataSourceCode == null) {
       apiValidationErrors.add(createFieldError(DATA_SOURCE_CODE, student.getDataSourceCode(), "Invalid Data Source Code."));
     } else if (dataSourceCode.getEffectiveDate() != null && new Date().before(dataSourceCode.getEffectiveDate())) {
