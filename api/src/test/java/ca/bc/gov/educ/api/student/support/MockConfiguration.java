@@ -1,6 +1,5 @@
 package ca.bc.gov.educ.api.student.support;
 
-import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 import ca.bc.gov.educ.api.student.service.CodeTableService;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
@@ -15,11 +14,5 @@ public class MockConfiguration {
   @Primary
   public CodeTableService codeTableService() {
     return Mockito.mock(CodeTableService.class);
-  }
-
-  @Bean
-  @Primary
-  public ApplicationProperties applicationProperties() {
-    return Mockito.mock(ApplicationProperties.class);
   }
 }

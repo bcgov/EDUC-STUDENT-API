@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.controller;
 
+import ca.bc.gov.educ.api.student.StudentApiApplication;
 import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
@@ -9,16 +10,20 @@ import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.DataSourceCode;
 import ca.bc.gov.educ.api.student.struct.GenderCode;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
+import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -32,15 +37,15 @@ import java.util.GregorianCalendar;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
+@RunWith(SpringJUnit4ClassRunner.class)
 @ActiveProfiles("test")
+@SpringBootTest(classes = StudentApiApplication.class)
 public class StudentControllerTest {
   private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-mm-dd");
   private MockMvc mockMvc;
@@ -49,13 +54,16 @@ public class StudentControllerTest {
 
   @Autowired
   StudentRepository repository;
-  @Autowired
+  @MockBean
   CodeTableService codeTableService;
+
+  @Autowired
+  StudentPayloadValidator validator;
+
 
   @Before
   public void setUp() {
-    Mockito.when(codeTableService.findDataSourceCode("DS1")).thenReturn(createDummyDataSource());
-    Mockito.when(codeTableService.findGenderCode("M")).thenReturn(dummyGenderCode());
+    MockitoAnnotations.initMocks(this);
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(new RestExceptionHandler()).build();
   }
@@ -90,9 +98,42 @@ public class StudentControllerTest {
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateDigitalId_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
+    when(codeTableService.findDataSourceCode("MYED")).thenReturn(createDummyDataSource());
+    when(codeTableService.findGenderCode("M")).thenReturn(dummyGenderCode());
+    StudentEntity entity = createStudent();
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(createStudent())))).andDo(print()).andExpect(status().isCreated());
+            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isCreated());
   }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  public void testCreateDigitalId_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
+    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(createStudent())))).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  public void testUpdateDigitalId_GivenValidPayload_ShouldReturnStatusOk() throws Exception {
+    when(codeTableService.findDataSourceCode("MYED")).thenReturn(createDummyDataSource());
+    when(codeTableService.findGenderCode("M")).thenReturn(dummyGenderCode());
+    StudentEntity entity = createStudent();
+    repository.save(entity);
+    entity.setLegalFirstName("updated");
+    this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName()));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  public void testUpdateDigitalId_GivenInvalidPayload_ShouldReturnStatusOk() throws Exception {
+    StudentEntity entity = createStudent();
+    repository.save(entity);
+    entity.setLegalFirstName("updated");
+    this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
+  }
+
 
   private StudentEntity createStudent() throws ParseException {
     StudentEntity student = new StudentEntity();
