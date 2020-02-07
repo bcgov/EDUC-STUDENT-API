@@ -13,14 +13,12 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CREATED;
 
 
 /**
@@ -51,7 +49,6 @@ public class StudentController implements StudentEndpoint {
     return mapper.toStructure(service.retrieveStudent(UUID.fromString(studentID)));
   }
 
-  @ResponseStatus(code = CREATED)
   public Student createStudent(Student student) {
     val validationResult = getPayloadValidator().validatePayload(student, true);
     if (!validationResult.isEmpty()) {
