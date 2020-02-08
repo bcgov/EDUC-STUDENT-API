@@ -71,7 +71,6 @@ public class StudentController implements StudentEndpoint {
 
   @Override
   public String health() {
-    log.info("Health Check OK, returning OK");
     return "OK";
   }
 }
