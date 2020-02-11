@@ -11,7 +11,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,7 +23,6 @@ import java.util.UUID;
 @Service
 public class StudentService {
   private static final String STUDENT_ID_ATTRIBUTE = "studentID";
-  public static final String STUDENT_API = "STUDENT_API";
 
   @Getter(AccessLevel.PRIVATE)
   private final StudentRepository repository;
@@ -67,14 +65,6 @@ public class StudentService {
    * @throws InvalidParameterException if Student GUID is passed in the payload for the post operation it will throw this exception.
    */
   public StudentEntity createStudent(StudentEntity student) {
-
-    if (student.getStudentID() != null)
-      throw new InvalidParameterException(STUDENT_ID_ATTRIBUTE);
-    student.setCreateUser(STUDENT_API);
-    student.setUpdateUser(STUDENT_API);
-    student.setUpdateDate(new Date());
-    student.setCreateDate(new Date());
-
     return repository.save(student);
   }
 
@@ -94,8 +84,6 @@ public class StudentService {
       val createUser = newStudentEntity.getCreateUser();
       val createDate = newStudentEntity.getCreateDate();
       BeanUtils.copyProperties(student, newStudentEntity);
-      newStudentEntity.setUpdateUser(STUDENT_API);
-      newStudentEntity.setUpdateDate(new Date());
       newStudentEntity.setCreateUser(createUser);
       newStudentEntity.setCreateDate(createDate);
       return repository.save(newStudentEntity);

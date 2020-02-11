@@ -11,11 +11,13 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -31,7 +33,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @EnableResourceServer
 @Slf4j
 public class StudentController implements StudentEndpoint {
-
+  public static final String STUDENT_API = "STUDENT_API";
   @Getter(AccessLevel.PRIVATE)
   private final StudentService service;
 
@@ -56,6 +58,7 @@ public class StudentController implements StudentEndpoint {
       error.addValidationErrors(validationResult);
       throw new InvalidPayloadException(error);
     }
+    setAuditColumns(student);
     return mapper.toStructure(service.createStudent(mapper.toModel(student)));
   }
 
@@ -66,11 +69,33 @@ public class StudentController implements StudentEndpoint {
       error.addValidationErrors(validationResult);
       throw new InvalidPayloadException(error);
     }
+    setAuditColumns(student);
     return mapper.toStructure(service.updateStudent(mapper.toModel(student)));
   }
 
   @Override
   public String health() {
     return "OK";
+  }
+
+  /**
+   * set audit data to the object.
+   *
+   * @param student The object which will be persisted.
+   */
+  private void setAuditColumns(Student student) {
+    if (StringUtils.isBlank(student.getCreateUser())) {
+      student.setCreateUser(STUDENT_API);
+    }
+    if (StringUtils.isBlank(student.getUpdateUser())) {
+      student.setUpdateUser(STUDENT_API);
+    }
+    if (student.getCreateDate() == null) {
+      student.setCreateDate(new Date());
+    }
+    if (student.getUpdateDate() == null) {
+      student.setUpdateDate(new Date());
+    }
+
   }
 }

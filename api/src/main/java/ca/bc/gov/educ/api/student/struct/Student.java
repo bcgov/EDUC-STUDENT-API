@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Null;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
@@ -46,4 +47,10 @@ public class Student implements Serializable {
   @Email(message = "Email must be valid email address.")
   String email;
   Date deceasedDate;
+  String createUser;
+  String updateUser;
+  @Null(message = "createDate should be null.")
+  Date createDate;
+  @Null(message = "updateDate should be null.")
+  Date updateDate;
 }
