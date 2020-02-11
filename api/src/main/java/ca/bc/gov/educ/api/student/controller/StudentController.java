@@ -4,6 +4,7 @@ import ca.bc.gov.educ.api.student.endpoint.StudentEndpoint;
 import ca.bc.gov.educ.api.student.exception.InvalidPayloadException;
 import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
+import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.Student;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
@@ -33,7 +34,6 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @EnableResourceServer
 @Slf4j
 public class StudentController implements StudentEndpoint {
-  public static final String STUDENT_API = "STUDENT_API";
   @Getter(AccessLevel.PRIVATE)
   private final StudentService service;
 
@@ -85,10 +85,10 @@ public class StudentController implements StudentEndpoint {
    */
   private void setAuditColumns(Student student) {
     if (StringUtils.isBlank(student.getCreateUser())) {
-      student.setCreateUser(STUDENT_API);
+      student.setCreateUser(ApplicationProperties.STUDENT_API);
     }
     if (StringUtils.isBlank(student.getUpdateUser())) {
-      student.setUpdateUser(STUDENT_API);
+      student.setUpdateUser(ApplicationProperties.STUDENT_API);
     }
     if (student.getCreateDate() == null) {
       student.setCreateDate(new Date());
