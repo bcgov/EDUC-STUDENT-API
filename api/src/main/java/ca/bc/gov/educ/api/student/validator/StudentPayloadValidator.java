@@ -34,6 +34,9 @@ public class StudentPayloadValidator {
 
   public List<FieldError> validatePayload(Student student, boolean isCreateOperation) {
     final List<FieldError> apiValidationErrors = new ArrayList<>();
+    if (isCreateOperation && student.getStudentID() != null) {
+      apiValidationErrors.add(createFieldError("studentID", student.getStudentID(), "studentID should be null for post operation."));
+    }
     validatePEN(student, isCreateOperation, apiValidationErrors);
     validateDataSourceCode(student, apiValidationErrors);
     validateGenderCode(student, apiValidationErrors);

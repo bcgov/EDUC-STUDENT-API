@@ -40,15 +40,6 @@ public class StudentServiceTest {
     assertNotNull(student.getStudentID());
   }
 
-
-  @Test
-  public void testCreateStudent_WhenPayloadContainsStudentID_ShouldThrowInvalidParameterException() throws ParseException {
-    StudentEntity student = getStudentEntity();
-    student.setStudentID(UUID.fromString("00000000-8000-0000-000e-000000000000"));
-    assertThrows(InvalidParameterException.class, () -> service.createStudent(student));
-  }
-
-
   @Test
   public void testRetrieveStudent_WhenStudentExistInDB_ShouldReturnStudent() throws ParseException {
     StudentEntity student = getStudentEntity();
@@ -69,7 +60,6 @@ public class StudentServiceTest {
     student.setLegalFirstName("updatedFirstName");
     StudentEntity updateEntity = service.updateStudent(student);
     assertNotNull(updateEntity);
-    assertNotNull(updateEntity.getUpdateDate());
     assertThat(updateEntity.getLegalFirstName().equals("updatedFirstName")).isTrue();
   }
 

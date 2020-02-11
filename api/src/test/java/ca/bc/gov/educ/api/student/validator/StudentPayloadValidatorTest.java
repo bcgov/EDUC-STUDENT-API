@@ -200,7 +200,7 @@ public class StudentPayloadValidatorTest {
     when(codeTableService.findGenderCode("M")).thenReturn(null);
     when(repository.findStudentEntityByPen(pen)).thenReturn(createDummyStudentRecordForInsertOperation(pen));
     List<FieldError> errorList = studentPayloadValidator.validatePayload(Student.builder().studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").email("abc@gmail.com").genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), isCreateOperation);
-    assertEquals(4, errorList.size());
+    assertEquals(5, errorList.size());
   }
   private DataSourceCode createDummyDataSource(String dataSourceCode) {
     return DataSourceCode.builder().dataSourceCode(dataSourceCode).effectiveDate(new Date()).expiryDate(new GregorianCalendar(2099, Calendar.FEBRUARY, 1).getTime()).build();
