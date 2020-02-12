@@ -47,7 +47,9 @@ public class Student implements Serializable {
   @Email(message = "Email must be valid email address.")
   String email;
   Date deceasedDate;
+  @Size(max = 32)
   String createUser;
+  @Size(max = 32)
   String updateUser;
   @Null(message = "createDate should be null.")
   Date createDate;
