@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 @Setter
 public class ApplicationProperties {
 
+  public static final String STUDENT_API = "STUDENT-API";
   @Value("${client.id}")
   private String clientID;
   @Value("${client.secret}")
