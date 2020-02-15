@@ -90,12 +90,7 @@ public class StudentController implements StudentEndpoint {
     if (StringUtils.isBlank(student.getUpdateUser())) {
       student.setUpdateUser(ApplicationProperties.STUDENT_API);
     }
-    if (student.getCreateDate() == null) {
       student.setCreateDate(new Date());
-    }
-    if (student.getUpdateDate() == null) {
       student.setUpdateDate(new Date());
-    }
-
   }
 }
