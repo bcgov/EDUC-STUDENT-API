@@ -48,7 +48,7 @@ public class StudentController implements StudentEndpoint {
   }
 
   public Student readStudent(String studentID) {
-    return mapper.toStructure(service.retrieveStudent(UUID.fromString(studentID)));
+    return mapper.toStructure(getService().retrieveStudent(UUID.fromString(studentID)));
   }
 
   public Student createStudent(Student student) {
@@ -59,7 +59,7 @@ public class StudentController implements StudentEndpoint {
       throw new InvalidPayloadException(error);
     }
     setAuditColumns(student);
-    return mapper.toStructure(service.createStudent(mapper.toModel(student)));
+    return mapper.toStructure(getService().createStudent(mapper.toModel(student)));
   }
 
   public Student updateStudent(Student student) {
@@ -70,7 +70,7 @@ public class StudentController implements StudentEndpoint {
       throw new InvalidPayloadException(error);
     }
     setAuditColumns(student);
-    return mapper.toStructure(service.updateStudent(mapper.toModel(student)));
+    return mapper.toStructure(getService().updateStudent(mapper.toModel(student)));
   }
 
   @Override
@@ -90,7 +90,7 @@ public class StudentController implements StudentEndpoint {
     if (StringUtils.isBlank(student.getUpdateUser())) {
       student.setUpdateUser(ApplicationProperties.STUDENT_API);
     }
-      student.setCreateDate(new Date());
-      student.setUpdateDate(new Date());
+    student.setCreateDate(new Date());
+    student.setUpdateDate(new Date());
   }
 }
