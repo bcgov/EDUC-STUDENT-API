@@ -94,6 +94,14 @@ public class StudentControllerTest {
     StudentEntity entity = repository.save(createStudent());
     this.mockMvc.perform(get("/" + entity.getStudentID())).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.studentID").value(entity.getStudentID().toString()));
   }
+  
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testRetrieveStudent_GivenPEN_ShouldReturnStatusOK() throws Exception {
+    StudentEntity entity = repository.save(createStudent());
+    this.mockMvc.perform(get("?pen=" + entity.getPen())).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
+  }
 
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
