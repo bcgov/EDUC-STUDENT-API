@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.validation.FieldError;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -93,7 +94,7 @@ public class StudentPayloadValidatorTest {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
     GenderCode code = dummyGenderCode();
-    code.setEffectiveDate(new GregorianCalendar(2099, Calendar.FEBRUARY, 1).getTime());
+    code.setEffectiveDate(LocalDateTime.MAX.toString());
     code.setGenderCode("M");
     when(codeTableService.findGenderCode("M")).thenReturn(code);
     studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
@@ -105,7 +106,7 @@ public class StudentPayloadValidatorTest {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
     GenderCode code = dummyGenderCode();
-    code.setExpiryDate(new GregorianCalendar(2020, Calendar.JANUARY, 1).getTime());
+    code.setExpiryDate(LocalDateTime.MIN.toString());
     code.setGenderCode("M");
     when(codeTableService.findGenderCode("M")).thenReturn(code);
     studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
@@ -144,7 +145,7 @@ public class StudentPayloadValidatorTest {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
     DataSourceCode code = createDummyDataSource("MY_ED");
-    code.setExpiryDate(new GregorianCalendar(2020, Calendar.JANUARY, 1).getTime());
+    code.setExpiryDate(LocalDateTime.MIN.toString());
     when(codeTableService.findDataSourceCode("MY_ED")).thenReturn(code);
     studentPayloadValidator.validateDataSourceCode(Student.builder().genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
@@ -155,7 +156,7 @@ public class StudentPayloadValidatorTest {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
     DataSourceCode code = createDummyDataSource("MY_ED");
-    code.setEffectiveDate(new GregorianCalendar(2099, Calendar.JANUARY, 1).getTime());
+    code.setEffectiveDate(LocalDateTime.MAX.toString());
     when(codeTableService.findDataSourceCode("MY_ED")).thenReturn(code);
     studentPayloadValidator.validateDataSourceCode(Student.builder().genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
@@ -203,11 +204,11 @@ public class StudentPayloadValidatorTest {
     assertEquals(5, errorList.size());
   }
   private DataSourceCode createDummyDataSource(String dataSourceCode) {
-    return DataSourceCode.builder().dataSourceCode(dataSourceCode).effectiveDate(new Date()).expiryDate(new GregorianCalendar(2099, Calendar.FEBRUARY, 1).getTime()).build();
+    return DataSourceCode.builder().dataSourceCode(dataSourceCode).effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
   }
 
   private GenderCode dummyGenderCode() {
-    return GenderCode.builder().genderCode("M").effectiveDate(new Date()).expiryDate(new GregorianCalendar(2099, Calendar.FEBRUARY, 1).getTime()).build();
+    return GenderCode.builder().genderCode("M").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
   }
 
   private Optional<StudentEntity> createDummyStudentRecordForInsertOperation(String pen) {

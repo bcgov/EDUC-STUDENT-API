@@ -6,7 +6,6 @@ import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import ca.bc.gov.educ.api.student.service.CodeTableService;
-import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.DataSourceCode;
 import ca.bc.gov.educ.api.student.struct.GenderCode;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
@@ -16,7 +15,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,16 +22,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
@@ -47,7 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @SpringBootTest(classes = StudentApiApplication.class)
 public class StudentControllerTest {
-  private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-mm-dd");
   private MockMvc mockMvc;
   @Autowired
   StudentController controller;
@@ -69,11 +62,11 @@ public class StudentControllerTest {
   }
 
   private DataSourceCode createDummyDataSource() {
-    return DataSourceCode.builder().dataSourceCode("DS").effectiveDate(new Date()).expiryDate(new GregorianCalendar(2099, Calendar.FEBRUARY, 1).getTime()).build();
+    return DataSourceCode.builder().dataSourceCode("DS").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
   }
 
   private GenderCode dummyGenderCode() {
-    return GenderCode.builder().genderCode("M").effectiveDate(new Date()).expiryDate(new GregorianCalendar(2099, Calendar.FEBRUARY, 1).getTime()).build();
+    return GenderCode.builder().genderCode("M").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
   }
 
   @After
@@ -143,13 +136,13 @@ public class StudentControllerTest {
   }
 
 
-  private StudentEntity createStudent() throws ParseException {
+  private StudentEntity createStudent() {
     StudentEntity student = new StudentEntity();
     student.setPen("987654321");
     student.setLegalFirstName("John");
     student.setLegalMiddleNames("Duke");
     student.setLegalLastName("Wayne");
-    student.setDob(formatter.parse("1907-05-26"));
+    student.setDob(LocalDate.parse("1907-05-26"));
     student.setGenderCode('M');
     student.setSexCode('M');
     student.setDataSourceCode("MYED");
@@ -157,7 +150,7 @@ public class StudentControllerTest {
     student.setUsualMiddleNames("Duke");
     student.setUsualLastName("Wayne");
     student.setEmail("theduke@someplace.com");
-    student.setDeceasedDate(formatter.parse("1979-06-11"));
+    student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     return student;
   }
 

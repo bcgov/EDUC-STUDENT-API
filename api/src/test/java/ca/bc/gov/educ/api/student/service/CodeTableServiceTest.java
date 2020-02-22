@@ -16,6 +16,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -62,8 +64,8 @@ public class CodeTableServiceTest {
 
   private DataSourceCode[] createDataSourceArray() {
     DataSourceCode[] dataSourceCodes = new DataSourceCode[2];
-    dataSourceCodes[0] = DataSourceCode.builder().dataSourceCode("MYED").effectiveDate(new Date()).expiryDate(new Date()).build();
-    dataSourceCodes[1] = DataSourceCode.builder().dataSourceCode("MYED1").effectiveDate(new Date()).expiryDate(new Date()).build();
+    dataSourceCodes[0] = DataSourceCode.builder().dataSourceCode("MYED").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
+    dataSourceCodes[1] = DataSourceCode.builder().dataSourceCode("MYED1").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
     return dataSourceCodes;
   }
 
@@ -73,8 +75,8 @@ public class CodeTableServiceTest {
 
   private GenderCode[] createGenderCodeArray() {
     GenderCode[] genderCodes = new GenderCode[2];
-    genderCodes[0] = GenderCode.builder().genderCode("M").effectiveDate(new Date()).expiryDate(new Date()).build();
-    genderCodes[1] = GenderCode.builder().genderCode("F").effectiveDate(new Date()).expiryDate(new Date()).build();
+    genderCodes[0] = GenderCode.builder().genderCode("M").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
+    genderCodes[1] = GenderCode.builder().genderCode("F").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
     return genderCodes;
   }
 

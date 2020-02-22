@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.FieldError;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Component
@@ -48,9 +49,9 @@ public class StudentPayloadValidator {
     final GenderCode genderCode = getCodeTableService().findGenderCode(student.getGenderCode());
     if (genderCode == null) {
       apiValidationErrors.add(createFieldError(GENDER_CODE, student.getGenderCode(), "Invalid Gender Code."));
-    } else if (genderCode.getEffectiveDate() != null && new Date().before(genderCode.getEffectiveDate())) {
+    } else if (genderCode.getEffectiveDate() != null && LocalDateTime.parse(genderCode.getEffectiveDate()).isAfter(LocalDateTime.now())) {
       apiValidationErrors.add(createFieldError(GENDER_CODE, student.getDataSourceCode(), "Gender Code provided is not yet effective."));
-    } else if (genderCode.getExpiryDate() != null && new Date().after(genderCode.getExpiryDate())) {
+    } else if (genderCode.getExpiryDate() != null && LocalDateTime.parse(genderCode.getExpiryDate()).isBefore(LocalDateTime.now())) {
       apiValidationErrors.add(createFieldError(GENDER_CODE, student.getDataSourceCode(), "Gender Code provided has expired."));
     }
   }
@@ -59,9 +60,9 @@ public class StudentPayloadValidator {
     final DataSourceCode dataSourceCode = getCodeTableService().findDataSourceCode(student.getDataSourceCode());
     if (dataSourceCode == null) {
       apiValidationErrors.add(createFieldError(DATA_SOURCE_CODE, student.getDataSourceCode(), "Invalid Data Source Code."));
-    } else if (dataSourceCode.getEffectiveDate() != null && new Date().before(dataSourceCode.getEffectiveDate())) {
+    } else if (dataSourceCode.getEffectiveDate() != null && LocalDateTime.parse(dataSourceCode.getEffectiveDate()).isAfter(LocalDateTime.now())) {
       apiValidationErrors.add(createFieldError(DATA_SOURCE_CODE, student.getDataSourceCode(), "Data Source Code provided is not yet effective."));
-    } else if (dataSourceCode.getExpiryDate() != null && new Date().after(dataSourceCode.getExpiryDate())) {
+    } else if (dataSourceCode.getExpiryDate() != null && LocalDateTime.parse(dataSourceCode.getExpiryDate()).isBefore(LocalDateTime.now())) {
       apiValidationErrors.add(createFieldError(DATA_SOURCE_CODE, student.getDataSourceCode(), "Data Source Code provided has expired."));
     }
   }

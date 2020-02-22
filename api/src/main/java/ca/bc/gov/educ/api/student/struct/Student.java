@@ -10,7 +10,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Date;
 
 @Data
 @Builder
@@ -31,7 +30,7 @@ public class Student implements Serializable {
   @NotNull(message = "Legal Last Name can not be null.")
   String legalLastName;
   @NotNull(message = "Date of Birth can not be null.")
-  Date dob;
+  String dob;
   String sexCode;
   @NotNull(message = "Gender Code can not be null.")
   String genderCode;
@@ -46,13 +45,13 @@ public class Student implements Serializable {
   @Size(max = 80)
   @Email(message = "Email must be valid email address.")
   String email;
-  Date deceasedDate;
+  String deceasedDate;
   @Size(max = 32)
   String createUser;
   @Size(max = 32)
   String updateUser;
   @Null(message = "createDate should be null.")
-  Date createDate;
+  String createDate;
   @Null(message = "updateDate should be null.")
-  Date updateDate;
+  String updateDate;
 }

@@ -1,7 +1,6 @@
 package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
-import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import org.junit.Before;
@@ -11,8 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,7 +24,6 @@ public class StudentServiceTest {
   @Autowired
   StudentRepository repository;
   StudentService service;
-  private SimpleDateFormat formatter = new SimpleDateFormat("yyyy-mm-dd");
 
   @Before
   public void before() {
@@ -34,14 +31,14 @@ public class StudentServiceTest {
   }
 
   @Test
-  public void testCreateStudent_WhenPayloadIsValid_ShouldReturnSavedObject() throws ParseException {
+  public void testCreateStudent_WhenPayloadIsValid_ShouldReturnSavedObject() {
     StudentEntity student = getStudentEntity();
     assertNotNull(service.createStudent(student));
     assertNotNull(student.getStudentID());
   }
 
   @Test
-  public void testRetrieveStudent_WhenStudentExistInDB_ShouldReturnStudent() throws ParseException {
+  public void testRetrieveStudent_WhenStudentExistInDB_ShouldReturnStudent() {
     StudentEntity student = getStudentEntity();
     assertNotNull(service.createStudent(student));
     assertNotNull(service.retrieveStudent(student.getStudentID()));
@@ -53,7 +50,7 @@ public class StudentServiceTest {
   }
 
   @Test
-  public void testUpdateStudent_WhenPayloadIsValid_ShouldReturnTheUpdatedObject() throws ParseException {
+  public void testUpdateStudent_WhenPayloadIsValid_ShouldReturnTheUpdatedObject(){
 
     StudentEntity student = getStudentEntity();
     student = service.createStudent(student);
@@ -64,13 +61,13 @@ public class StudentServiceTest {
   }
 
 
-  private StudentEntity getStudentEntity() throws ParseException {
+  private StudentEntity getStudentEntity() {
     StudentEntity student = new StudentEntity();
     student.setPen("987654321");
     student.setLegalFirstName("John");
     student.setLegalMiddleNames("Duke");
     student.setLegalLastName("Wayne");
-    student.setDob(formatter.parse("1907-05-26"));
+    student.setDob(LocalDate.parse("1907-05-26"));
     student.setGenderCode('M');
     student.setSexCode('M');
     student.setDataSourceCode("MYED");
@@ -78,7 +75,7 @@ public class StudentServiceTest {
     student.setUsualMiddleNames("Duke");
     student.setUsualLastName("Wayne");
     student.setEmail("theduke@someplace.com");
-    student.setDeceasedDate(formatter.parse("1979-06-11"));
+    student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     return student;
   }
 }
