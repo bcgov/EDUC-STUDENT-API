@@ -52,9 +52,9 @@ public class StudentEntity {
   @Column(name = "deceased_date")
   @PastOrPresent
   LocalDate deceasedDate;
-  @Column(name = "create_user")
+  @Column(name = "create_user", updatable = false)
   String createUser;
-  @Column(name = "create_date")
+  @Column(name = "create_date", updatable = false)
   @PastOrPresent
   LocalDateTime createDate;
   @Column(name = "update_user")
