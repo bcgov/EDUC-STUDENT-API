@@ -52,32 +52,31 @@ public class StudentController implements StudentEndpoint {
   public Student readStudent(String studentID) {
     return mapper.toStructure(getService().retrieveStudent(UUID.fromString(studentID)));
   }
-  
+
   public Iterable<Student> findStudent(String pen) {
-	  Optional<StudentEntity> studentsResponse = getService().retrieveStudentByPen(pen);
-	  return studentsResponse.map(mapper::toStructure).map(Collections::singletonList).orElseGet(Collections::emptyList);
+    Optional<StudentEntity> studentsResponse = getService().retrieveStudentByPen(pen);
+    return studentsResponse.map(mapper::toStructure).map(Collections::singletonList).orElseGet(Collections::emptyList);
   }
 
   public Student createStudent(Student student) {
-    val validationResult = getPayloadValidator().validatePayload(student, true);
-    if (!validationResult.isEmpty()) {
-      ApiError error = ApiError.builder().timestamp(LocalDateTime.now()).message("Payload contains invalid data.").status(BAD_REQUEST).build();
-      error.addValidationErrors(validationResult);
-      throw new InvalidPayloadException(error);
-    }
+    validatePayload(student, true);
     setAuditColumns(student);
     return mapper.toStructure(getService().createStudent(mapper.toModel(student)));
   }
 
   public Student updateStudent(Student student) {
-    val validationResult = getPayloadValidator().validatePayload(student, false);
+    validatePayload(student, false);
+    setAuditColumns(student);
+    return mapper.toStructure(getService().updateStudent(mapper.toModel(student)));
+  }
+
+  private void validatePayload(Student student, boolean isCreateOperation) {
+    val validationResult = getPayloadValidator().validatePayload(student, isCreateOperation);
     if (!validationResult.isEmpty()) {
       ApiError error = ApiError.builder().timestamp(LocalDateTime.now()).message("Payload contains invalid data.").status(BAD_REQUEST).build();
       error.addValidationErrors(validationResult);
       throw new InvalidPayloadException(error);
     }
-    setAuditColumns(student);
-    return mapper.toStructure(getService().updateStudent(mapper.toModel(student)));
   }
 
   @Override
