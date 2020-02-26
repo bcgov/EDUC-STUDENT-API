@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
@@ -56,7 +55,7 @@ public class StudentController implements StudentEndpoint {
   
   public Iterable<Student> findStudent(String pen) {
 	  Optional<StudentEntity> studentsResponse = getService().retrieveStudentByPen(pen);
-	  return studentsResponse.map(Collections::singletonList).orElseGet(Collections::emptyList).stream().map(mapper::toStructure).collect(Collectors.toList());
+	  return studentsResponse.map(mapper::toStructure).map(Collections::singletonList).orElseGet(Collections::emptyList);
   }
 
   public Student createStudent(Student student) {
