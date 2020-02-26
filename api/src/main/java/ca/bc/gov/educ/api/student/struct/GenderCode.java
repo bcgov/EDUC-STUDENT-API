@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Builder
 @Data
 @NoArgsConstructor
@@ -17,7 +15,7 @@ public class GenderCode {
   String label;
   String description;
   Integer displayOrder;
-  Date effectiveDate;
-  Date expiryDate;
+  String effectiveDate;
+  String expiryDate;
 
 }

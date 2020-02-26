@@ -8,7 +8,8 @@ import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PastOrPresent;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -32,7 +33,7 @@ public class StudentEntity {
   String legalLastName;
   @Column(name = "dob")
   @PastOrPresent
-  Date dob;
+  LocalDate dob;
   @Column(name = "sex_code")
   char sexCode;
   @Column(name = "gender_code")
@@ -50,16 +51,16 @@ public class StudentEntity {
   String email;
   @Column(name = "deceased_date")
   @PastOrPresent
-  Date deceasedDate;
-  @Column(name = "create_user")
+  LocalDate deceasedDate;
+  @Column(name = "create_user", updatable = false)
   String createUser;
-  @Column(name = "create_date")
+  @Column(name = "create_date", updatable = false)
   @PastOrPresent
-  Date createDate;
+  LocalDateTime createDate;
   @Column(name = "update_user")
   String updateUser;
   @Column(name = "update_date")
   @PastOrPresent
-  Date updateDate;
+  LocalDateTime updateDate;
 
 }

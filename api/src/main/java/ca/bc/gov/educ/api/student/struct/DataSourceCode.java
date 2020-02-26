@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,6 +15,6 @@ public class DataSourceCode {
   String label;
   String description;
   Integer displayOrder;
-  Date effectiveDate;
-  Date expiryDate;
+  String effectiveDate;
+  String expiryDate;
 }
