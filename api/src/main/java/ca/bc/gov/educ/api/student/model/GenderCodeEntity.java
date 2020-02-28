@@ -23,7 +23,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "gender_code")
+@Table(name = "student_gender_code")
 public class GenderCodeEntity {
 
 	@Id
