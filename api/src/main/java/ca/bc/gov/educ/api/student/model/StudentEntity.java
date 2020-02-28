@@ -35,11 +35,9 @@ public class StudentEntity {
   @PastOrPresent
   LocalDate dob;
   @Column(name = "sex_code")
-  char sexCode;
+  String sexCode;
   @Column(name = "gender_code")
-  char genderCode;
-  @Column(name = "data_source_code")
-  String dataSourceCode;
+  String genderCode;
   @Column(name = "usual_first_name")
   String usualFirstName;
   @Column(name = "usual_middle_names")

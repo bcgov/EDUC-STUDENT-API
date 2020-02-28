@@ -31,11 +31,9 @@ public class Student implements Serializable {
   String legalLastName;
   @NotNull(message = "Date of Birth can not be null.")
   String dob;
+  @NotNull(message = "Sex Code can not be null.")
   String sexCode;
-  @NotNull(message = "Gender Code can not be null.")
   String genderCode;
-  @NotNull(message = "Data Source Code can not be null.")
-  String dataSourceCode;
   @Size(max = 40)
   String usualFirstName;
   @Size(max = 60)

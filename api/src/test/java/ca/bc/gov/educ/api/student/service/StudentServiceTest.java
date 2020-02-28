@@ -1,33 +1,69 @@
 package ca.bc.gov.educ.api.student.service;
 
-import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import static ca.bc.gov.educ.api.student.constant.CodeTableConstants.GENDER_CODE_API_BASE_PATH;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.UUID;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDate;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
+import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.rest.RestUtils;
+import ca.bc.gov.educ.api.student.struct.GenderCode;
+import ca.bc.gov.educ.api.student.struct.SexCode;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
 public class StudentServiceTest {
 
+  public static final String PARAMETERS = "parameters";
+	
   @Autowired
   StudentRepository repository;
   StudentService service;
+  
+  @Mock
+  ApplicationProperties applicationProperties;
+
+  @Autowired
+  GenderCodeTableRepository genderRepo;
+  
+  @Autowired
+  SexCodeTableRepository sexRepo;
+  
+  @Mock
+  RestTemplate template;
+
+  @Mock
+  RestUtils restUtils;
 
   @Before
   public void before() {
-    service = new StudentService(repository);
+    service = new StudentService(repository, genderRepo, sexRepo);
   }
 
   @Test
@@ -59,7 +95,29 @@ public class StudentServiceTest {
     assertNotNull(updateEntity);
     assertThat(updateEntity.getLegalFirstName().equals("updatedFirstName")).isTrue();
   }
+  
+  @Test
+  public void testLoadCodeTableDataToMemory_OnClassLoad_ShouldPopulateTheCodeMaps() {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+    when(restUtils.getRestTemplate()).thenReturn(template);
+    when(applicationProperties.getCodetableApiURL()).thenReturn("http://localhost:0000");
+    when(template.exchange(applicationProperties.getCodetableApiURL() + GENDER_CODE_API_BASE_PATH.getValue(), HttpMethod.GET, new HttpEntity<>(PARAMETERS, headers), SexCode[].class)).thenReturn(createSexCodeResponse());
+    assertNotNull(service.findGenderCode("M"));
+    assertNotNull(service.findSexCode("F"));
+  }
+  
 
+  private ResponseEntity<SexCode[]> createSexCodeResponse() {
+    return ResponseEntity.ok(createSexCodeArray());
+  }
+
+  private SexCode[] createSexCodeArray() {
+	SexCode[] sexCodes = new SexCode[2];
+    sexCodes[0] = SexCode.builder().sexCode("M").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
+    sexCodes[1] = SexCode.builder().sexCode("F").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
+    return sexCodes;
+  }
 
   private StudentEntity getStudentEntity() {
     StudentEntity student = new StudentEntity();
@@ -68,9 +126,8 @@ public class StudentServiceTest {
     student.setLegalMiddleNames("Duke");
     student.setLegalLastName("Wayne");
     student.setDob(LocalDate.parse("1907-05-26"));
-    student.setGenderCode('M');
-    student.setSexCode('M');
-    student.setDataSourceCode("MYED");
+    student.setSexCode("M");
+    student.setGenderCode(null);
     student.setUsualFirstName("Johnny");
     student.setUsualMiddleNames("Duke");
     student.setUsualLastName("Wayne");

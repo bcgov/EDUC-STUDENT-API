@@ -1,18 +1,27 @@
 package ca.bc.gov.educ.api.student.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
+import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
+import ca.bc.gov.educ.api.student.model.SexCodeEntity;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.val;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * StudentService
@@ -26,9 +35,17 @@ public class StudentService {
 
   @Getter(AccessLevel.PRIVATE)
   private final StudentRepository repository;
+  
+  @Getter(AccessLevel.PRIVATE)
+  private final GenderCodeTableRepository genderCodeTableRepo;
 
-  public StudentService(@Autowired final StudentRepository repository) {
+  @Getter(AccessLevel.PRIVATE)	
+  private final SexCodeTableRepository sexCodeTableRepo;
+
+  public StudentService(@Autowired final StudentRepository repository, @Autowired final GenderCodeTableRepository genderCodeTableRepo, @Autowired final SexCodeTableRepository sexCodeTableRepo) {
     this.repository = repository;
+    this.sexCodeTableRepo = sexCodeTableRepo;
+    this.genderCodeTableRepo = genderCodeTableRepo;
   }
 
   /**
@@ -94,5 +111,43 @@ public class StudentService {
 
   public Optional<StudentEntity> retrieveStudentByEmail(String email) {
     return repository.findStudentEntityByEmail(email);
+  }
+  
+
+  /**
+   * Returns the full list of access channel codes
+   *
+   * @return {@link List<AccessChannelCodeEntity>}
+   */
+  @Cacheable("sexCodes")
+  public List<SexCodeEntity> getSexCodesList() {
+    return sexCodeTableRepo.findAll();
+  }
+
+  /**
+   * Returns the full list of access channel codes
+   *
+   * @return {@link List<IdentityTypeCodeEntity>}
+   */
+  @Cacheable("genderCodes")
+  public List<GenderCodeEntity> getGenderCodesList() {
+    return genderCodeTableRepo.findAll();
+  }
+
+  public Optional<SexCodeEntity> findSexCode(String sexCode) {
+    return Optional.ofNullable(loadAllSexCodes().get(sexCode));
+  }
+
+  public Optional<GenderCodeEntity> findGenderCode(String genderCode) {
+    return Optional.ofNullable(loadGenderCodes().get(genderCode));
+  }
+  
+  private Map<String, SexCodeEntity> loadAllSexCodes() {
+    return getSexCodesList().stream().collect(Collectors.toMap(SexCodeEntity::getSexCode, sexCode -> sexCode));
+  }
+
+
+  private Map<String, GenderCodeEntity> loadGenderCodes() {
+    return getGenderCodesList().stream().collect(Collectors.toMap(GenderCodeEntity::getGenderCode, genderCodeEntity -> genderCodeEntity));
   }
 }
