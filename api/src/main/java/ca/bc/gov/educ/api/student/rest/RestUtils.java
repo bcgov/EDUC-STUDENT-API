@@ -1,6 +1,7 @@
 package ca.bc.gov.educ.api.student.rest;
 
-import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
+import java.util.List;
+
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
@@ -9,7 +10,7 @@ import org.springframework.security.oauth2.client.token.grant.client.ClientCrede
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
+import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 
 /**
  * This class is used for REST calls

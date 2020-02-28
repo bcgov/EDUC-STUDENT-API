@@ -14,7 +14,6 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -33,7 +32,6 @@ import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import ca.bc.gov.educ.api.student.rest.RestUtils;
-import ca.bc.gov.educ.api.student.struct.GenderCode;
 import ca.bc.gov.educ.api.student.struct.SexCode;
 
 @RunWith(SpringRunner.class)
