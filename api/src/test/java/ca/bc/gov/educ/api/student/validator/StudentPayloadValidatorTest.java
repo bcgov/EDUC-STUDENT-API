@@ -1,12 +1,14 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.service.CodeTableService;
-import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.struct.DataSourceCode;
-import ca.bc.gov.educ.api.student.struct.GenderCode;
-import ca.bc.gov.educ.api.student.struct.Student;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,19 +17,26 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.validation.FieldError;
 
-import java.time.LocalDateTime;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.service.StudentService;
+import ca.bc.gov.educ.api.student.struct.SexCode;
+import ca.bc.gov.educ.api.student.struct.Student;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StudentPayloadValidatorTest {
   private boolean isCreateOperation = false;
   @Mock
   StudentRepository repository;
+
   @Mock
-  CodeTableService codeTableService;
+  GenderCodeTableRepository genderRepo;
+
+  @Mock
+  SexCodeTableRepository sexRepo;
+
   @Mock
   StudentService studentService;
   @InjectMocks
@@ -35,8 +44,8 @@ public class StudentPayloadValidatorTest {
 
   @Before
   public void before() {
-    studentService = new StudentService(repository);
-    studentPayloadValidator = new StudentPayloadValidator(studentService, codeTableService);
+    studentService = new StudentService(repository, genderRepo, sexRepo);
+    studentPayloadValidator = new StudentPayloadValidator(studentService);
   }
 
   @Test
@@ -84,7 +93,6 @@ public class StudentPayloadValidatorTest {
   public void testValidateGenderCode_WhenGenderCodeDoesNotExistInCodeTable_ShouldAddAnErrorTOTheReturnedList() {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
-    when(codeTableService.findGenderCode("M")).thenReturn(null);
     studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
   }
@@ -93,10 +101,9 @@ public class StudentPayloadValidatorTest {
   public void testValidateGenderCode_WhenGenderCodeExistInCodeTableButEffectiveDateIsFutureDate_ShouldAddAnErrorTOTheReturnedList() {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
-    GenderCode code = dummyGenderCode();
+    SexCode code = dummySexCode();
     code.setEffectiveDate(LocalDateTime.MAX.toString());
-    code.setGenderCode("M");
-    when(codeTableService.findGenderCode("M")).thenReturn(code);
+    code.setSexCode("M");
     studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
   }
@@ -105,60 +112,10 @@ public class StudentPayloadValidatorTest {
   public void testValidateGenderCode_WhenGenderCodeExistInCodeTableButExpiryDateIsPast_ShouldAddAnErrorTOTheReturnedList() {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
-    GenderCode code = dummyGenderCode();
+    SexCode code = dummySexCode();
     code.setExpiryDate(LocalDateTime.MIN.toString());
-    code.setGenderCode("M");
-    when(codeTableService.findGenderCode("M")).thenReturn(code);
+    code.setSexCode("M");
     studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
-    assertEquals(1, errorList.size());
-  }
-
-  @Test
-  public void testValidateGenderCode_WhenGenderCodeExistAndValid_ShouldNotAddAnErrorTOTheReturnedList() {
-    final String pen = "123456789";
-    List<FieldError> errorList = new ArrayList<>();
-    when(codeTableService.findGenderCode("M")).thenReturn(dummyGenderCode());
-    studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
-    assertEquals(0, errorList.size());
-  }
-
-  @Test
-  public void testValidateDataSourceCode_WhenDataSourceCodeDoesNotExistInCodeTable_ShouldAddAnErrorTOTheReturnedList() {
-    final String pen = "123456789";
-    List<FieldError> errorList = new ArrayList<>();
-    when(codeTableService.findDataSourceCode("MY_ED1")).thenReturn(null);
-    studentPayloadValidator.validateDataSourceCode(Student.builder().genderCode("M").dataSourceCode("MY_ED1").pen(pen).build(), errorList);
-    assertEquals(1, errorList.size());
-  }
-
-  @Test
-  public void testValidateDataSourceCode_WhenDataSourceCodeExistInCodeTableAndValid_ShouldNotAddAnErrorTOTheReturnedList() {
-    final String pen = "123456789";
-    List<FieldError> errorList = new ArrayList<>();
-    when(codeTableService.findDataSourceCode("MY_ED1")).thenReturn(createDummyDataSource("MY_ED1"));
-    studentPayloadValidator.validateDataSourceCode(Student.builder().genderCode("M").dataSourceCode("MY_ED1").pen(pen).build(), errorList);
-    assertEquals(0, errorList.size());
-  }
-
-  @Test
-  public void testValidateDataSourceCode_WhenDataSourceCodeExistInCodeTableAndExpired_ShouldAddAnErrorTOTheReturnedList() {
-    final String pen = "123456789";
-    List<FieldError> errorList = new ArrayList<>();
-    DataSourceCode code = createDummyDataSource("MY_ED");
-    code.setExpiryDate(LocalDateTime.MIN.toString());
-    when(codeTableService.findDataSourceCode("MY_ED")).thenReturn(code);
-    studentPayloadValidator.validateDataSourceCode(Student.builder().genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), errorList);
-    assertEquals(1, errorList.size());
-  }
-
-  @Test
-  public void testValidateDataSourceCode_WhenDataSourceCodeExistInCodeTableAndNotYetEffective_ShouldAddAnErrorTOTheReturnedList() {
-    final String pen = "123456789";
-    List<FieldError> errorList = new ArrayList<>();
-    DataSourceCode code = createDummyDataSource("MY_ED");
-    code.setEffectiveDate(LocalDateTime.MAX.toString());
-    when(codeTableService.findDataSourceCode("MY_ED")).thenReturn(code);
-    studentPayloadValidator.validateDataSourceCode(Student.builder().genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
   }
 
@@ -168,7 +125,7 @@ public class StudentPayloadValidatorTest {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
     when(repository.findStudentEntityByEmail("abc@gmail.com")).thenReturn(createDummyStudentRecordForInsertOperation(pen));
-    studentPayloadValidator.validateEmail(Student.builder().email("abc@gmail.com").genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), isCreateOperation, errorList);
+    studentPayloadValidator.validateEmail(Student.builder().email("abc@gmail.com").genderCode("M").pen(pen).build(), isCreateOperation, errorList);
     assertEquals(1, errorList.size());
   }
 
@@ -178,7 +135,7 @@ public class StudentPayloadValidatorTest {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
     when(repository.findStudentEntityByEmail("abc@gmail.com")).thenReturn(Optional.empty());
-    studentPayloadValidator.validateEmail(Student.builder().email("abc@gmail.com").genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), isCreateOperation, errorList);
+    studentPayloadValidator.validateEmail(Student.builder().email("abc@gmail.com").genderCode("M").pen(pen).build(), isCreateOperation, errorList);
     assertEquals(0, errorList.size());
   }
 
@@ -188,7 +145,7 @@ public class StudentPayloadValidatorTest {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
     when(repository.findStudentEntityByEmail("abc@gmail.com")).thenReturn(createDummyStudentRecordForUpdateOperation(pen));
-    studentPayloadValidator.validateEmail(Student.builder().studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").email("abc@gmail.com").genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), isCreateOperation, errorList);
+    studentPayloadValidator.validateEmail(Student.builder().studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").email("abc@gmail.com").genderCode("M").pen(pen).build(), isCreateOperation, errorList);
     assertEquals(1, errorList.size());
   }
 
@@ -197,18 +154,13 @@ public class StudentPayloadValidatorTest {
     isCreateOperation = true;
     final String pen = "123456789";
     when(repository.findStudentEntityByEmail("abc@gmail.com")).thenReturn(createDummyStudentRecordForInsertOperation(pen));
-    when(codeTableService.findDataSourceCode("MY_ED")).thenReturn(null);
-    when(codeTableService.findGenderCode("M")).thenReturn(null);
     when(repository.findStudentEntityByPen(pen)).thenReturn(createDummyStudentRecordForInsertOperation(pen));
-    List<FieldError> errorList = studentPayloadValidator.validatePayload(Student.builder().studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").email("abc@gmail.com").genderCode("M").dataSourceCode("MY_ED").pen(pen).build(), isCreateOperation);
-    assertEquals(5, errorList.size());
-  }
-  private DataSourceCode createDummyDataSource(String dataSourceCode) {
-    return DataSourceCode.builder().dataSourceCode(dataSourceCode).effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
+    List<FieldError> errorList = studentPayloadValidator.validatePayload(Student.builder().studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").email("abc@gmail.com").genderCode("M").pen(pen).build(), isCreateOperation);
+    assertEquals(4, errorList.size());
   }
 
-  private GenderCode dummyGenderCode() {
-    return GenderCode.builder().genderCode("M").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
+  private SexCode dummySexCode() {
+    return SexCode.builder().sexCode("M").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
   }
 
   private Optional<StudentEntity> createDummyStudentRecordForInsertOperation(String pen) {

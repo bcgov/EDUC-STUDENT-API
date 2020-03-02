@@ -1,8 +1,8 @@
 package ca.bc.gov.educ.api.student.mappers;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class UUIDMapper {
 

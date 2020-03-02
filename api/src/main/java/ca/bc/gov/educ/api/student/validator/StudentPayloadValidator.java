@@ -1,36 +1,36 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.service.CodeTableService;
-import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.struct.DataSourceCode;
-import ca.bc.gov.educ.api.student.struct.GenderCode;
-import ca.bc.gov.educ.api.student.struct.Student;
-import lombok.AccessLevel;
-import lombok.Getter;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.FieldError;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
+import ca.bc.gov.educ.api.student.model.SexCodeEntity;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.service.StudentService;
+import ca.bc.gov.educ.api.student.struct.Student;
+import lombok.AccessLevel;
+import lombok.Getter;
 
 @Component
 public class StudentPayloadValidator {
 
   public static final String GENDER_CODE = "genderCode";
-  public static final String DATA_SOURCE_CODE = "dataSourceCode";
+  public static final String SEX_CODE = "sexCode";
   public static final String PEN = "pen";
   @Getter(AccessLevel.PRIVATE)
   private final StudentService studentService;
-  @Getter(AccessLevel.PRIVATE)
-  private final CodeTableService codeTableService;
 
   @Autowired
-  public StudentPayloadValidator(final StudentService studentService, final CodeTableService codeTableService) {
+  public StudentPayloadValidator(final StudentService studentService) {
     this.studentService = studentService;
-    this.codeTableService = codeTableService;
   }
 
   public List<FieldError> validatePayload(Student student, boolean isCreateOperation) {
@@ -39,32 +39,36 @@ public class StudentPayloadValidator {
       apiValidationErrors.add(createFieldError("studentID", student.getStudentID(), "studentID should be null for post operation."));
     }
     validatePEN(student, isCreateOperation, apiValidationErrors);
-    validateDataSourceCode(student, apiValidationErrors);
     validateGenderCode(student, apiValidationErrors);
+    validateSexCode(student, apiValidationErrors);
     validateEmail(student, isCreateOperation, apiValidationErrors);
     return apiValidationErrors;
   }
 
   protected void validateGenderCode(Student student, List<FieldError> apiValidationErrors) {
-    final GenderCode genderCode = getCodeTableService().findGenderCode(student.getGenderCode());
-    if (genderCode == null) {
-      apiValidationErrors.add(createFieldError(GENDER_CODE, student.getGenderCode(), "Invalid Gender Code."));
-    } else if (genderCode.getEffectiveDate() != null && LocalDateTime.parse(genderCode.getEffectiveDate()).isAfter(LocalDateTime.now())) {
-      apiValidationErrors.add(createFieldError(GENDER_CODE, student.getDataSourceCode(), "Gender Code provided is not yet effective."));
-    } else if (genderCode.getExpiryDate() != null && LocalDateTime.parse(genderCode.getExpiryDate()).isBefore(LocalDateTime.now())) {
-      apiValidationErrors.add(createFieldError(GENDER_CODE, student.getDataSourceCode(), "Gender Code provided has expired."));
-    }
+	if(student.getGenderCode() != null) {
+	    Optional<GenderCodeEntity> genderCodeEntity = studentService.findGenderCode(student.getGenderCode());
+	   	if (!genderCodeEntity.isPresent()) {
+	      apiValidationErrors.add(createFieldError(GENDER_CODE, student.getGenderCode(), "Invalid Gender Code."));
+	   	} else if (genderCodeEntity.get().getEffectiveDate() != null && genderCodeEntity.get().getEffectiveDate().isAfter(LocalDateTime.now())) {
+	      apiValidationErrors.add(createFieldError(GENDER_CODE, student.getGenderCode(), "Gender Code provided is not yet effective."));
+	    } else if (genderCodeEntity.get().getExpiryDate() != null && genderCodeEntity.get().getExpiryDate().isBefore(LocalDateTime.now())) {
+	      apiValidationErrors.add(createFieldError(GENDER_CODE, student.getGenderCode(), "Gender Code provided has expired."));
+	    }
+	}
   }
-
-  protected void validateDataSourceCode(Student student, List<FieldError> apiValidationErrors) {
-    final DataSourceCode dataSourceCode = getCodeTableService().findDataSourceCode(student.getDataSourceCode());
-    if (dataSourceCode == null) {
-      apiValidationErrors.add(createFieldError(DATA_SOURCE_CODE, student.getDataSourceCode(), "Invalid Data Source Code."));
-    } else if (dataSourceCode.getEffectiveDate() != null && LocalDateTime.parse(dataSourceCode.getEffectiveDate()).isAfter(LocalDateTime.now())) {
-      apiValidationErrors.add(createFieldError(DATA_SOURCE_CODE, student.getDataSourceCode(), "Data Source Code provided is not yet effective."));
-    } else if (dataSourceCode.getExpiryDate() != null && LocalDateTime.parse(dataSourceCode.getExpiryDate()).isBefore(LocalDateTime.now())) {
-      apiValidationErrors.add(createFieldError(DATA_SOURCE_CODE, student.getDataSourceCode(), "Data Source Code provided has expired."));
-    }
+  
+  protected void validateSexCode(Student student, List<FieldError> apiValidationErrors) {
+	if(student.getSexCode() != null) {
+	  Optional<SexCodeEntity> sexCodeEntity = studentService.findSexCode(student.getSexCode());
+	  if (!sexCodeEntity.isPresent()) {
+	    apiValidationErrors.add(createFieldError(SEX_CODE, student.getSexCode(), "Invalid Sex Code."));
+	  } else if (sexCodeEntity.get().getEffectiveDate() != null && sexCodeEntity.get().getEffectiveDate().isAfter(LocalDateTime.now())) {
+	    apiValidationErrors.add(createFieldError(SEX_CODE, student.getSexCode(), "Sex Code provided is not yet effective."));
+	  } else if (sexCodeEntity.get().getExpiryDate() != null && sexCodeEntity.get().getExpiryDate().isBefore(LocalDateTime.now())) {
+	    apiValidationErrors.add(createFieldError(SEX_CODE, student.getSexCode(), "Sex Code provided has expired."));
+	  }
+	}
   }
 
   protected void validatePEN(Student student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {

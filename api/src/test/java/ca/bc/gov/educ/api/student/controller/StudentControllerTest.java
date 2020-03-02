@@ -1,16 +1,17 @@
 package ca.bc.gov.educ.api.student.controller;
 
-import ca.bc.gov.educ.api.student.StudentApiApplication;
-import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
-import ca.bc.gov.educ.api.student.mappers.StudentMapper;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.service.CodeTableService;
-import ca.bc.gov.educ.api.student.struct.DataSourceCode;
-import ca.bc.gov.educ.api.student.struct.GenderCode;
-import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
-import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,26 +19,29 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import ca.bc.gov.educ.api.student.StudentApiApplication;
+import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
+import ca.bc.gov.educ.api.student.mappers.StudentMapper;
+import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
+import ca.bc.gov.educ.api.student.model.SexCodeEntity;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.service.StudentService;
+import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
+import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest(classes = StudentApiApplication.class)
 public class StudentControllerTest {
@@ -47,11 +51,18 @@ public class StudentControllerTest {
 
   @Autowired
   StudentRepository repository;
-  @MockBean
-  CodeTableService codeTableService;
+  
+  @Autowired
+  GenderCodeTableRepository genderRepo;
+  
+  @Autowired
+  SexCodeTableRepository sexRepo;
 
   @Autowired
   StudentPayloadValidator validator;
+  
+  @Autowired
+  StudentService studentService;
 
 
   @Before
@@ -59,19 +70,30 @@ public class StudentControllerTest {
     MockitoAnnotations.initMocks(this);
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(new RestExceptionHandler()).build();
+    genderRepo.save(createGenderCodeData());
+    sexRepo.save(createSexCodeData());
   }
-
-  private DataSourceCode createDummyDataSource() {
-    return DataSourceCode.builder().dataSourceCode("DS").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
-  }
-
-  private GenderCode dummyGenderCode() {
-    return GenderCode.builder().genderCode("M").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
-  }
-
+  
+  /**
+   * need to delete the records to make it working in unit tests assertion, else the records will keep growing and assertions will fail.
+   */
   @After
   public void after() {
+    genderRepo.deleteAll();
+    sexRepo.deleteAll();
     repository.deleteAll();
+  }
+
+  private SexCodeEntity createSexCodeData() {
+    return SexCodeEntity.builder().sexCode("M").description("Male")
+            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+  }
+
+  private GenderCodeEntity createGenderCodeData() {
+    return GenderCodeEntity.builder().genderCode("M").description("Male")
+            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 
   @Test
@@ -99,8 +121,6 @@ public class StudentControllerTest {
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateDigitalId_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
-    when(codeTableService.findDataSourceCode("MYED")).thenReturn(createDummyDataSource());
-    when(codeTableService.findGenderCode("M")).thenReturn(dummyGenderCode());
     StudentEntity entity = createStudent();
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isCreated());
@@ -109,32 +129,21 @@ public class StudentControllerTest {
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateDigitalId_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
+	StudentEntity entity = createStudent();
+	entity.setSexCode("J");
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(createStudent())))).andDo(print()).andExpect(status().isBadRequest());
+            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testUpdateDigitalId_GivenValidPayload_ShouldReturnStatusOk() throws Exception {
-    when(codeTableService.findDataSourceCode("MYED")).thenReturn(createDummyDataSource());
-    when(codeTableService.findGenderCode("M")).thenReturn(dummyGenderCode());
     StudentEntity entity = createStudent();
     repository.save(entity);
     entity.setLegalFirstName("updated");
     this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName()));
   }
-
-  @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
-  public void testUpdateDigitalId_GivenInvalidPayload_ShouldReturnStatusOk() throws Exception {
-    StudentEntity entity = createStudent();
-    repository.save(entity);
-    entity.setLegalFirstName("updated");
-    this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
-  }
-
 
   private StudentEntity createStudent() {
     StudentEntity student = new StudentEntity();
@@ -143,9 +152,7 @@ public class StudentControllerTest {
     student.setLegalMiddleNames("Duke");
     student.setLegalLastName("Wayne");
     student.setDob(LocalDate.parse("1907-05-26"));
-    student.setGenderCode('M');
-    student.setSexCode('M');
-    student.setDataSourceCode("MYED");
+    student.setSexCode("M");
     student.setUsualFirstName("Johnny");
     student.setUsualMiddleNames("Duke");
     student.setUsualLastName("Wayne");
