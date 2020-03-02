@@ -1,14 +1,11 @@
 package ca.bc.gov.educ.api.student.service;
 
-import static ca.bc.gov.educ.api.student.constant.CodeTableConstants.GENDER_CODE_API_BASE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -17,10 +14,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
@@ -31,7 +24,6 @@ import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.rest.RestUtils;
 import ca.bc.gov.educ.api.student.struct.SexCode;
 
 @RunWith(SpringRunner.class)
@@ -55,9 +47,6 @@ public class StudentServiceTest {
   
   @Mock
   RestTemplate template;
-
-  @Mock
-  RestUtils restUtils;
 
   @Before
   public void before() {
@@ -93,18 +82,6 @@ public class StudentServiceTest {
     assertNotNull(updateEntity);
     assertThat(updateEntity.getLegalFirstName().equals("updatedFirstName")).isTrue();
   }
-  
-  @Test
-  public void testLoadCodeTableDataToMemory_OnClassLoad_ShouldPopulateTheCodeMaps() {
-    HttpHeaders headers = new HttpHeaders();
-    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-    when(restUtils.getRestTemplate()).thenReturn(template);
-    when(applicationProperties.getCodetableApiURL()).thenReturn("http://localhost:0000");
-    when(template.exchange(applicationProperties.getCodetableApiURL() + GENDER_CODE_API_BASE_PATH.getValue(), HttpMethod.GET, new HttpEntity<>(PARAMETERS, headers), SexCode[].class)).thenReturn(createSexCodeResponse());
-    assertNotNull(service.findGenderCode("M"));
-    assertNotNull(service.findSexCode("F"));
-  }
-  
 
   private ResponseEntity<SexCode[]> createSexCodeResponse() {
     return ResponseEntity.ok(createSexCodeArray());
