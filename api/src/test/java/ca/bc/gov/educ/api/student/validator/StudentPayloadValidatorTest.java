@@ -123,10 +123,9 @@ public class StudentPayloadValidatorTest {
   public void testValidatePayload_WhenAllTheFieldsAreInvalidForCreate_ShouldAddAllTheErrorsTOTheReturnedList() {
     isCreateOperation = true;
     final String pen = "123456789";
-    when(repository.findStudentEntityByEmail("abc@gmail.com")).thenReturn(createDummyStudentRecordForInsertOperation(pen));
     when(repository.findStudentEntityByPen(pen)).thenReturn(createDummyStudentRecordForInsertOperation(pen));
-    List<FieldError> errorList = studentPayloadValidator.validatePayload(Student.builder().studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").email("abc@gmail.com").genderCode("M").pen(pen).build(), isCreateOperation);
-    assertEquals(4, errorList.size());
+    List<FieldError> errorList = studentPayloadValidator.validatePayload(Student.builder().studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").genderCode("M").pen(pen).build(), isCreateOperation);
+    assertEquals(3, errorList.size());
   }
 
   private SexCode dummySexCode() {
