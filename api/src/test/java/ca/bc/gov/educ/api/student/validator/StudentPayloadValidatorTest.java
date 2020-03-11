@@ -74,7 +74,7 @@ public class StudentPayloadValidatorTest {
     isCreateOperation = false;
     final String pen = "123456780";
     List<FieldError> errorList = new ArrayList<>();
-    when(repository.findStudentEntityByPen(pen)).thenReturn(createDummyStudentRecordForUpdateOperation(pen));
+    when(repository.findStudentEntityByPen(pen)).thenReturn(createDummyStudentRecordForUpdateOperation());
     studentPayloadValidator.validatePEN(Student.builder().pen(pen).studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").build(), isCreateOperation, errorList);
     assertEquals(1, errorList.size());
   }
@@ -84,7 +84,7 @@ public class StudentPayloadValidatorTest {
     isCreateOperation = false;
     final String pen = "123456780";
     List<FieldError> errorList = new ArrayList<>();
-    when(repository.findStudentEntityByPen(pen)).thenReturn(createDummyStudentRecordForUpdateOperation(pen));
+    when(repository.findStudentEntityByPen(pen)).thenReturn(createDummyStudentRecordForUpdateOperation());
     studentPayloadValidator.validatePEN(Student.builder().pen(pen).studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20000").build(), isCreateOperation, errorList);
     assertEquals(0, errorList.size());
   }
@@ -120,36 +120,6 @@ public class StudentPayloadValidatorTest {
   }
 
   @Test
-  public void testValidateEmail_WhenEmailIsAssociatedToAnotherStudent_ShouldAddAnErrorTOTheReturnedList() {
-    isCreateOperation = true;
-    final String pen = "123456789";
-    List<FieldError> errorList = new ArrayList<>();
-    when(repository.findStudentEntityByEmail("abc@gmail.com")).thenReturn(createDummyStudentRecordForInsertOperation(pen));
-    studentPayloadValidator.validateEmail(Student.builder().email("abc@gmail.com").genderCode("M").pen(pen).build(), isCreateOperation, errorList);
-    assertEquals(1, errorList.size());
-  }
-
-  @Test
-  public void testValidateEmail_WhenEmailIsNotAssociatedToAnotherStudent_ShouldNotAddAnErrorTOTheReturnedList() {
-    isCreateOperation = true;
-    final String pen = "123456789";
-    List<FieldError> errorList = new ArrayList<>();
-    when(repository.findStudentEntityByEmail("abc@gmail.com")).thenReturn(Optional.empty());
-    studentPayloadValidator.validateEmail(Student.builder().email("abc@gmail.com").genderCode("M").pen(pen).build(), isCreateOperation, errorList);
-    assertEquals(0, errorList.size());
-  }
-
-  @Test
-  public void testValidateEmail_WhenEmailIsAssociatedToAnotherStudentDuringUpdate_ShouldAddAnErrorTOTheReturnedList() {
-    isCreateOperation = false;
-    final String pen = "123456789";
-    List<FieldError> errorList = new ArrayList<>();
-    when(repository.findStudentEntityByEmail("abc@gmail.com")).thenReturn(createDummyStudentRecordForUpdateOperation(pen));
-    studentPayloadValidator.validateEmail(Student.builder().studentID("8e20a9c8-6ff3-12bf-816f-f3b2d4f20001").email("abc@gmail.com").genderCode("M").pen(pen).build(), isCreateOperation, errorList);
-    assertEquals(1, errorList.size());
-  }
-
-  @Test
   public void testValidatePayload_WhenAllTheFieldsAreInvalidForCreate_ShouldAddAllTheErrorsTOTheReturnedList() {
     isCreateOperation = true;
     final String pen = "123456789";
@@ -170,9 +140,9 @@ public class StudentPayloadValidatorTest {
     return Optional.of(entity);
   }
 
-  private Optional<StudentEntity> createDummyStudentRecordForUpdateOperation(String pen) {
+  private Optional<StudentEntity> createDummyStudentRecordForUpdateOperation() {
     StudentEntity entity = new StudentEntity();
-    entity.setPen(pen);
+    entity.setPen("123456780");
     entity.setEmail("abc@gmail.com");
     entity.setStudentID(UUID.fromString("8e20a9c8-6ff3-12bf-816f-f3b2d4f20000"));
     return Optional.of(entity);
