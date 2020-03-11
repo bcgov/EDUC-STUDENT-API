@@ -1,16 +1,5 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.validation.FieldError;
-
 import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
 import ca.bc.gov.educ.api.student.model.SexCodeEntity;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
@@ -18,6 +7,15 @@ import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.Student;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.FieldError;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class StudentPayloadValidator {
@@ -41,7 +39,6 @@ public class StudentPayloadValidator {
     validatePEN(student, isCreateOperation, apiValidationErrors);
     validateGenderCode(student, apiValidationErrors);
     validateSexCode(student, apiValidationErrors);
-    validateEmail(student, isCreateOperation, apiValidationErrors);
     return apiValidationErrors;
   }
 
@@ -77,17 +74,6 @@ public class StudentPayloadValidator {
       apiValidationErrors.add(createFieldError(PEN, student.getPen(), "PEN is already associated to a student."));
     } else if (studentEntity.isPresent() && !studentEntity.get().getStudentID().equals(UUID.fromString(student.getStudentID()))) {
       apiValidationErrors.add(createFieldError(PEN, student.getPen(), "Updated PEN number is already associated to a different student."));
-    }
-  }
-
-  protected void validateEmail(Student student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {
-    if (StringUtils.isNotBlank(student.getEmail())) {
-      Optional<StudentEntity> studentEntityByEmail = getStudentService().retrieveStudentByEmail(student.getEmail());
-      if (isCreateOperation && studentEntityByEmail.isPresent()) {
-        apiValidationErrors.add(createFieldError(PEN, student.getEmail(), "Email is already associated to a student."));
-      } else if (studentEntityByEmail.isPresent() && !studentEntityByEmail.get().getStudentID().equals(UUID.fromString(student.getStudentID()))) {
-        apiValidationErrors.add(createFieldError(PEN, student.getEmail(), "Updated Email is already associated to a different student."));
-      }
     }
   }
 
