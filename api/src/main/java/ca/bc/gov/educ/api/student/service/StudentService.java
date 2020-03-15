@@ -117,7 +117,7 @@ public class StudentService {
   /**
    * Returns the full list of access channel codes
    *
-   * @return {@link List<AccessChannelCodeEntity>}
+   * @return {@link List<SexCodeEntity>}
    */
   @Cacheable("sexCodes")
   public List<SexCodeEntity> getSexCodesList() {
@@ -127,7 +127,7 @@ public class StudentService {
   /**
    * Returns the full list of access channel codes
    *
-   * @return {@link List<IdentityTypeCodeEntity>}
+   * @return {@link List<GenderCodeEntity>}
    */
   @Cacheable("genderCodes")
   public List<GenderCodeEntity> getGenderCodesList() {
@@ -150,4 +150,5 @@ public class StudentService {
   private Map<String, GenderCodeEntity> loadGenderCodes() {
     return getGenderCodesList().stream().collect(Collectors.toMap(GenderCodeEntity::getGenderCode, genderCodeEntity -> genderCodeEntity));
   }
+
 }

@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.mappers;
 
+import ca.bc.gov.educ.api.student.struct.StudentSagaData;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -20,7 +21,7 @@ public interface StudentMapper {
   StudentEntity toModel(Student student);
 
   Student toStructure(StudentEntity studentEntity);
-  
+
   @Mapping(target = "updateUser", ignore = true)
   @Mapping(target = "updateDate", ignore = true)
   @Mapping(target = "createUser", ignore = true)
@@ -36,4 +37,6 @@ public interface StudentMapper {
   GenderCodeEntity toModel(GenderCode structure);
 
   GenderCode toStructure(GenderCodeEntity entity);
+
+  StudentEntity mapFromSagaData(StudentSagaData studentSagaData);
 }
