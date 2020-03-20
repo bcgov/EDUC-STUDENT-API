@@ -1,16 +1,14 @@
 package ca.bc.gov.educ.api.student.mappers;
 
-import ca.bc.gov.educ.api.student.struct.StudentSagaData;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
-
 import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
 import ca.bc.gov.educ.api.student.model.SexCodeEntity;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.struct.GenderCode;
 import ca.bc.gov.educ.api.student.struct.SexCode;
 import ca.bc.gov.educ.api.student.struct.Student;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 
 @Mapper(uses = UUIDMapper.class)
 @SuppressWarnings("squid:S1214")
@@ -38,5 +36,4 @@ public interface StudentMapper {
 
   GenderCode toStructure(GenderCodeEntity entity);
 
-  StudentEntity mapFromSagaData(StudentSagaData studentSagaData);
 }

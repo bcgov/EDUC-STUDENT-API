@@ -10,5 +10,7 @@ import java.util.UUID;
 public interface StudentEventRepository extends CrudRepository<StudentEvent, UUID> {
   Optional<StudentEvent> findBySagaId(UUID sagaId);
 
+  Optional<StudentEvent> findBySagaIdAndEventType(UUID sagaId, String eventType);
+
   List<StudentEvent> findByEventStatus(String eventStatus);
 }

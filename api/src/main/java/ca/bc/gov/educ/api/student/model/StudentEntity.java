@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.GenericGenerator;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @Table(name = "student")
 @Data
 @DynamicUpdate
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StudentEntity {
   @Id
   @GeneratedValue(generator = "UUID")

@@ -143,7 +143,10 @@
             <artifactId>shedlock-provider-jdbc-template</artifactId>
             <version>4.5.1</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
     </dependencies>
 
 

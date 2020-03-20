@@ -98,11 +98,7 @@ public class StudentService {
 
     if (curStudentEntity.isPresent()) {
       final StudentEntity newStudentEntity = curStudentEntity.get();
-      val createUser = newStudentEntity.getCreateUser();
-      val createDate = newStudentEntity.getCreateDate();
       BeanUtils.copyProperties(student, newStudentEntity);
-      newStudentEntity.setCreateUser(createUser);
-      newStudentEntity.setCreateDate(createDate);
       return repository.save(newStudentEntity);
     } else {
       throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, student.getStudentID().toString());

@@ -51,4 +51,9 @@ public class StudentEvent {
   LocalDateTime updateDate;
   @Column(name = "saga_id", updatable = false)
   private UUID sagaId;
+  @NotNull(message = "eventOutcome cannot be null.")
+  @Column(name = "event_outcome")
+  private String eventOutcome;
+  @Column(name = "reply_channel")
+  private String replyChannel;
 }

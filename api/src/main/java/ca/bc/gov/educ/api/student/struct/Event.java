@@ -1,9 +1,13 @@
 package ca.bc.gov.educ.api.student.struct;
 
+import ca.bc.gov.educ.api.student.constant.EventOutcome;
+import ca.bc.gov.educ.api.student.constant.EventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 @AllArgsConstructor
 @Builder
@@ -11,12 +15,9 @@ import lombok.NoArgsConstructor;
 @Data
 public class Event {
   private EventType eventType;
+  private EventOutcome eventOutcome;
   private String replyTo;
   private String eventPayload;
-  private String sagaId;
-  public enum EventType{
-    STUDENT_CREATED_OR_UPDATED,
-    PEN_REQUEST_COMPLETE_SAGA,
-    STUDENT_EVENT_OUTBOX_PROCESSED
-  }
+  private UUID sagaId;
+
 }
