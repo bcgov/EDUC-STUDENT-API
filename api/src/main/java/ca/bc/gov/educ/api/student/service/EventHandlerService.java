@@ -86,7 +86,7 @@ public class EventHandlerService {
         BeanUtils.copyProperties(entity, studentDBEntity);
         studentDBEntity.setUpdateDate(LocalDateTime.now());
         getStudentRepository().save(studentDBEntity);
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentDBEntity));
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(studentDBEntity)));// need to convert to structure MANDATORY otherwise jackson will break.
         event.setEventOutcome(EventOutcome.STUDENT_UPDATED);
       } else {
         event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
@@ -115,7 +115,7 @@ public class EventHandlerService {
         entity.setUpdateDate(LocalDateTime.now());
         getStudentRepository().save(entity);
         event.setEventOutcome(EventOutcome.STUDENT_CREATED);
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(entity));
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.
       }
       studentEvent = createStudentEventRecord(event);
     } else {
@@ -149,7 +149,7 @@ public class EventHandlerService {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE, event);
       val optionalStudentEntity = getStudentRepository().findStudentEntityByPen(event.getEventPayload());
       if (optionalStudentEntity.isPresent()) {
-        Student student = mapper.toStructure(optionalStudentEntity.get());
+        Student student = mapper.toStructure(optionalStudentEntity.get()); // need to convert to structure MANDATORY otherwise jackson will break.
         event.setEventPayload(JsonUtil.getJsonStringFromObject(student));
         event.setEventOutcome(EventOutcome.STUDENT_FOUND);
       } else {
