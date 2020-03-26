@@ -30,9 +30,11 @@ import static lombok.AccessLevel.PRIVATE;
 @Slf4j
 public class EventHandlerService {
 
-  public static final String NO_RECORD_SAGA_ID_EVENT_TYPE = "no record found for the saga id and event type combination, processing. {}";
+  public static final String NO_RECORD_SAGA_ID_EVENT_TYPE = "no record found for the saga id and event type combination, processing.";
   public static final String RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE = "record found for the saga id and event type combination, might be a duplicate or replay," +
-          " just updating the db status so that it will be polled and sent back again. {}";
+          " just updating the db status so that it will be polled and sent back again.";
+  public static final String PAYLOAD_LOG = "payload is :: {}";
+  public static final String EVENT_PAYLOAD = "event is :: {}";
   @Getter(PRIVATE)
   private final StudentRepository studentRepository;
   private static final StudentMapper mapper = StudentMapper.mapper;
@@ -50,19 +52,23 @@ public class EventHandlerService {
     try {
       switch (event.getEventType()) {
         case STUDENT_EVENT_OUTBOX_PROCESSED:
-          log.info("received outbox processed event :: " + event.getEventPayload());
+          log.info("received outbox processed event :: ");
+          log.trace(PAYLOAD_LOG, event.getEventPayload());
           handleStudentOutboxProcessedEvent(event.getEventPayload());
           break;
         case GET_STUDENT:
-          log.info("received get student event :: " + event.getEventPayload());
+          log.info("received get student event :: ");
+          log.trace(PAYLOAD_LOG, event.getEventPayload());
           handleGetStudentEvent(event);
           break;
         case CREATE_STUDENT:
-          log.info("received create student event :: " + event.getEventPayload());
+          log.info("received create student event :: ");
+          log.trace(PAYLOAD_LOG, event.getEventPayload());
           handleCreateStudentEvent(event);
           break;
         case UPDATE_STUDENT:
-          log.info("received update student event :: " + event.getEventPayload());
+          log.info("received update student event :: ");
+          log.trace(PAYLOAD_LOG, event.getEventPayload());
           handleUpdateStudentEvent(event);
           break;
         default:
@@ -78,7 +84,8 @@ public class EventHandlerService {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (!studentEventOptional.isPresent()) {
-      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE, event);
+      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
       StudentEntity entity = mapper.toModel(JsonUtil.getJsonObjectFromString(Student.class, event.getEventPayload()));
       val optionalStudent = getStudentRepository().findById(entity.getStudentID());
       if (optionalStudent.isPresent()) {
@@ -93,7 +100,8 @@ public class EventHandlerService {
       }
       studentEvent = createStudentEventRecord(event);
     } else {
-      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE, event);
+      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
       studentEvent = studentEventOptional.get();
       studentEvent.setEventStatus(DB_COMMITTED.toString());
     }
@@ -105,7 +113,8 @@ public class EventHandlerService {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (!studentEventOptional.isPresent()) {
-      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE, event);
+      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
       StudentEntity entity = mapper.toModel(JsonUtil.getJsonObjectFromString(Student.class, event.getEventPayload()));
       val optionalStudent = getStudentRepository().findStudentEntityByPen(entity.getPen());
       if (optionalStudent.isPresent()) {
@@ -119,7 +128,8 @@ public class EventHandlerService {
       }
       studentEvent = createStudentEventRecord(event);
     } else {
-      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE, event);
+      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
       studentEvent = studentEventOptional.get();
       studentEvent.setEventStatus(DB_COMMITTED.toString());
     }
@@ -146,7 +156,8 @@ public class EventHandlerService {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (!studentEventOptional.isPresent()) {
-      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE, event);
+      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
       val optionalStudentEntity = getStudentRepository().findStudentEntityByPen(event.getEventPayload());
       if (optionalStudentEntity.isPresent()) {
         Student student = mapper.toStructure(optionalStudentEntity.get()); // need to convert to structure MANDATORY otherwise jackson will break.
@@ -157,7 +168,8 @@ public class EventHandlerService {
       }
       studentEvent = createStudentEventRecord(event);
     } else { // just update the status of the event so that it will be polled and send again to the saga orchestrator.
-      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE, event);
+      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
       studentEvent = studentEventOptional.get();
       studentEvent.setEventStatus(DB_COMMITTED.toString());
     }
