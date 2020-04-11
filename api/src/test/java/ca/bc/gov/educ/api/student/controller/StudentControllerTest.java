@@ -120,7 +120,7 @@ public class StudentControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
-  public void testCreateDigitalId_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
+  public void testCreateStudent_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
     StudentEntity entity = createStudent();
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isCreated());
@@ -128,7 +128,7 @@ public class StudentControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
-  public void testCreateDigitalId_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
+  public void testCreateStudent_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
 	StudentEntity entity = createStudent();
 	entity.setSexCode("J");
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
@@ -137,7 +137,7 @@ public class StudentControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
-  public void testUpdateDigitalId_GivenValidPayload_ShouldReturnStatusOk() throws Exception {
+  public void testUpdateStudent_GivenValidPayload_ShouldReturnStatusOk() throws Exception {
     StudentEntity entity = createStudent();
     repository.save(entity);
     entity.setLegalFirstName("updated");

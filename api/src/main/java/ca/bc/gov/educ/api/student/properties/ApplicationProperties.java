@@ -25,7 +25,4 @@ public class ApplicationProperties {
   @Getter
   private String natsClusterId;
 
-  @Value("${nats.streaming.server.clientId}")
-  @Getter
-  private String natsClientId;
 }
