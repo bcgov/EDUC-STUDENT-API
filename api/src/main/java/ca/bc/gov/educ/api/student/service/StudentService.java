@@ -1,16 +1,5 @@
 package ca.bc.gov.educ.api.student.service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
 import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
@@ -22,6 +11,18 @@ import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.val;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * StudentService
@@ -35,11 +36,11 @@ public class StudentService {
 
   @Getter(AccessLevel.PRIVATE)
   private final StudentRepository repository;
-  
+
   @Getter(AccessLevel.PRIVATE)
   private final GenderCodeTableRepository genderCodeTableRepo;
 
-  @Getter(AccessLevel.PRIVATE)	
+  @Getter(AccessLevel.PRIVATE)
   private final SexCodeTableRepository sexCodeTableRepo;
 
   public StudentService(@Autowired final StudentRepository repository, @Autowired final GenderCodeTableRepository genderCodeTableRepo, @Autowired final SexCodeTableRepository sexCodeTableRepo) {
@@ -109,15 +110,11 @@ public class StudentService {
     }
   }
 
-  public Optional<StudentEntity> retrieveStudentByEmail(String email) {
-    return repository.findStudentEntityByEmail(email);
-  }
-  
 
   /**
    * Returns the full list of access channel codes
    *
-   * @return {@link List<AccessChannelCodeEntity>}
+   * @return {@link List<SexCodeEntity>}
    */
   @Cacheable("sexCodes")
   public List<SexCodeEntity> getSexCodesList() {
@@ -127,7 +124,7 @@ public class StudentService {
   /**
    * Returns the full list of access channel codes
    *
-   * @return {@link List<IdentityTypeCodeEntity>}
+   * @return {@link List<GenderCodeEntity>}
    */
   @Cacheable("genderCodes")
   public List<GenderCodeEntity> getGenderCodesList() {
@@ -141,7 +138,7 @@ public class StudentService {
   public Optional<GenderCodeEntity> findGenderCode(String genderCode) {
     return Optional.ofNullable(loadGenderCodes().get(genderCode));
   }
-  
+
   private Map<String, SexCodeEntity> loadAllSexCodes() {
     return getSexCodesList().stream().collect(Collectors.toMap(SexCodeEntity::getSexCode, sexCode -> sexCode));
   }
@@ -149,5 +146,17 @@ public class StudentService {
 
   private Map<String, GenderCodeEntity> loadGenderCodes() {
     return getGenderCodesList().stream().collect(Collectors.toMap(GenderCodeEntity::getGenderCode, genderCodeEntity -> genderCodeEntity));
+  }
+
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void deleteAll() {
+    getRepository().deleteAll();
+  }
+
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void deleteById(UUID id) {
+    val entityOptional = getRepository().findById(id);
+    val entity = entityOptional.orElseThrow(() -> new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, id.toString()));
+    getRepository().delete(entity);
   }
 }

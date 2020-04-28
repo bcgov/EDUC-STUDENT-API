@@ -1,19 +1,5 @@
 package ca.bc.gov.educ.api.student.controller;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
-import org.springframework.web.bind.annotation.RestController;
-
 import ca.bc.gov.educ.api.student.endpoint.StudentEndpoint;
 import ca.bc.gov.educ.api.student.exception.InvalidPayloadException;
 import ca.bc.gov.educ.api.student.exception.errors.ApiError;
@@ -27,8 +13,23 @@ import ca.bc.gov.educ.api.student.struct.Student;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.val;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 
 /**
@@ -113,4 +114,17 @@ public class StudentController implements StudentEndpoint {
     return getService().getSexCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
+  @Override
+  @Transactional
+  public ResponseEntity<Void> deleteAll() {
+    getService().deleteAll();
+    return ResponseEntity.noContent().build();
+  }
+
+  @Override
+  @Transactional
+  public ResponseEntity<Void> deleteById(final UUID id) {
+    getService().deleteById(id);
+    return ResponseEntity.noContent().build();
+  }
 }
