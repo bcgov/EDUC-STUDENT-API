@@ -54,10 +54,6 @@ public interface StudentEndpoint {
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
   List<GenderCode> getGenderCodes();
 
-  @GetMapping("/health")
-  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
-  String health();
-
   @DeleteMapping
   @PreAuthorize("#oauth2.hasScope('DELETE_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "NO CONTENT"), @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR.")})

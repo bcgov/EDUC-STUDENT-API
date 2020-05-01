@@ -85,11 +85,6 @@ public class StudentController implements StudentEndpoint {
     }
   }
 
-  @Override
-  public String health() {
-    return "OK";
-  }
-
   /**
    * set audit data to the object.
    *
