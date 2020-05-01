@@ -31,10 +31,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -184,14 +182,6 @@ public class StudentControllerTest {
     student.setEmail("theduke@someplace.com");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     return student;
-  }
-
-
-  @Test
-
-  public void testHealth_GivenServerIsRunning_ShouldReturnOK() throws Exception {
-    this.mockMvc.perform(get("/health")).andDo(print()).andExpect(status().isOk())
-            .andExpect(content().string(containsString("OK")));
   }
 
   public static String asJsonString(final Object obj) {
