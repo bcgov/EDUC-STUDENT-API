@@ -1,17 +1,18 @@
 package ca.bc.gov.educ.api.student.controller;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.UUID;
-
+import ca.bc.gov.educ.api.student.StudentApiApplication;
+import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
+import ca.bc.gov.educ.api.student.mappers.StudentMapper;
+import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
+import ca.bc.gov.educ.api.student.model.SexCodeEntity;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.service.StudentService;
+import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
+import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,20 +27,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
-import ca.bc.gov.educ.api.student.StudentApiApplication;
-import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
-import ca.bc.gov.educ.api.student.mappers.StudentMapper;
-import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
-import ca.bc.gov.educ.api.student.model.SexCodeEntity;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
-import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
@@ -115,7 +109,7 @@ public class StudentControllerTest {
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testRetrieveStudent_GivenPEN_ShouldReturnStatusOK() throws Exception {
     StudentEntity entity = repository.save(createStudent());
-    this.mockMvc.perform(get("?pen=" + entity.getPen())).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
+    this.mockMvc.perform(get("/?pen=" + entity.getPen())).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
   }
 
   @Test
@@ -145,6 +139,35 @@ public class StudentControllerTest {
             .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName()));
   }
 
+  @Test
+  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
+  public void testDeleteStudent_GivenValidId_ShouldReturnStatus204() throws Exception {
+    StudentEntity entity = createStudent();
+    repository.save(entity);
+    this.mockMvc.perform(delete("/"+entity.getStudentID().toString()).contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
+  public void testDeleteStudent_GivenInvalidId_ShouldReturnStatus404() throws Exception {
+    this.mockMvc.perform(delete("/"+UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNotFound());
+  }
+  @Test
+  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
+  public void testDeleteStudentAll__ShouldReturnStatus204() throws Exception {
+    this.mockMvc.perform(delete("/").contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
+  }
+  @Test
+  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
+  public void testDeleteStudentAll_GivenNoDataInDB_ShouldReturnStatus204() throws Exception {
+    repository.deleteAll();
+    this.mockMvc.perform(delete("/").contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
+  }
+
   private StudentEntity createStudent() {
     StudentEntity student = new StudentEntity();
     student.setPen("987654321");
@@ -159,14 +182,6 @@ public class StudentControllerTest {
     student.setEmail("theduke@someplace.com");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     return student;
-  }
-
-
-  @Test
-
-  public void testHealth_GivenServerIsRunning_ShouldReturnOK() throws Exception {
-    this.mockMvc.perform(get("/health")).andDo(print()).andExpect(status().isOk())
-            .andExpect(content().string(containsString("OK")));
   }
 
   public static String asJsonString(final Object obj) {
