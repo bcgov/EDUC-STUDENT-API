@@ -1,10 +1,8 @@
 package ca.bc.gov.educ.api.student.properties;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.stereotype.Component;
 
 /**
  * Class holds all application properties
