@@ -149,11 +149,6 @@ public class StudentService {
   }
 
   @Transactional(propagation = Propagation.MANDATORY)
-  public void deleteAll() {
-    getRepository().deleteAll();
-  }
-
-  @Transactional(propagation = Propagation.MANDATORY)
   public void deleteById(UUID id) {
     val entityOptional = getRepository().findById(id);
     val entity = entityOptional.orElseThrow(() -> new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, id.toString()));

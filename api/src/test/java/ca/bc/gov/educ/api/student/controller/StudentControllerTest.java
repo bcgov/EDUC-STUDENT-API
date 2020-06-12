@@ -154,19 +154,6 @@ public class StudentControllerTest {
     this.mockMvc.perform(delete("/"+UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNotFound());
   }
-  @Test
-  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
-  public void testDeleteStudentAll__ShouldReturnStatus204() throws Exception {
-    this.mockMvc.perform(delete("/").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
-  }
-  @Test
-  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
-  public void testDeleteStudentAll_GivenNoDataInDB_ShouldReturnStatus204() throws Exception {
-    repository.deleteAll();
-    this.mockMvc.perform(delete("/").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
-  }
 
   private StudentEntity createStudent() {
     StudentEntity student = new StudentEntity();
