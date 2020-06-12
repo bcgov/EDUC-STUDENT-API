@@ -54,11 +54,6 @@ public interface StudentEndpoint {
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
   List<GenderCode> getGenderCodes();
 
-  @DeleteMapping
-  @PreAuthorize("#oauth2.hasScope('DELETE_STUDENT')")
-  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "NO CONTENT"), @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR.")})
-  ResponseEntity<Void> deleteAll();
-
   @DeleteMapping("/{id}")
   @PreAuthorize("#oauth2.hasScope('DELETE_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "NO CONTENT"),  @ApiResponse(responseCode = "404", description = "NOT FOUND."), @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR.")})
