@@ -53,6 +53,9 @@ public class StudentEntity {
   @Email(message = "Email must be valid email address")
   @Column(name = "email")
   String email;
+  @NotNull(message = "Email verified cannot be null")
+  @Column(name = "email_verified")
+  String emailVerified;
   @Column(name = "deceased_date")
   @PastOrPresent
   LocalDate deceasedDate;

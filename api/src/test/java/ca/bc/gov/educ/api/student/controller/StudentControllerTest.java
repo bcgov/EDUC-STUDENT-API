@@ -180,6 +180,7 @@ public class StudentControllerTest {
     student.setUsualMiddleNames("Duke");
     student.setUsualLastName("Wayne");
     student.setEmail("theduke@someplace.com");
+    student.setEmailVerified("Y");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     return student;
   }
