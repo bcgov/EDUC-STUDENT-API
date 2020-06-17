@@ -59,6 +59,14 @@ public class StudentEntity {
   @Column(name = "deceased_date")
   @PastOrPresent
   LocalDate deceasedDate;
+  @Column(name = "postal_code")
+  String postalCode;
+  @Column(name = "mincode")
+  String school;
+  @Column(name = "local_id")
+  String localID;
+  @Column(name = "grade")
+  String grade;
   @Column(name = "create_user", updatable = false)
   String createUser;
   @Column(name = "create_date", updatable = false)
