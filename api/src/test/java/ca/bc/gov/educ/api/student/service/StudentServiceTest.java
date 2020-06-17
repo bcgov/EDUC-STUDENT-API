@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,6 +70,10 @@ public class StudentServiceTest {
     assertThat(updateEntity.getLegalFirstName().equals("updatedFirstName")).isTrue();
   }
 
+  @Test
+  public void testFindAllStudent_WhenPayloadIsValid_ShouldReturnAllStudentsObject() {
+    assertNotNull(service.findAll(null, 0, 5, new ArrayList<>()));
+  }
 
   private StudentEntity getStudentEntity() {
     StudentEntity student = new StudentEntity();
