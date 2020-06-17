@@ -2,6 +2,7 @@ package ca.bc.gov.educ.api.student.struct;
 
 import java.io.Serializable;
 
+import javax.persistence.Column;
 import javax.validation.constraints.*;
 
 import lombok.AllArgsConstructor;
@@ -46,6 +47,16 @@ public class Student implements Serializable {
   @Pattern(regexp = "[YN]")
   String emailVerified;
   String deceasedDate;
+  @Column(name = "postal_code")
+  @Size(max = 7)
+  @Pattern(regexp = "^(?:[A-Z]\\d[A-Z][ -]?\\d[A-Z]\\d)$")
+  String postalCode;
+  @Size(max = 8)
+  String school;
+  @Size(max = 12)
+  String localID;
+  @Size(max = 2)
+  String grade;
   @Size(max = 32)
   String createUser;
   @Size(max = 32)

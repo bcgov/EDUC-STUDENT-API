@@ -14,6 +14,11 @@ import lombok.val;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 /**
@@ -153,5 +160,15 @@ public class StudentService {
     val entityOptional = getRepository().findById(id);
     val entity = entityOptional.orElseThrow(() -> new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, id.toString()));
     getRepository().delete(entity);
+  }
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public CompletableFuture<Page<StudentEntity>> findAll(Specification<StudentEntity> studentSpecs, final Integer pageNumber, final Integer pageSize, final List<Sort.Order> sorts) {
+    Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sorts));
+    try {
+      val result = getRepository().findAll(studentSpecs, paging);
+      return CompletableFuture.completedFuture(result);
+    } catch (final Exception ex) {
+      throw new CompletionException(ex);
+    }
   }
 }
