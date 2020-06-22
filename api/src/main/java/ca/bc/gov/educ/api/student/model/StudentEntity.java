@@ -51,9 +51,20 @@ public class StudentEntity {
   @Email(message = "Email must be valid email address")
   @Column(name = "email")
   String email;
+  @NotNull(message = "Email verified cannot be null")
+  @Column(name = "email_verified")
+  String emailVerified;
   @Column(name = "deceased_date")
   @PastOrPresent
   LocalDate deceasedDate;
+  @Column(name = "postal_code")
+  String postalCode;
+  @Column(name = "mincode")
+  String school;
+  @Column(name = "local_id")
+  String localID;
+  @Column(name = "grade")
+  String grade;
   @Column(name = "create_user", updatable = false)
   String createUser;
   @Column(name = "create_date", updatable = false)

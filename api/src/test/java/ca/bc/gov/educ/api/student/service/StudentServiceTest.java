@@ -1,52 +1,39 @@
 package ca.bc.gov.educ.api.student.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.client.RestTemplate;
-
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.struct.SexCode;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
 public class StudentServiceTest {
 
-  public static final String PARAMETERS = "parameters";
-	
   @Autowired
   StudentRepository repository;
   StudentService service;
-  
-  @Mock
-  ApplicationProperties applicationProperties;
+
 
   @Autowired
   GenderCodeTableRepository genderRepo;
-  
+
   @Autowired
   SexCodeTableRepository sexRepo;
-  
-  @Mock
-  RestTemplate template;
 
   @Before
   public void before() {
@@ -73,7 +60,7 @@ public class StudentServiceTest {
   }
 
   @Test
-  public void testUpdateStudent_WhenPayloadIsValid_ShouldReturnTheUpdatedObject(){
+  public void testUpdateStudent_WhenPayloadIsValid_ShouldReturnTheUpdatedObject() {
 
     StudentEntity student = getStudentEntity();
     student = service.createStudent(student);
@@ -83,15 +70,9 @@ public class StudentServiceTest {
     assertThat(updateEntity.getLegalFirstName().equals("updatedFirstName")).isTrue();
   }
 
-  private ResponseEntity<SexCode[]> createSexCodeResponse() {
-    return ResponseEntity.ok(createSexCodeArray());
-  }
-
-  private SexCode[] createSexCodeArray() {
-	SexCode[] sexCodes = new SexCode[2];
-    sexCodes[0] = SexCode.builder().sexCode("M").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
-    sexCodes[1] = SexCode.builder().sexCode("F").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
-    return sexCodes;
+  @Test
+  public void testFindAllStudent_WhenPayloadIsValid_ShouldReturnAllStudentsObject() {
+    assertNotNull(service.findAll(null, 0, 5, new ArrayList<>()));
   }
 
   private StudentEntity getStudentEntity() {
@@ -107,6 +88,7 @@ public class StudentServiceTest {
     student.setUsualMiddleNames("Duke");
     student.setUsualLastName("Wayne");
     student.setEmail("theduke@someplace.com");
+    student.setEmailVerified("Y");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     return student;
   }

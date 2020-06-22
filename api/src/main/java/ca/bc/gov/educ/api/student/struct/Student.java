@@ -2,10 +2,8 @@ package ca.bc.gov.educ.api.student.struct;
 
 import java.io.Serializable;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
-import javax.validation.constraints.Size;
+import javax.persistence.Column;
+import javax.validation.constraints.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -46,7 +44,21 @@ public class Student implements Serializable {
   @Size(max = 80)
   @Email(message = "Email must be valid email address.")
   String email;
+  @NotNull(message = "Email verified cannot be null.")
+  @Size(max = 1)
+  @Pattern(regexp = "[YN]")
+  String emailVerified;
   String deceasedDate;
+  @Column(name = "postal_code")
+  @Size(max = 7)
+  @Pattern(regexp = "^(?:[A-Z]\\d[A-Z][ -]?\\d[A-Z]\\d)$")
+  String postalCode;
+  @Size(max = 8)
+  String school;
+  @Size(max = 12)
+  String localID;
+  @Size(max = 2)
+  String grade;
   @Size(max = 32)
   String createUser;
   @Size(max = 32)
