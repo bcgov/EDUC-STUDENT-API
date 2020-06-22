@@ -65,6 +65,8 @@ public class StudentEntity {
   String localID;
   @Column(name = "grade")
   String grade;
+  @Column(name = "memo")
+  String memo;
   @Column(name = "create_user", updatable = false)
   String createUser;
   @Column(name = "create_date", updatable = false)
