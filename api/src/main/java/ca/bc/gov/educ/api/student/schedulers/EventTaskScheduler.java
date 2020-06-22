@@ -1,4 +1,4 @@
-package ca.bc.gov.educ.api.student.poll;
+package ca.bc.gov.educ.api.student.schedulers;
 
 import ca.bc.gov.educ.api.student.constant.EventOutcome;
 import ca.bc.gov.educ.api.student.constant.EventType;

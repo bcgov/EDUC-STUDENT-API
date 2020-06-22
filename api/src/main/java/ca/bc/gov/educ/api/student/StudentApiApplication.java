@@ -46,6 +46,6 @@ public class StudentApiApplication {
 
   @Bean
   public LockProvider lockProvider(@Autowired JdbcTemplate jdbcTemplate, @Autowired PlatformTransactionManager transactionManager) {
-    return new JdbcTemplateLockProvider(jdbcTemplate, transactionManager, "student_shedlock");
+    return new JdbcTemplateLockProvider(jdbcTemplate, transactionManager, "STUDENT_SHEDLOCK");
   }
 }
