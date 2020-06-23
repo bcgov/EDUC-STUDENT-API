@@ -185,27 +185,27 @@ public class StudentController implements StudentEndpoint {
   }
 
   private Specification<StudentEntity> getTypeSpecification(String key, FilterOperation filterOperation, String value, ValueType valueType) {
-    Specification<StudentEntity> studnetSpecs = null;
+    Specification<StudentEntity> studentEntitySpecification = null;
     switch (valueType) {
       case STRING:
-        studnetSpecs = studentFilterSpecs.getStringTypeSpecification(key, value, filterOperation);
+        studentEntitySpecification = studentFilterSpecs.getStringTypeSpecification(key, value, filterOperation);
         break;
       case DATE_TIME:
-        studnetSpecs = studentFilterSpecs.getDateTimeTypeSpecification(key, value, filterOperation);
+        studentEntitySpecification = studentFilterSpecs.getDateTimeTypeSpecification(key, value, filterOperation);
         break;
       case LONG:
-        studnetSpecs = studentFilterSpecs.getLongTypeSpecification(key, value, filterOperation);
+        studentEntitySpecification = studentFilterSpecs.getLongTypeSpecification(key, value, filterOperation);
         break;
       case INTEGER:
-        studnetSpecs = studentFilterSpecs.getIntegerTypeSpecification(key, value, filterOperation);
+        studentEntitySpecification = studentFilterSpecs.getIntegerTypeSpecification(key, value, filterOperation);
         break;
       case DATE:
-        studnetSpecs = studentFilterSpecs.getDateTypeSpecification(key, value, filterOperation);
+        studentEntitySpecification = studentFilterSpecs.getDateTypeSpecification(key, value, filterOperation);
         break;
       default:
         break;
     }
-    return studnetSpecs;
+    return studentEntitySpecification;
   }
   
 }
