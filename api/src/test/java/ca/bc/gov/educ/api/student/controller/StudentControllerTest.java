@@ -210,7 +210,7 @@ public class StudentControllerTest {
             .perform(get("/paginated").param("pageNumber","1").param("pageSize", "5").param("sort", sort)
                     .contentType(APPLICATION_JSON))
             .andReturn();
-    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
   @Test
@@ -306,7 +306,7 @@ public class StudentControllerTest {
             .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
                     .contentType(APPLICATION_JSON))
             .andReturn();
-    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(3)));
   }
 
   @Test
