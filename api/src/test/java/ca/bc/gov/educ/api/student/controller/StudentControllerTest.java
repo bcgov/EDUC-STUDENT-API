@@ -18,6 +18,7 @@ import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.val;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -403,13 +404,14 @@ public class StudentControllerTest {
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH_IGNORE_CASE).value("rham").valueType(ValueType.STRING).build();
+
+    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    val entitiesFromDB = repository.findAll();
+    SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
-    System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))

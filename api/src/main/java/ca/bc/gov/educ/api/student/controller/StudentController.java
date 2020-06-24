@@ -202,6 +202,9 @@ public class StudentController implements StudentEndpoint {
       case DATE:
         studentEntitySpecification = studentFilterSpecs.getDateTypeSpecification(key, value, filterOperation);
         break;
+      case UUID:
+        studentEntitySpecification = studentFilterSpecs.getUUIDTypeSpecification(key, value, filterOperation);
+        break;
       default:
         break;
     }
