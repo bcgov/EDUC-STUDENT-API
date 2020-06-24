@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.chrono.ChronoLocalDate;
 import java.time.chrono.ChronoLocalDateTime;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -18,14 +19,16 @@ public class StudentFilterSpecs {
   private final FilterSpecifications<StudentEntity, Integer> integerFilterSpecifications;
   private final FilterSpecifications<StudentEntity, String> stringFilterSpecifications;
   private final FilterSpecifications<StudentEntity, Long> longFilterSpecifications;
+  private final FilterSpecifications<StudentEntity, UUID> uuidFilterSpecifications;
   private final Converters converters;
 
-  public StudentFilterSpecs(FilterSpecifications<StudentEntity, ChronoLocalDate> dateFilterSpecifications, FilterSpecifications<StudentEntity, ChronoLocalDateTime<?>> dateTimeFilterSpecifications, FilterSpecifications<StudentEntity, Integer> integerFilterSpecifications, FilterSpecifications<StudentEntity, String> stringFilterSpecifications, FilterSpecifications<StudentEntity, Long> longFilterSpecifications, Converters converters) {
+  public StudentFilterSpecs(FilterSpecifications<StudentEntity, ChronoLocalDate> dateFilterSpecifications, FilterSpecifications<StudentEntity, ChronoLocalDateTime<?>> dateTimeFilterSpecifications, FilterSpecifications<StudentEntity, Integer> integerFilterSpecifications, FilterSpecifications<StudentEntity, String> stringFilterSpecifications, FilterSpecifications<StudentEntity, Long> longFilterSpecifications, FilterSpecifications<StudentEntity, UUID> uuidFilterSpecifications, Converters converters) {
     this.dateFilterSpecifications = dateFilterSpecifications;
     this.dateTimeFilterSpecifications = dateTimeFilterSpecifications;
     this.integerFilterSpecifications = integerFilterSpecifications;
     this.stringFilterSpecifications = stringFilterSpecifications;
     this.longFilterSpecifications = longFilterSpecifications;
+    this.uuidFilterSpecifications = uuidFilterSpecifications;
     this.converters = converters;
   }
 
@@ -47,6 +50,9 @@ public class StudentFilterSpecs {
 
   public Specification<StudentEntity> getStringTypeSpecification(String fieldName, String filterValue, FilterOperation filterOperation) {
     return getSpecification(fieldName, filterValue, filterOperation, converters.getFunction(String.class), stringFilterSpecifications);
+  }
+  public Specification<StudentEntity> getUUIDTypeSpecification(String fieldName, String filterValue, FilterOperation filterOperation) {
+    return getSpecification(fieldName, filterValue, filterOperation, converters.getFunction(UUID.class), uuidFilterSpecifications);
   }
 
   private <T extends Comparable<T>> Specification<StudentEntity> getSpecification(String fieldName,
