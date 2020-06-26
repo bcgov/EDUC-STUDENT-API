@@ -16,44 +16,44 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "student_demog_code")
+@Table(name = "STUDENT_DEMOG_CODE")
 public class DemogCodeEntity {
 
     @Id
-    @Column(name = "demog_code", unique = true, updatable = false)
+    @Column(name = "DEMOG_CODE", unique = true, updatable = false)
     String demogCode;
     
     @NotNull(message="label cannot be null")
-    @Column(name = "label")
+    @Column(name = "LABEL")
     String label;
     
     @NotNull(message="description cannot be null")
-    @Column(name = "description")
+    @Column(name = "DESCRIPTION")
     String description;
 
     @NotNull(message="displayOrder cannot be null")
-    @Column(name = "display_order")
+    @Column(name = "DISPLAY_ORDER")
     Integer displayOrder;
 
     @NotNull(message="effectiveDate cannot be null")
-    @Column(name = "effective_date")
+    @Column(name = "EFFECTIVE_DATE")
     LocalDateTime effectiveDate;
     
     @NotNull(message="expiryDate cannot be null")
-    @Column(name = "expiry_date")
+    @Column(name = "EXPIRY_DATE")
     LocalDateTime expiryDate;
 
-    @Column(name = "create_user", updatable = false)
+    @Column(name = "CREATE_USER", updatable = false)
     String createUser;
 
     @PastOrPresent
-    @Column(name = "create_date", updatable = false)
+    @Column(name = "CREATE_DATE", updatable = false)
     LocalDateTime createDate;
 
-    @Column(name = "update_user", updatable = false)
+    @Column(name = "UPDATE_USER", updatable = false)
     String updateUser;
 
     @PastOrPresent
-    @Column(name = "update_date", updatable = false)
+    @Column(name = "UPDATE_DATE", updatable = false)
     LocalDateTime updateDate;
 }
