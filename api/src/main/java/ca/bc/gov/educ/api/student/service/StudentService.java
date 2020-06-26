@@ -2,12 +2,8 @@ package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
-import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
-import ca.bc.gov.educ.api.student.model.SexCodeEntity;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.model.*;
+import ca.bc.gov.educ.api.student.repository.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.val;
@@ -50,10 +46,18 @@ public class StudentService {
   @Getter(AccessLevel.PRIVATE)
   private final SexCodeTableRepository sexCodeTableRepo;
 
-  public StudentService(@Autowired final StudentRepository repository, @Autowired final GenderCodeTableRepository genderCodeTableRepo, @Autowired final SexCodeTableRepository sexCodeTableRepo) {
+  @Getter(AccessLevel.PRIVATE)
+  private final DemogCodeTableRepository demogCodeTableRepo;
+
+  @Getter(AccessLevel.PRIVATE)
+  private final StatusCodeTableRepository statusCodeTableRepo;
+
+  public StudentService(@Autowired final StudentRepository repository, @Autowired final GenderCodeTableRepository genderCodeTableRepo, @Autowired final SexCodeTableRepository sexCodeTableRepo, @Autowired final StatusCodeTableRepository statusCodeTableRepo, @Autowired final DemogCodeTableRepository demogCodeTableRepo) {
     this.repository = repository;
     this.sexCodeTableRepo = sexCodeTableRepo;
     this.genderCodeTableRepo = genderCodeTableRepo;
+    this.statusCodeTableRepo = statusCodeTableRepo;
+    this.demogCodeTableRepo = demogCodeTableRepo;
   }
 
   /**
@@ -119,13 +123,33 @@ public class StudentService {
 
 
   /**
-   * Returns the full list of access channel codes
+   * Returns the full list of sex codes
    *
    * @return {@link List<SexCodeEntity>}
    */
   @Cacheable("sexCodes")
   public List<SexCodeEntity> getSexCodesList() {
     return sexCodeTableRepo.findAll();
+  }
+
+  /**
+   * Returns the full list of demog codes
+   *
+   * @return {@link List<DemogCodeEntity>}
+   */
+  @Cacheable("demogCodes")
+  public List<DemogCodeEntity> getDemogCodesList() {
+    return demogCodeTableRepo.findAll();
+  }
+
+  /**
+   * Returns the full list of status codes
+   *
+   * @return {@link List<StatusCodeEntity>}
+   */
+  @Cacheable("statusCodes")
+  public List<StatusCodeEntity> getStatusCodesList() {
+    return statusCodeTableRepo.findAll();
   }
 
   /**

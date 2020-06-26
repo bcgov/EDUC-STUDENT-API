@@ -54,11 +54,17 @@ public class Student implements Serializable {
   @Pattern(regexp = "^(?:[A-Z]\\d[A-Z][ -]?\\d[A-Z]\\d)$")
   String postalCode;
   @Size(max = 8)
-  String school;
+  String mincode;
   @Size(max = 12)
   String localID;
   @Size(max = 2)
   String grade;
+  @Size(max = 4)
+  String gradeYear;
+  @Size(max = 1)
+  String demogCode;
+  @Size(max = 1)
+  String statusCode;
   @Size(max = 25)
   String memo;
   @Size(max = 32)

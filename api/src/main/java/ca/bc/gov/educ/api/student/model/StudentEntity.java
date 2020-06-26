@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "student")
+@Table(name = "STUDENT")
 @Data
 @DynamicUpdate
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -24,57 +24,63 @@ public class StudentEntity {
   @GeneratedValue(generator = "UUID")
   @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator", parameters = {
           @Parameter(name = "uuid_gen_strategy_class", value = "org.hibernate.id.uuid.CustomVersionOneStrategy")})
-  @Column(name = "student_id", unique = true, updatable = false, columnDefinition = "BINARY(16)")
+  @Column(name = "STUDENT_ID", unique = true, updatable = false, columnDefinition = "BINARY(16)")
   UUID studentID;
   @NotNull(message = "pen cannot be null")
-  @Column(name = "pen")
+  @Column(name = "PEN")
   String pen;
-  @Column(name = "legal_first_name")
+  @Column(name = "LEGAL_FIRST_NAME")
   String legalFirstName;
-  @Column(name = "legal_middle_names")
+  @Column(name = "LEGAL_MIDDLE_NAMES")
   String legalMiddleNames;
-  @Column(name = "legal_last_name")
+  @Column(name = "LEGAL_LAST_NAME")
   String legalLastName;
-  @Column(name = "dob")
+  @Column(name = "DOB")
   @PastOrPresent
   LocalDate dob;
-  @Column(name = "sex_code")
+  @Column(name = "SEX_CODE")
   String sexCode;
-  @Column(name = "gender_code")
+  @Column(name = "GENDER_CODE")
   String genderCode;
-  @Column(name = "usual_first_name")
+  @Column(name = "USUAL_FIRST_NAME")
   String usualFirstName;
-  @Column(name = "usual_middle_names")
+  @Column(name = "USUAL_MIDDLE_NAMES")
   String usualMiddleNames;
-  @Column(name = "usual_last_name")
+  @Column(name = "USUAL_LAST_NAME")
   String usualLastName;
   @Email(message = "Email must be valid email address")
-  @Column(name = "email")
+  @Column(name = "EMAIL")
   String email;
   @NotNull(message = "Email verified cannot be null")
-  @Column(name = "email_verified")
+  @Column(name = "EMAIL_VERIFIED")
   String emailVerified;
-  @Column(name = "deceased_date")
+  @Column(name = "DECEASED_DATE")
   @PastOrPresent
   LocalDate deceasedDate;
-  @Column(name = "postal_code")
+  @Column(name = "POSTAL_CODE")
   String postalCode;
-  @Column(name = "mincode")
-  String school;
-  @Column(name = "local_id")
+  @Column(name = "MINCODE")
+  String mincode;
+  @Column(name = "LOCAL_ID")
   String localID;
-  @Column(name = "grade")
+  @Column(name = "GRADE")
   String grade;
-  @Column(name = "memo")
+  @Column(name = "MEMO")
   String memo;
-  @Column(name = "create_user", updatable = false)
+  @Column(name = "GRADE_YEAR")
+  String gradeYear;
+  @Column(name = "DEMOG_CODE")
+  String demogCode;
+  @Column(name = "STATUS_CODE")
+  String statusCode;
+  @Column(name = "CREATE_USER", updatable = false)
   String createUser;
-  @Column(name = "create_date", updatable = false)
+  @Column(name = "CREATE_DATE", updatable = false)
   @PastOrPresent
   LocalDateTime createDate;
-  @Column(name = "update_user")
+  @Column(name = "UPDATE_USER")
   String updateUser;
-  @Column(name = "update_date")
+  @Column(name = "UPDATE_DATE")
   @PastOrPresent
   LocalDateTime updateDate;
 

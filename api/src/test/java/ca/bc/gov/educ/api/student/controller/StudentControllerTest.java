@@ -4,12 +4,8 @@ import ca.bc.gov.educ.api.student.StudentApiApplication;
 import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.filter.FilterOperation;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
-import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
-import ca.bc.gov.educ.api.student.model.SexCodeEntity;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.model.*;
+import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.SearchCriteria;
 import ca.bc.gov.educ.api.student.struct.Student;
@@ -67,6 +63,12 @@ public class StudentControllerTest {
   SexCodeTableRepository sexRepo;
 
   @Autowired
+  DemogCodeTableRepository demogRepo;
+
+  @Autowired
+  StatusCodeTableRepository statusRepo;
+
+  @Autowired
   StudentPayloadValidator validator;
   
   @Autowired
@@ -80,6 +82,8 @@ public class StudentControllerTest {
             .setControllerAdvice(new RestExceptionHandler()).build();
     genderRepo.save(createGenderCodeData());
     sexRepo.save(createSexCodeData());
+    demogRepo.save(createDemogCodeData());
+    statusRepo.save(createStatusCodeData());
   }
   
   /**
@@ -89,6 +93,8 @@ public class StudentControllerTest {
   public void after() {
     genderRepo.deleteAll();
     sexRepo.deleteAll();
+    demogRepo.deleteAll();
+    statusRepo.deleteAll();
     repository.deleteAll();
   }
 
@@ -100,6 +106,18 @@ public class StudentControllerTest {
 
   private GenderCodeEntity createGenderCodeData() {
     return GenderCodeEntity.builder().genderCode("M").description("Male")
+            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+  }
+
+  private StatusCodeEntity createStatusCodeData() {
+    return StatusCodeEntity.builder().statusCode("A").description("Active")
+            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+  }
+
+  private DemogCodeEntity createDemogCodeData() {
+    return DemogCodeEntity.builder().demogCode("A").description("Accepted")
             .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
             .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }

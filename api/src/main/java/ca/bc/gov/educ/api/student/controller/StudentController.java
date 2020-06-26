@@ -11,11 +11,7 @@ import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.struct.GenderCode;
-import ca.bc.gov.educ.api.student.struct.SexCode;
-import ca.bc.gov.educ.api.student.struct.Student;
-import ca.bc.gov.educ.api.student.struct.SearchCriteria;
-import ca.bc.gov.educ.api.student.struct.ValueType;
+import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -120,6 +116,14 @@ public class StudentController implements StudentEndpoint {
 
   public List<SexCode> getSexCodes() {
     return getService().getSexCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
+  }
+
+  public List<DemogCode> getDemogCodes() {
+    return getService().getDemogCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
+  }
+
+  public List<StatusCode> getStatusCodes() {
+    return getService().getStatusCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
   @Override
