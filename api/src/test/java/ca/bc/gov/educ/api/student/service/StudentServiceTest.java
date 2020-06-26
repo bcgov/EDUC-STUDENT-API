@@ -2,9 +2,7 @@ package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.repository.GenderCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.SexCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.repository.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,9 +33,15 @@ public class StudentServiceTest {
   @Autowired
   SexCodeTableRepository sexRepo;
 
+  @Autowired
+  DemogCodeTableRepository demogRepo;
+
+  @Autowired
+  StatusCodeTableRepository statusRepo;
+
   @Before
   public void before() {
-    service = new StudentService(repository, genderRepo, sexRepo);
+    service = new StudentService(repository, genderRepo, sexRepo,statusRepo,demogRepo);
   }
 
   @Test
@@ -84,6 +88,8 @@ public class StudentServiceTest {
     student.setDob(LocalDate.parse("1907-05-26"));
     student.setSexCode("M");
     student.setGenderCode(null);
+    student.setStatusCode("A");
+    student.setDemogCode("A");
     student.setUsualFirstName("Johnny");
     student.setUsualMiddleNames("Duke");
     student.setUsualLastName("Wayne");

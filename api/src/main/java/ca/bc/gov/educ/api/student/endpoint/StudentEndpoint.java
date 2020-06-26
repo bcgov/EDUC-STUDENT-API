@@ -1,8 +1,6 @@
 package ca.bc.gov.educ.api.student.endpoint;
 
-import ca.bc.gov.educ.api.student.struct.GenderCode;
-import ca.bc.gov.educ.api.student.struct.SexCode;
-import ca.bc.gov.educ.api.student.struct.Student;
+import ca.bc.gov.educ.api.student.struct.*;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -51,6 +49,16 @@ public interface StudentEndpoint {
   @GetMapping("sex-codes")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
   List<SexCode> getSexCodes();
+
+  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
+  @GetMapping("status-codes")
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
+  List<StatusCode> getStatusCodes();
+
+  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
+  @GetMapping("demog-codes")
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
+  List<DemogCode> getDemogCodes();
   
   @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
   @GetMapping("gender-codes")

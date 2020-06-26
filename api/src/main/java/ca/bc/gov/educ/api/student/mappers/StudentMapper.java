@@ -1,11 +1,7 @@
 package ca.bc.gov.educ.api.student.mappers;
 
-import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
-import ca.bc.gov.educ.api.student.model.SexCodeEntity;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.struct.GenderCode;
-import ca.bc.gov.educ.api.student.struct.SexCode;
-import ca.bc.gov.educ.api.student.struct.Student;
+import ca.bc.gov.educ.api.student.model.*;
+import ca.bc.gov.educ.api.student.struct.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -36,4 +32,19 @@ public interface StudentMapper {
 
   GenderCode toStructure(GenderCodeEntity entity);
 
+  @Mapping(target = "updateUser", ignore = true)
+  @Mapping(target = "updateDate", ignore = true)
+  @Mapping(target = "createUser", ignore = true)
+  @Mapping(target = "createDate", ignore = true)
+  StatusCodeEntity toModel(StatusCode structure);
+
+  StatusCode toStructure(StatusCodeEntity entity);
+
+  @Mapping(target = "updateUser", ignore = true)
+  @Mapping(target = "updateDate", ignore = true)
+  @Mapping(target = "createUser", ignore = true)
+  @Mapping(target = "createDate", ignore = true)
+  DemogCodeEntity toModel(DemogCode structure);
+
+  DemogCode toStructure(DemogCodeEntity entity);
 }

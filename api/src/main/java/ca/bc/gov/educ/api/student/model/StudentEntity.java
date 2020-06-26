@@ -60,13 +60,19 @@ public class StudentEntity {
   @Column(name = "postal_code")
   String postalCode;
   @Column(name = "mincode")
-  String school;
+  String mincode;
   @Column(name = "local_id")
   String localID;
   @Column(name = "grade")
   String grade;
   @Column(name = "memo")
   String memo;
+  @Column(name = "grade_year")
+  String gradeYear;
+  @Column(name = "demog_code")
+  String demogCode;
+  @Column(name = "status_code")
+  String statusCode;
   @Column(name = "create_user", updatable = false)
   String createUser;
   @Column(name = "create_date", updatable = false)
