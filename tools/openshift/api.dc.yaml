@@ -112,6 +112,7 @@ objects:
           emptyDir: {}
         - name: flb-sc-config-volume
           configMap:
+            name: "${APP_NAME}-flb-sc-config-map"
     test: false
     triggers:
     - type: ConfigChange
