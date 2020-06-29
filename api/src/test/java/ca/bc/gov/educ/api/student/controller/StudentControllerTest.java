@@ -69,6 +69,9 @@ public class StudentControllerTest {
   StatusCodeTableRepository statusRepo;
 
   @Autowired
+  GradeCodeTableRepository gradeRepo;
+
+  @Autowired
   StudentPayloadValidator validator;
   
   @Autowired
@@ -84,6 +87,7 @@ public class StudentControllerTest {
     sexRepo.save(createSexCodeData());
     demogRepo.save(createDemogCodeData());
     statusRepo.save(createStatusCodeData());
+    gradeRepo.save(createGradeCodeData());
   }
   
   /**
@@ -95,6 +99,7 @@ public class StudentControllerTest {
     sexRepo.deleteAll();
     demogRepo.deleteAll();
     statusRepo.deleteAll();
+    gradeRepo.deleteAll();
     repository.deleteAll();
   }
 
@@ -121,6 +126,13 @@ public class StudentControllerTest {
             .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
             .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
+
+  private GradeCodeEntity createGradeCodeData() {
+    return GradeCodeEntity.builder().gradeCode("01").description("First Grade")
+            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+  }
+
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")

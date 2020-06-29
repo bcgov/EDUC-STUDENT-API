@@ -43,13 +43,16 @@ public class StudentPayloadValidatorTest {
   StatusCodeTableRepository statusRepo;
 
   @Mock
+  GradeCodeTableRepository gradeRepo;
+
+  @Mock
   StudentService studentService;
   @InjectMocks
   StudentPayloadValidator studentPayloadValidator;
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo);
+    studentService = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
     studentPayloadValidator = new StudentPayloadValidator(studentService);
   }
 

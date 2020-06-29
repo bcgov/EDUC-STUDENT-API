@@ -122,6 +122,10 @@ public class StudentController implements StudentEndpoint {
     return getService().getDemogCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
+  public List<GradeCode> getGradeCodes() {
+    return getService().getGradeCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
+  }
+
   public List<StatusCode> getStatusCodes() {
     return getService().getStatusCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
   }
