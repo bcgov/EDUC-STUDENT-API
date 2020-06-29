@@ -51,7 +51,7 @@ public class Student implements Serializable {
   String deceasedDate;
   @Column(name = "postal_code")
   @Size(max = 7)
-  @Pattern(regexp = "^(?:[A-Z]\\d[A-Z][ -]?\\d[A-Z]\\d)$")
+  @Pattern(regexp = "^([A-Z]\\d[A-Z]\\d[A-Z]\\d|)$")
   String postalCode;
   @Size(max = 8)
   String mincode;
