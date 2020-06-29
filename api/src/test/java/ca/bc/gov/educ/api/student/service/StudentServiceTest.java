@@ -26,7 +26,6 @@ public class StudentServiceTest {
   StudentRepository repository;
   StudentService service;
 
-
   @Autowired
   GenderCodeTableRepository genderRepo;
 
@@ -39,9 +38,12 @@ public class StudentServiceTest {
   @Autowired
   StatusCodeTableRepository statusRepo;
 
+  @Autowired
+  GradeCodeTableRepository gradeRepo;
+
   @Before
   public void before() {
-    service = new StudentService(repository, genderRepo, sexRepo,statusRepo,demogRepo);
+    service = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
   }
 
   @Test

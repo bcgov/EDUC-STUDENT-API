@@ -63,8 +63,8 @@ public class StudentEntity {
   String mincode;
   @Column(name = "LOCAL_ID")
   String localID;
-  @Column(name = "GRADE")
-  String grade;
+  @Column(name = "GRADE_CODE")
+  String gradeCode;
   @Column(name = "MEMO")
   String memo;
   @Column(name = "GRADE_YEAR")

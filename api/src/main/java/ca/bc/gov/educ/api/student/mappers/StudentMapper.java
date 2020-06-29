@@ -47,4 +47,12 @@ public interface StudentMapper {
   DemogCodeEntity toModel(DemogCode structure);
 
   DemogCode toStructure(DemogCodeEntity entity);
+
+  @Mapping(target = "updateUser", ignore = true)
+  @Mapping(target = "updateDate", ignore = true)
+  @Mapping(target = "createUser", ignore = true)
+  @Mapping(target = "createDate", ignore = true)
+  GradeCodeEntity toModel(GradeCode structure);
+
+  GradeCode toStructure(GradeCodeEntity entity);
 }

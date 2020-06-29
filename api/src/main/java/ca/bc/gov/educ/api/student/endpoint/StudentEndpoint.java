@@ -59,7 +59,12 @@ public interface StudentEndpoint {
   @GetMapping("demog-codes")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
   List<DemogCode> getDemogCodes();
-  
+
+  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
+  @GetMapping("grade-codes")
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
+  List<GradeCode> getGradeCodes();
+
   @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
   @GetMapping("gender-codes")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})

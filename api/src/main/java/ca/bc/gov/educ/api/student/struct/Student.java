@@ -58,7 +58,7 @@ public class Student implements Serializable {
   @Size(max = 12)
   String localID;
   @Size(max = 2)
-  String grade;
+  String gradeCode;
   @Size(max = 4)
   String gradeYear;
   @Size(max = 1)

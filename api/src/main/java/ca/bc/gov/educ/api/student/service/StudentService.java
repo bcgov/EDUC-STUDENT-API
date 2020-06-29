@@ -52,12 +52,16 @@ public class StudentService {
   @Getter(AccessLevel.PRIVATE)
   private final StatusCodeTableRepository statusCodeTableRepo;
 
-  public StudentService(@Autowired final StudentRepository repository, @Autowired final GenderCodeTableRepository genderCodeTableRepo, @Autowired final SexCodeTableRepository sexCodeTableRepo, @Autowired final StatusCodeTableRepository statusCodeTableRepo, @Autowired final DemogCodeTableRepository demogCodeTableRepo) {
+  @Getter(AccessLevel.PRIVATE)
+  private final GradeCodeTableRepository gradeCodeTableRepo;
+
+  public StudentService(@Autowired final StudentRepository repository, @Autowired final GenderCodeTableRepository genderCodeTableRepo, @Autowired final SexCodeTableRepository sexCodeTableRepo, @Autowired final StatusCodeTableRepository statusCodeTableRepo, @Autowired final DemogCodeTableRepository demogCodeTableRepo, @Autowired final GradeCodeTableRepository gradeCodeTableRepo) {
     this.repository = repository;
     this.sexCodeTableRepo = sexCodeTableRepo;
     this.genderCodeTableRepo = genderCodeTableRepo;
     this.statusCodeTableRepo = statusCodeTableRepo;
     this.demogCodeTableRepo = demogCodeTableRepo;
+    this.gradeCodeTableRepo = gradeCodeTableRepo;
   }
 
   /**
@@ -140,6 +144,16 @@ public class StudentService {
   @Cacheable("demogCodes")
   public List<DemogCodeEntity> getDemogCodesList() {
     return demogCodeTableRepo.findAll();
+  }
+
+  /**
+   * Returns the full list of demog codes
+   *
+   * @return {@link List<DemogCodeEntity>}
+   */
+  @Cacheable("gradeCodes")
+  public List<GradeCodeEntity> getGradeCodesList() {
+    return gradeCodeTableRepo.findAll();
   }
 
   /**
