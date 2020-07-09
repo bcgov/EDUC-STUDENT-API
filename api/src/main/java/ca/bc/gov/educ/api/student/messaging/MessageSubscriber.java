@@ -68,6 +68,7 @@ public class MessageSubscriber {
       try {
         String eventString = new String(message.getData());
         Event event = new ObjectMapper().readValue(eventString, Event.class);
+        log.info("received event for event type :: {} and saga ID :: {}", event.getEventType(), event.getSagaId());
         getEventHandlerService().handleEvent(event);
       } catch (final Exception ex) {
         log.error("Exception ", ex);
