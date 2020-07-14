@@ -103,7 +103,9 @@ pipeline{
         DC_URL = "https://raw.githubusercontent.com/bcgov/EDUC-STUDENT-API/master/tools/openshift/api.dc.yaml"
       }
       steps{
-        extJSHelper.performApiDeploy(STAGING_ENV, TARGET_ENVIRONMENT, 'educ-student-api',APP_NAME, JOB_NAME, "latest", TOOLS, TARGET_ENVIRONMENT, APP_DOMAIN,DC_URL,MIN_REPLICAS,MAX_REPLICAS,MIN_CPU,MAX_CPU,MIN_MEM,MAX_MEM,TARGET_ENV,NAMESPACE)
+        script{
+            extJSHelper.performApiDeploy(STAGING_ENV, TARGET_ENVIRONMENT, 'educ-student-api',"${APP_NAME}", JOB_NAME, "latest", TOOLS, TARGET_ENVIRONMENT, APP_DOMAIN,"${DC_URL}","${MIN_REPLICAS}","${MAX_REPLICAS}","${MIN_CPU}","${MAX_CPU}","${MIN_MEM}","${MAX_MEM}",TARGET_ENV,NAMESPACE)
+        }
       }
       post{
         success{
