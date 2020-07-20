@@ -20,6 +20,7 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Component
 @Slf4j
+@SuppressWarnings("java:S2142")
 public class MessagePublisher implements Closeable {
   private final ExecutorService executorService = Executors.newFixedThreadPool(2);
   private StreamingConnection connection;
@@ -45,7 +46,6 @@ public class MessagePublisher implements Closeable {
     connection.publish(subject, message, ackHandler);
   }
 
-  @SuppressWarnings("java:S2142")
   private AckHandler getAckHandler() {
     return new AckHandler() {
       @Override
@@ -80,7 +80,6 @@ public class MessagePublisher implements Closeable {
   /**
    * This method will keep retrying for a connection.
    */
-  @SuppressWarnings("java:S2142")
   private void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
     if (e != null) {
       int numOfRetries = 1;
@@ -109,6 +108,15 @@ public class MessagePublisher implements Closeable {
   public void close() {
     if (!executorService.isShutdown()) {
       executorService.shutdown();
+    }
+    if(connection != null){
+      log.info("closing nats connection in the publisher...");
+      try {
+        connection.close();
+      } catch (IOException | TimeoutException | InterruptedException e) {
+        log.error("error while closing nats connection in the publisher...", e);
+      }
+      log.info("nats connection closed in the publisher...");
     }
   }
 }
