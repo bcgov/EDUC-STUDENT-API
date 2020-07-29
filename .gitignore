@@ -10,4 +10,6 @@ bin/
 .classpath
 application-local.properties
 application-devlocal.properties
+application-dev.properties
 ojdbc8.jar
+.vscode/
