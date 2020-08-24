@@ -48,7 +48,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @RestController
 @EnableResourceServer
 @Slf4j
-public class StudentController implements StudentEndpoint {
+public class StudentController extends BaseController implements StudentEndpoint {
   @Getter(AccessLevel.PRIVATE)
   private final StudentService service;
 
@@ -92,22 +92,6 @@ public class StudentController implements StudentEndpoint {
       error.addValidationErrors(validationResult);
       throw new InvalidPayloadException(error);
     }
-  }
-
-  /**
-   * set audit data to the object.
-   *
-   * @param student The object which will be persisted.
-   */
-  private void setAuditColumns(Student student) {
-    if (StringUtils.isBlank(student.getCreateUser())) {
-      student.setCreateUser(ApplicationProperties.STUDENT_API);
-    }
-    if (StringUtils.isBlank(student.getUpdateUser())) {
-      student.setUpdateUser(ApplicationProperties.STUDENT_API);
-    }
-    student.setCreateDate(LocalDateTime.now().toString());
-    student.setUpdateDate(LocalDateTime.now().toString());
   }
 
   public List<GenderCode> getGenderCodes() {
@@ -154,7 +138,6 @@ public class StudentController implements StudentEndpoint {
     }
     return getService().findAll(studentSpecs, pageNumber, pageSize, sorts).thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure));
   }
-
 
   private void getSortCriteria(String sortCriteriaJson, ObjectMapper objectMapper, List<Sort.Order> sorts) throws JsonProcessingException {
     if (StringUtils.isNotBlank(sortCriteriaJson)) {

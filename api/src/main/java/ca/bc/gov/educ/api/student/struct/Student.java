@@ -7,16 +7,18 @@ import javax.validation.constraints.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Student implements Serializable {
+public class Student extends BaseRequest implements Serializable {
   private static final long serialVersionUID = 1L;
 
   String studentID;
@@ -67,12 +69,4 @@ public class Student implements Serializable {
   String statusCode;
   @Size(max = 25)
   String memo;
-  @Size(max = 32)
-  String createUser;
-  @Size(max = 32)
-  String updateUser;
-  @Null(message = "createDate should be null.")
-  String createDate;
-  @Null(message = "updateDate should be null.")
-  String updateDate;
 }
