@@ -57,7 +57,7 @@ public class StudentTwinServiceTest {
   public void testFindStudentTwins_WhenStudentTwinsDoNotExistInDB_ShouldReturnEmptyList() {
     StudentEntity student = getStudentEntity();
     assertNotNull(studentService.createStudent(student));
-    assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isEqualTo(0);
+    assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isZero();
   }
 
   @Test

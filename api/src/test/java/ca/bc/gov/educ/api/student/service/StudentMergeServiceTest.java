@@ -60,7 +60,7 @@ public class StudentMergeServiceTest {
   public void testFindStudentMerges_WhenStudentMergesDoNotExistInDB_ShouldReturnEmptyList() {
     StudentEntity student = getStudentEntity();
     assertNotNull(studentService.createStudent(student));
-    assertThat(studentMergeService.findStudentMerges(student.getStudentID()).size()).isEqualTo(0);
+    assertThat(studentMergeService.findStudentMerges(student.getStudentID()).size()).isZero();
   }
 
   @Test
