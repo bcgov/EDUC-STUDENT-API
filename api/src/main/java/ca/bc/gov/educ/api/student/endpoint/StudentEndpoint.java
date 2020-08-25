@@ -32,7 +32,7 @@ public interface StudentEndpoint {
   @GetMapping
   @PreAuthorize("#oauth2.hasScope('READ_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
-  Iterable<Student> findStudent(@Param("pen")  String pen);
+  List<Student> findStudent(@Param("pen")  String pen);
 
   @PostMapping
   @PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")
