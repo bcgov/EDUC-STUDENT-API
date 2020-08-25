@@ -20,7 +20,7 @@ public interface StudentMergeEndpoint {
   @GetMapping("/{studentID}/merges")
   @PreAuthorize("#oauth2.hasScope('READ_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "404", description = "NOT FOUND")})
-  Iterable<StudentMerge> findStudentMerges(@PathVariable String studentID);
+  List<StudentMerge> findStudentMerges(@PathVariable String studentID);
 
   @PostMapping("/{studentID}/merges")
   @PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")

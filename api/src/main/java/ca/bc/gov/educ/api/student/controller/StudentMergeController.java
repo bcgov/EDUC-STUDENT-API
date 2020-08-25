@@ -4,6 +4,7 @@ import ca.bc.gov.educ.api.student.endpoint.StudentMergeEndpoint;
 import ca.bc.gov.educ.api.student.exception.InvalidPayloadException;
 import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import ca.bc.gov.educ.api.student.mappers.StudentMergeMapper;
+import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
 import ca.bc.gov.educ.api.student.service.StudentMergeService;
 import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.validator.StudentMergePayloadValidator;
@@ -45,22 +46,23 @@ public class StudentMergeController extends BaseController implements StudentMer
     this.payloadValidator = payloadValidator;
   }
 
-  public Iterable<StudentMerge> findStudentMerges(String studentID) {
+  public List<StudentMerge> findStudentMerges(String studentID) {
     return getService().findStudentMerges(UUID.fromString(studentID)).stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
   public StudentMerge createStudentMerge(String studentID, StudentMerge studentMerge) {
-    validatePayload(studentID, studentMerge, true);
     setAuditColumns(studentMerge);
-    return mapper.toStructure(getService().createStudentMerge(mapper.toModel(studentMerge)));
+    StudentMergeEntity entity = mapper.toModel(studentMerge);
+    validatePayload(studentID, studentMerge, true, entity);
+    return mapper.toStructure(getService().createStudentMerge(entity));
   }
 
   public List<StudentMergeSourceCode> getStudentMergeSourceCodes() {
     return getService().getStudentMergeSourceCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
-  private void validatePayload(String studentID, StudentMerge studentMerge, boolean isCreateOperation) {
-    val validationResult = getPayloadValidator().validatePayload(studentID, studentMerge, isCreateOperation);
+  private void validatePayload(String studentID, StudentMerge studentMerge, boolean isCreateOperation, StudentMergeEntity studentMergeEntity) {
+    val validationResult = getPayloadValidator().validatePayload(studentID, studentMerge, isCreateOperation, studentMergeEntity);
     if (!validationResult.isEmpty()) {
       ApiError error = ApiError.builder().timestamp(LocalDateTime.now()).message("Payload contains invalid data.").status(BAD_REQUEST).build();
       error.addValidationErrors(validationResult);

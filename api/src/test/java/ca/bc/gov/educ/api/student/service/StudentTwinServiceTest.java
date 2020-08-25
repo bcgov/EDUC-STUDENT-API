@@ -68,7 +68,7 @@ public class StudentTwinServiceTest {
     assertNotNull(studentService.createStudent(twinedStudent));
     StudentTwinEntity studentTwin = new StudentTwinEntity();
     studentTwin.setStudentID(student.getStudentID());
-    studentTwin.setTwinStudentID(twinedStudent.getStudentID());
+    studentTwin.setTwinStudent(twinedStudent);
     studentTwin.setStudentTwinReasonCode("PENMATCH");
     assertNotNull(studentTwinService.createStudentTwin(studentTwin));
     assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isEqualTo(1);

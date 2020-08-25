@@ -79,14 +79,14 @@ public class StudentMergeControllerTest {
 
     StudentMergeEntity studentMergeFrom = new StudentMergeEntity();
     studentMergeFrom.setStudentID(student.getStudentID());
-    studentMergeFrom.setMergeStudentID(mergedFromStudent.getStudentID());
+    studentMergeFrom.setMergeStudent(mergedFromStudent);
     studentMergeFrom.setStudentMergeDirectionCode("FROM");
     studentMergeFrom.setStudentMergeSourceCode("MINISTRY");
     studentMergeRepo.save(studentMergeFrom);
 
     StudentMergeEntity studentMergeTo = new StudentMergeEntity();
     studentMergeTo.setStudentID(student.getStudentID());
-    studentMergeTo.setMergeStudentID(mergedToStudent.getStudentID());
+    studentMergeTo.setMergeStudent(mergedToStudent);
     studentMergeTo.setStudentMergeDirectionCode("TO");
     studentMergeTo.setStudentMergeSourceCode("MINISTRY");
     studentMergeRepo.save(studentMergeTo);
@@ -105,7 +105,7 @@ public class StudentMergeControllerTest {
 
     StudentMergeEntity studentMergeFrom = new StudentMergeEntity();
     studentMergeFrom.setStudentID(student.getStudentID());
-    studentMergeFrom.setMergeStudentID(mergedFromStudent.getStudentID());
+    studentMergeFrom.setMergeStudent(mergedFromStudent);
     studentMergeFrom.setStudentMergeDirectionCode("FROM");
     studentMergeFrom.setStudentMergeSourceCode("MINISTRY");
     studentMergeFrom.setUpdateUser("Test User");
@@ -114,7 +114,8 @@ public class StudentMergeControllerTest {
 
     this.mockMvc.perform(post("/" + student.getStudentID() + "/merges").contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
       .content(asJsonString(studentMergeFromStruct))).andDo(print()).andExpect(status().isCreated())
-      .andExpect(MockMvcResultMatchers.jsonPath("$.mergeStudentID").value(studentMergeFrom.getMergeStudentID().toString()))
+      .andExpect(MockMvcResultMatchers.jsonPath("$.mergeStudentID").value(mergedFromStudent.getStudentID().toString()))
+      .andExpect(MockMvcResultMatchers.jsonPath("$.mergeStudent.pen").value(mergedFromStudent.getPen()))
       .andExpect(MockMvcResultMatchers.jsonPath("$.updateUser").value("Test User"));
   }
 
@@ -126,7 +127,7 @@ public class StudentMergeControllerTest {
 
     StudentMergeEntity studentMergeFrom = new StudentMergeEntity();
     studentMergeFrom.setStudentID(student.getStudentID());
-    studentMergeFrom.setMergeStudentID(mergedFromStudent.getStudentID());
+    studentMergeFrom.setMergeStudent(mergedFromStudent);
     studentMergeFrom.setStudentMergeDirectionCode("FROM");
     studentMergeFrom.setStudentMergeSourceCode("MINISTRY");
 
@@ -142,7 +143,7 @@ public class StudentMergeControllerTest {
 
     StudentMergeEntity studentMergeFrom = new StudentMergeEntity();
     studentMergeFrom.setStudentID(student.getStudentID());
-    studentMergeFrom.setMergeStudentID(mergedFromStudent.getStudentID());
+    studentMergeFrom.setMergeStudent(mergedFromStudent);
     studentMergeFrom.setStudentMergeDirectionCode("FROM");
     studentMergeFrom.setStudentMergeSourceCode("INVALID");
 

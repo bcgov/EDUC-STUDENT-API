@@ -3,6 +3,7 @@ package ca.bc.gov.educ.api.student.validator;
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 
 import ca.bc.gov.educ.api.student.model.StudentMergeDirectionCodeEntity;
+import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
 import ca.bc.gov.educ.api.student.model.StudentMergeSourceCodeEntity;
 import ca.bc.gov.educ.api.student.service.StudentMergeService;
 import ca.bc.gov.educ.api.student.service.StudentService;
@@ -38,13 +39,13 @@ public class StudentMergePayloadValidator {
     this.studentService = studentService;
   }
 
-  public List<FieldError> validatePayload(String studentID, StudentMerge studentMerge, boolean isCreateOperation) {
+  public List<FieldError> validatePayload(String studentID, StudentMerge studentMerge, boolean isCreateOperation, StudentMergeEntity studentMergeEntity) {
     final List<FieldError> apiValidationErrors = new ArrayList<>();
     if (isCreateOperation && studentMerge.getStudentMergeID() != null) {
       apiValidationErrors.add(createFieldError("studentMergeID", studentMerge.getStudentMergeID(), "studentMergeID should be null for post operation."));
     }
     validateStudentID(studentID, studentMerge, apiValidationErrors);
-    validateMergeStudentID(studentMerge, apiValidationErrors);
+    validateMergeStudentID(studentMerge, apiValidationErrors, studentMergeEntity);
     validateMergeDirectionCode(studentMerge, apiValidationErrors);
     validateMergeSourceCode(studentMerge, apiValidationErrors);
     return apiValidationErrors;
@@ -88,9 +89,10 @@ public class StudentMergePayloadValidator {
     }
   }
 
-  protected void validateMergeStudentID(StudentMerge studentMerge, List<FieldError> apiValidationErrors) {
+  protected void validateMergeStudentID(StudentMerge studentMerge, List<FieldError> apiValidationErrors, StudentMergeEntity studentMergeEntity) {
     try {
-      getStudentService().retrieveStudent(UUID.fromString(studentMerge.getMergeStudentID()));
+      var mergeStudent = getStudentService().retrieveStudent(UUID.fromString(studentMerge.getMergeStudentID()));
+      studentMergeEntity.setMergeStudent(mergeStudent);
     } catch (EntityNotFoundException e) {
       apiValidationErrors.add(createFieldError(MERGE_STUDENT_ID, studentMerge.getMergeStudentID(), "Merge Student ID does not exist."));
     }

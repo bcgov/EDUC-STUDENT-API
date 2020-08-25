@@ -25,13 +25,10 @@ public class StudentMergeEntity {
   @Column(name = "STUDENT_MERGE_ID", unique = true, updatable = false, columnDefinition = "BINARY(16)")
   UUID studentMergeID;
 
+  //To keep the code simple, we didn't use the @ManyToOne association here
   @NotNull(message = "studentID cannot be null")
   @Column(name = "STUDENT_ID")
   UUID studentID;
-
-  @NotNull(message = "mergeStudentID cannot be null")
-  @Column(name = "MERGE_STUDENT_ID")
-  UUID mergeStudentID;
 
   @NotNull(message = "studentMergeDirectionCode cannot be null")
   @Column(name = "STUDENT_MERGE_DIRECTION_CODE")
@@ -55,7 +52,8 @@ public class StudentMergeEntity {
   @PastOrPresent
   LocalDateTime updateDate;
 
+  @NotNull(message = "mergeStudent cannot be null")
   @ManyToOne(optional = false, targetEntity = StudentEntity.class)
-  @JoinColumn(name = "MERGE_STUDENT_ID", referencedColumnName = "STUDENT_ID", updatable = false, insertable = false)
+  @JoinColumn(name = "MERGE_STUDENT_ID", referencedColumnName = "STUDENT_ID", updatable = false)
   StudentEntity mergeStudent;
 }

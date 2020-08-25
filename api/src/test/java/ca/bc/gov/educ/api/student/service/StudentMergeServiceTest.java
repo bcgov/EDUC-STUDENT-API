@@ -71,7 +71,7 @@ public class StudentMergeServiceTest {
     assertNotNull(studentService.createStudent(mergedStudent));
     StudentMergeEntity studentMerge = new StudentMergeEntity();
     studentMerge.setStudentID(student.getStudentID());
-    studentMerge.setMergeStudentID(mergedStudent.getStudentID());
+    studentMerge.setMergeStudent(mergedStudent);
     studentMerge.setStudentMergeDirectionCode("FROM");
     studentMerge.setStudentMergeSourceCode("MINISTRY");
     assertNotNull(studentMergeService.createStudentMerge(studentMerge));

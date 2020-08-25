@@ -4,6 +4,7 @@ import ca.bc.gov.educ.api.student.endpoint.StudentTwinEndpoint;
 import ca.bc.gov.educ.api.student.exception.InvalidPayloadException;
 import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import ca.bc.gov.educ.api.student.mappers.StudentTwinMapper;
+import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
 import ca.bc.gov.educ.api.student.service.StudentTwinService;
 import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.validator.StudentTwinPayloadValidator;
@@ -45,22 +46,23 @@ public class StudentTwinController extends BaseController implements StudentTwin
     this.payloadValidator = payloadValidator;
   }
 
-  public Iterable<StudentTwin> findStudentTwins(String studentID) {
+  public List<StudentTwin> findStudentTwins(String studentID) {
     return getService().findStudentTwins(UUID.fromString(studentID)).stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
   public StudentTwin createStudentTwin(String studentID, StudentTwin studentTwin) {
-    validatePayload(studentID, studentTwin, true);
     setAuditColumns(studentTwin);
-    return mapper.toStructure(getService().createStudentTwin(mapper.toModel(studentTwin)));
+    StudentTwinEntity entity = mapper.toModel(studentTwin);
+    validatePayload(studentID, studentTwin, true, entity);
+    return mapper.toStructure(getService().createStudentTwin(entity));
   }
 
   public List<StudentTwinReasonCode> getStudentTwinReasonCodes() {
     return getService().getStudentTwinReasonCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
-  private void validatePayload(String studentID, StudentTwin studentTwin, boolean isCreateOperation) {
-    val validationResult = getPayloadValidator().validatePayload(studentID, studentTwin, isCreateOperation);
+  private void validatePayload(String studentID, StudentTwin studentTwin, boolean isCreateOperation, StudentTwinEntity studentTwinEntity) {
+    val validationResult = getPayloadValidator().validatePayload(studentID, studentTwin, isCreateOperation, studentTwinEntity);
     if (!validationResult.isEmpty()) {
       ApiError error = ApiError.builder().timestamp(LocalDateTime.now()).message("Payload contains invalid data.").status(BAD_REQUEST).build();
       error.addValidationErrors(validationResult);

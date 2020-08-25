@@ -25,13 +25,10 @@ public class StudentTwinEntity {
   @Column(name = "STUDENT_TWIN_ID", unique = true, updatable = false, columnDefinition = "BINARY(16)")
   UUID studentTwinID;
 
+  //To keep the code simple, we didn't use the @ManyToOne association here
   @NotNull(message = "studentID cannot be null")
   @Column(name = "STUDENT_ID")
   UUID studentID;
-
-  @NotNull(message = "twinStudentID cannot be null")
-  @Column(name = "TWIN_STUDENT_ID")
-  UUID twinStudentID;
 
   @NotNull(message = "studentTwinReasonCode cannot be null")
   @Column(name = "STUDENT_TWIN_REASON_CODE")
@@ -51,7 +48,8 @@ public class StudentTwinEntity {
   @PastOrPresent
   LocalDateTime updateDate;
 
+  @NotNull(message = "twinStudent cannot be null")
   @ManyToOne(optional = false, targetEntity = StudentEntity.class)
-  @JoinColumn(name = "TWIN_STUDENT_ID", referencedColumnName = "STUDENT_ID", updatable = false, insertable = false)
+  @JoinColumn(name = "TWIN_STUDENT_ID", referencedColumnName = "STUDENT_ID", updatable = false)
   StudentEntity twinStudent;
 }

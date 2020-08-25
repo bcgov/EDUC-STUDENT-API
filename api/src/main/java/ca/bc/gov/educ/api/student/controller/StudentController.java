@@ -67,7 +67,7 @@ public class StudentController extends BaseController implements StudentEndpoint
     return mapper.toStructure(getService().retrieveStudent(UUID.fromString(studentID)));
   }
 
-  public Iterable<Student> findStudent(String pen) {
+  public List<Student> findStudent(String pen) {
     Optional<StudentEntity> studentsResponse = getService().retrieveStudentByPen(pen);
     return studentsResponse.map(mapper::toStructure).map(Collections::singletonList).orElseGet(Collections::emptyList);
   }
