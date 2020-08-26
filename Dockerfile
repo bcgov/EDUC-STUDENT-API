@@ -1,9 +1,9 @@
-FROM maven:3-jdk-11 as build
+FROM docker-registry.default.svc:5000/mvubjx-tools/api-base-spring-boot-2.3.2-template:latest as build
 WORKDIR /workspace/app
 
 COPY api/pom.xml .
 COPY api/src src
-RUN mvn package -DskipTests
+RUN mvn clean package -DskipTests
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 
 FROM openjdk:11-jdk
