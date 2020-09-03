@@ -51,7 +51,6 @@ public class Student extends BaseRequest implements Serializable {
   @Pattern(regexp = "[YN]")
   String emailVerified;
   String deceasedDate;
-  @Column(name = "postal_code")
   @Size(max = 7)
   @Pattern(regexp = "^([A-Z]\\d[A-Z]\\d[A-Z]\\d|)$")
   String postalCode;
