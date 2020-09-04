@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDateTime;
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
-//@ActiveProfiles("test-event")
+@ActiveProfiles("test-event")
 @SpringBootTest
 public class EventTaskSchedulerTest {
   public static final String STUDENT_API_TOPIC = "STUDENT_API_TOPIC";
