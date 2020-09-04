@@ -22,10 +22,9 @@ import java.util.UUID;
 @Component
 public class StudentTwinPayloadValidator {
 
-  public static final String MERGE_DIRECTION_CODE = "studentMergeDirectionCode";
-  public static final String MERGE_SOURCE_CODE = "studentMergeSourceCode";
+  public static final String TWIN_REASON_CODE = "studentTwinReasonCode";
   public static final String STUDENT_ID = "studentID";
-  public static final String MERGE_STUDENT_ID = "mergeStudentID";
+  public static final String TWIN_STUDENT_ID = "twinStudentID";
   @Getter(AccessLevel.PRIVATE)
   private final StudentTwinService studentTwinService;
 
@@ -53,11 +52,11 @@ public class StudentTwinPayloadValidator {
 	  if(studentTwin.getStudentTwinReasonCode() != null) {
 	    Optional<StudentTwinReasonCodeEntity> twinReasonCodeEntity = studentTwinService.findStudentTwinReasonCode(studentTwin.getStudentTwinReasonCode());
 	   	if (!twinReasonCodeEntity.isPresent()) {
-	      apiValidationErrors.add(createFieldError(MERGE_SOURCE_CODE, studentTwin.getStudentTwinReasonCode(), "Invalid Student Twin Reason Code."));
+	      apiValidationErrors.add(createFieldError(TWIN_REASON_CODE, studentTwin.getStudentTwinReasonCode(), "Invalid Student Twin Reason Code."));
 	   	} else if (twinReasonCodeEntity.get().getEffectiveDate() != null && twinReasonCodeEntity.get().getEffectiveDate().isAfter(LocalDateTime.now())) {
-	      apiValidationErrors.add(createFieldError(MERGE_SOURCE_CODE, studentTwin.getStudentTwinReasonCode(), "Student Twin Reason Code provided is not yet effective."));
+	      apiValidationErrors.add(createFieldError(TWIN_REASON_CODE, studentTwin.getStudentTwinReasonCode(), "Student Twin Reason Code provided is not yet effective."));
 	    } else if (twinReasonCodeEntity.get().getExpiryDate() != null && twinReasonCodeEntity.get().getExpiryDate().isBefore(LocalDateTime.now())) {
-	      apiValidationErrors.add(createFieldError(MERGE_SOURCE_CODE, studentTwin.getStudentTwinReasonCode(), "Student Twin Reason Code provided has expired."));
+	      apiValidationErrors.add(createFieldError(TWIN_REASON_CODE, studentTwin.getStudentTwinReasonCode(), "Student Twin Reason Code provided has expired."));
 	    }
 	  }
   }
@@ -79,7 +78,7 @@ public class StudentTwinPayloadValidator {
       var twinStudent = getStudentService().retrieveStudent(UUID.fromString(studentTwin.getTwinStudentID()));
       studentTwinEntity.setTwinStudent(twinStudent);
     } catch (EntityNotFoundException e) {
-      apiValidationErrors.add(createFieldError(MERGE_STUDENT_ID, studentTwin.getTwinStudentID(), "Twin Student ID does not exist."));
+      apiValidationErrors.add(createFieldError(TWIN_STUDENT_ID, studentTwin.getTwinStudentID(), "Twin Student ID does not exist."));
     }
   }
 

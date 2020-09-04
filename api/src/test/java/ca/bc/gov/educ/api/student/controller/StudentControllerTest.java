@@ -449,6 +449,41 @@ public class StudentControllerTest {
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
+  public void testGetGenderCodes_ShouldReturnCodes() throws Exception {
+    this.mockMvc.perform(get("/gender-codes")).andDo(print()).andExpect(status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].genderCode").value("M"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
+  public void testGetSexCodes_ShouldReturnCodes() throws Exception {
+    this.mockMvc.perform(get("/sex-codes")).andDo(print()).andExpect(status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].sexCode").value("M"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
+  public void testGetDemogCodes_ShouldReturnCodes() throws Exception {
+    this.mockMvc.perform(get("/demog-codes")).andDo(print()).andExpect(status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].demogCode").value("A"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
+  public void testGetGradeCodes_ShouldReturnCodes() throws Exception {
+    this.mockMvc.perform(get("/grade-codes")).andDo(print()).andExpect(status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].gradeCode").value("01"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
+  public void testGetStatusCodes_ShouldReturnCodes() throws Exception {
+    this.mockMvc.perform(get("/status-codes")).andDo(print()).andExpect(status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].statusCode").value("A"));
+  }
+
   private StudentEntity createStudent() {
     StudentEntity student = new StudentEntity();
     student.setPen("987654321");

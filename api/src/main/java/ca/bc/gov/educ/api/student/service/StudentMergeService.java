@@ -35,7 +35,7 @@ public class StudentMergeService {
   private final StudentMergeSourceCodeTableRepository studentMergeSourceCodeTableRepo;
 
   public StudentMergeService(@Autowired final StudentMergeRepository studentMergeRepo, @Autowired final StudentMergeDirectionCodeTableRepository studentMergeDirectionCodeTableRepo,
-    StudentMergeSourceCodeTableRepository studentMergeSourceCodeTableRepo) {
+                             @Autowired final StudentMergeSourceCodeTableRepository studentMergeSourceCodeTableRepo) {
     this.studentMergeRepo = studentMergeRepo;
     this.studentMergeDirectionCodeTableRepo = studentMergeDirectionCodeTableRepo;
     this.studentMergeSourceCodeTableRepo = studentMergeSourceCodeTableRepo;

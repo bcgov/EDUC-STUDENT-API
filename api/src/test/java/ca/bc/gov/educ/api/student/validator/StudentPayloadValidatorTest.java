@@ -9,7 +9,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
+import ca.bc.gov.educ.api.student.model.SexCodeEntity;
 import ca.bc.gov.educ.api.student.repository.*;
+import ca.bc.gov.educ.api.student.struct.GenderCode;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -97,6 +100,7 @@ public class StudentPayloadValidatorTest {
     assertEquals(0, errorList.size());
   }
 
+
   @Test
   public void testValidateGenderCode_WhenGenderCodeDoesNotExistInCodeTable_ShouldAddAnErrorTOTheReturnedList() {
     final String pen = "123456789";
@@ -109,9 +113,10 @@ public class StudentPayloadValidatorTest {
   public void testValidateGenderCode_WhenGenderCodeExistInCodeTableButEffectiveDateIsFutureDate_ShouldAddAnErrorTOTheReturnedList() {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
-    SexCode code = dummySexCode();
-    code.setEffectiveDate(LocalDateTime.MAX.toString());
-    code.setSexCode("M");
+    GenderCodeEntity code = dummyGenderCode();
+    code.setEffectiveDate(LocalDateTime.MAX);
+    code.setGenderCode("M");
+    when(genderRepo.findAll()).thenReturn(List.of(code));
     studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
   }
@@ -120,10 +125,43 @@ public class StudentPayloadValidatorTest {
   public void testValidateGenderCode_WhenGenderCodeExistInCodeTableButExpiryDateIsPast_ShouldAddAnErrorTOTheReturnedList() {
     final String pen = "123456789";
     List<FieldError> errorList = new ArrayList<>();
-    SexCode code = dummySexCode();
-    code.setExpiryDate(LocalDateTime.MIN.toString());
-    code.setSexCode("M");
+    GenderCodeEntity code = dummyGenderCode();
+    code.setExpiryDate(LocalDateTime.MIN);
+    code.setGenderCode("M");
+    when(genderRepo.findAll()).thenReturn(List.of(code));
     studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
+    assertEquals(1, errorList.size());
+  }
+
+  @Test
+  public void testValidateSexCode_WhenSexCodeDoesNotExistInCodeTable_ShouldAddAnErrorTOTheReturnedList() {
+    final String pen = "123456789";
+    List<FieldError> errorList = new ArrayList<>();
+    studentPayloadValidator.validateSexCode(Student.builder().sexCode("M").pen(pen).build(), errorList);
+    assertEquals(1, errorList.size());
+  }
+
+  @Test
+  public void testValidateSexCode_WhenSexCodeExistInCodeTableButEffectiveDateIsFutureDate_ShouldAddAnErrorTOTheReturnedList() {
+    final String pen = "123456789";
+    List<FieldError> errorList = new ArrayList<>();
+    SexCodeEntity code = dummySexCode();
+    code.setEffectiveDate(LocalDateTime.MAX);
+    code.setSexCode("M");
+    when(sexRepo.findAll()).thenReturn(List.of(code));
+    studentPayloadValidator.validateSexCode(Student.builder().sexCode("M").pen(pen).build(), errorList);
+    assertEquals(1, errorList.size());
+  }
+
+  @Test
+  public void testValidateSexCode_WhenSexCodeExistInCodeTableButExpiryDateIsPast_ShouldAddAnErrorTOTheReturnedList() {
+    final String pen = "123456789";
+    List<FieldError> errorList = new ArrayList<>();
+    SexCodeEntity code = dummySexCode();
+    code.setExpiryDate(LocalDateTime.MIN);
+    code.setSexCode("M");
+    when(sexRepo.findAll()).thenReturn(List.of(code));
+    studentPayloadValidator.validateSexCode(Student.builder().sexCode("M").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
   }
 
@@ -136,8 +174,12 @@ public class StudentPayloadValidatorTest {
     assertEquals(3, errorList.size());
   }
 
-  private SexCode dummySexCode() {
-    return SexCode.builder().sexCode("M").effectiveDate(LocalDateTime.now().toString()).expiryDate(LocalDateTime.MAX.toString()).build();
+  private SexCodeEntity dummySexCode() {
+    return SexCodeEntity.builder().sexCode("M").effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).build();
+  }
+
+  private GenderCodeEntity dummyGenderCode() {
+    return GenderCodeEntity.builder().genderCode("M").effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).build();
   }
 
   private Optional<StudentEntity> createDummyStudentRecordForInsertOperation(String pen) {
