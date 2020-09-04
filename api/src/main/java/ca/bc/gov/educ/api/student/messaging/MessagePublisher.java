@@ -4,7 +4,6 @@ import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 import ca.bc.gov.educ.api.student.service.EventHandlerService;
 import io.nats.streaming.*;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,12 +23,8 @@ import static lombok.AccessLevel.PRIVATE;
 @SuppressWarnings("java:S2142")
 public class MessagePublisher implements Closeable {
   private final ExecutorService executorService = Executors.newFixedThreadPool(2);
-  @Getter
-  @Setter
   private StreamingConnection connection;
-  @Getter
-  @Setter
-  private StreamingConnectionFactory connectionFactory;
+  private final StreamingConnectionFactory connectionFactory;
 
   @Getter(PRIVATE)
   private final EventHandlerService eventHandlerService;
