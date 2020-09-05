@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
-@ActiveProfiles("test-event")
+@ActiveProfiles("test-message-sub")
 @SpringBootTest
 public class MessageSubscriberTest {
   public static final String STUDENT_API_TOPIC = "STUDENT_API_TOPIC";
