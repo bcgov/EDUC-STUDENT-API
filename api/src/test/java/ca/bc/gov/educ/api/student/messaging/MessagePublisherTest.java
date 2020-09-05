@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
-@ActiveProfiles("test-message-pub")
+@ActiveProfiles("test-event")
 @SpringBootTest
 public class MessagePublisherTest {
   public static final String STUDENT_API_TOPIC = "STUDENT_API_TOPIC";
