@@ -175,6 +175,22 @@ public class StudentControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  public void testCreateStudent_GivenMalformedPayload_ShouldReturnStatusBadRequest() throws Exception {
+    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+      .accept(MediaType.APPLICATION_JSON).content("{test}")).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  public void testCreateStudent_GivenInvalidEmailVerifiedAttribute_ShouldReturnStatusBadRequest() throws Exception {
+    StudentEntity entity = createStudent();
+    entity.setEmailVerified("WRONG");
+    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+      .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testUpdateStudent_GivenValidPayload_ShouldReturnStatusOk() throws Exception {
     StudentEntity entity = createStudent();
     repository.save(entity);
@@ -447,6 +463,34 @@ public class StudentControllerTest {
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_givenOperationTypeNull_ShouldReturnStatusBadRequest() throws Exception {
+    var file = new File(
+      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+
+    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    val entitiesFromDB = repository.findAll();
+    SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(null).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    var objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    this.mockMvc.perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_givenInvalidSearchCriterial_ShouldReturnStatusBadRequest() throws Exception {
+    this.mockMvc
+      .perform(get("/paginated").param("searchCriteriaList", "{test}")
+        .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test

@@ -40,22 +40,19 @@ public class StudentService {
   @Getter(AccessLevel.PRIVATE)
   private final StudentRepository repository;
 
-  @Getter(AccessLevel.PRIVATE)
   private final GenderCodeTableRepository genderCodeTableRepo;
 
-  @Getter(AccessLevel.PRIVATE)
   private final SexCodeTableRepository sexCodeTableRepo;
 
-  @Getter(AccessLevel.PRIVATE)
   private final DemogCodeTableRepository demogCodeTableRepo;
 
-  @Getter(AccessLevel.PRIVATE)
   private final StatusCodeTableRepository statusCodeTableRepo;
 
-  @Getter(AccessLevel.PRIVATE)
   private final GradeCodeTableRepository gradeCodeTableRepo;
 
-  public StudentService(@Autowired final StudentRepository repository, @Autowired final GenderCodeTableRepository genderCodeTableRepo, @Autowired final SexCodeTableRepository sexCodeTableRepo, @Autowired final StatusCodeTableRepository statusCodeTableRepo, @Autowired final DemogCodeTableRepository demogCodeTableRepo, @Autowired final GradeCodeTableRepository gradeCodeTableRepo) {
+  @Autowired
+  public StudentService(final StudentRepository repository, final GenderCodeTableRepository genderCodeTableRepo, final SexCodeTableRepository sexCodeTableRepo,
+                        final StatusCodeTableRepository statusCodeTableRepo, final DemogCodeTableRepository demogCodeTableRepo, final GradeCodeTableRepository gradeCodeTableRepo) {
     this.repository = repository;
     this.sexCodeTableRepo = sexCodeTableRepo;
     this.genderCodeTableRepo = genderCodeTableRepo;

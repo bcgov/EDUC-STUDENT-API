@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.service;
 
+import ca.bc.gov.educ.api.student.constant.Topics;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.repository.StudentEventRepository;
@@ -34,7 +35,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @SpringBootTest
 public class EventHandlerServiceTest {
 
-  public static final String STUDENT_API_TOPIC = "STUDENT_API_TOPIC";
+  public static final String STUDENT_API_TOPIC = Topics.STUDENT_API_TOPIC.toString();
   @Autowired
   private StudentRepository studentRepository;
   @Autowired

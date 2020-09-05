@@ -6,6 +6,7 @@ import ca.bc.gov.educ.api.student.struct.Event;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.nats.streaming.*;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,8 +40,10 @@ public class MessageSubscriber implements Closeable {
 
   @Getter(PRIVATE)
   private final EventHandlerService eventHandlerService;
+  @Setter
   private StreamingConnection connection;
-  private final StreamingConnectionFactory connectionFactory;
+  @Setter
+  private StreamingConnectionFactory connectionFactory;
 
   @Autowired
   public MessageSubscriber(final ApplicationProperties applicationProperties, final EventHandlerService eventHandlerService) throws IOException, InterruptedException {

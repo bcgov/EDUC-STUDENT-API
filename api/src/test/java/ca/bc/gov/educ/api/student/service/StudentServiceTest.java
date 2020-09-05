@@ -8,6 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
@@ -17,6 +19,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -76,9 +82,26 @@ public class StudentServiceTest {
     assertThat(updateEntity.getLegalFirstName().equals("updatedFirstName")).isTrue();
   }
 
+  @Test(expected = EntityNotFoundException.class)
+  public void testUpdateStudent_WhenStudentNotExist_ShouldThrowException() {
+
+    StudentEntity student = getStudentEntity();
+    student.setStudentID(UUID.randomUUID());
+    student.setLegalFirstName("updatedFirstName");
+    StudentEntity updateEntity = service.updateStudent(student);
+  }
+
   @Test
   public void testFindAllStudent_WhenPayloadIsValid_ShouldReturnAllStudentsObject() {
     assertNotNull(service.findAll(null, 0, 5, new ArrayList<>()));
+  }
+
+  @Test(expected = Exception.class)
+  public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() {
+    var repository = mock(StudentRepository.class);
+    when(repository.findAll(isNull(), any(Pageable.class))).thenThrow(EntityNotFoundException.class);
+    var service = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    service.findAll(null, 0, 5, new ArrayList<>());
   }
 
   private StudentEntity getStudentEntity() {

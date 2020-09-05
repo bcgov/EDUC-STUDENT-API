@@ -66,8 +66,8 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
    * @param ex the InvalidParameterException
    * @return the ApiError object
    */
-  @ExceptionHandler(IllegalArgumentException.class)
-  protected ResponseEntity<Object> handleInvalidParameter(IllegalArgumentException ex) {
+  @ExceptionHandler({IllegalArgumentException.class, StudentRuntimeException.class})
+  protected ResponseEntity<Object> handleInvalidParameter(RuntimeException ex) {
     ApiError apiError = new ApiError(BAD_REQUEST);
     apiError.setMessage(ex.getMessage());
     log.error("{} ",apiError.getMessage(), ex);
