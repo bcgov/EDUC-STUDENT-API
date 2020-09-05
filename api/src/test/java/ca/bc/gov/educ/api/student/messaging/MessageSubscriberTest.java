@@ -45,6 +45,11 @@ public class MessageSubscriberTest {
     messageSubscriber.connnect();
   }
 
+  @Test(expected = IOException.class)
+  public void testMessageSubscriber_givenInvalidNatsUrl_shouldThrownException() throws IOException, InterruptedException {
+    var messageSubscriber = new MessageSubscriber(applicationProperties, eventHandlerService);
+  }
+
   @Test
   public void testSubscribe_shouldSubscribe() throws Exception{
     messageSubscriber.subscribe();
@@ -59,9 +64,7 @@ public class MessageSubscriberTest {
 
   @Test
   public void testClose_givenException_shouldClose() throws Exception{
-    doAnswer(invocation -> {
-      throw new IOException("Test");
-    }).when(connection).close();
+    doThrow(new IOException("Test")).when(connection).close();
     messageSubscriber.close();
     verify(connection, atMostOnce()).close();
   }
@@ -78,9 +81,7 @@ public class MessageSubscriberTest {
   public void testOnStudentTopicMessage_givenException_shouldLogError() {
     Message message = mock(Message.class);
     when(message.getData()).thenReturn("{\"EventType:\":\"GET_STUDENT\",\"EventOutcome\":\"DB_COMMITTED\"}".getBytes());
-    doAnswer(invocation -> {
-      throw new Exception("Test");
-    }).when(eventHandlerService).handleEvent(any(Event.class));
+    doThrow(new RuntimeException("Test")).when(eventHandlerService).handleEvent(any(Event.class));
     messageSubscriber.onStudentTopicMessage(message);
     verify(eventHandlerService, atMostOnce()).handleEvent(any(Event.class));
   }

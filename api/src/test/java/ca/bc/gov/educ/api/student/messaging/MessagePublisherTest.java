@@ -15,6 +15,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.Mockito.*;
@@ -43,6 +44,11 @@ public class MessagePublisherTest {
     messagePublisher.connnect();
   }
 
+  @Test(expected = IOException.class)
+  public void testMessagePublisher_givenInvalidNatsUrl_shouldThrownException() throws IOException, InterruptedException {
+    var messagePublisher = new MessagePublisher(applicationProperties);
+  }
+
   @Test
   public void testDispatchMessage_givenMessage_shouldPublish() throws Exception{
     messagePublisher.dispatchMessage(STUDENT_API_TOPIC, "Test".getBytes());
@@ -63,9 +69,7 @@ public class MessagePublisherTest {
 
   @Test
   public void testClose_givenException_shouldClose() throws Exception{
-    doAnswer(invocation -> {
-      throw new IOException("Test");
-    }).when(connection).close();
+    doThrow(new IOException("Test")).when(connection).close();
     messagePublisher.close();
     verify(connection, atMostOnce()).close();
   }
@@ -78,6 +82,7 @@ public class MessagePublisherTest {
     ackHandler.onAck(UUID.randomUUID().toString(), STUDENT_API_TOPIC, "Test".getBytes(), new Exception());
     when(connection.publish(eq(STUDENT_API_TOPIC), aryEq("Test".getBytes()), any(AckHandler.class))).thenThrow(new IOException("Test"));
     ackHandler.onAck(UUID.randomUUID().toString(), STUDENT_API_TOPIC, "Test".getBytes(), new Exception());
+    TimeUnit.SECONDS.sleep(1);
     verify(connection, atLeast(1)).publish(eq(STUDENT_API_TOPIC), aryEq("Test".getBytes()), any(AckHandler.class));
   }
 
