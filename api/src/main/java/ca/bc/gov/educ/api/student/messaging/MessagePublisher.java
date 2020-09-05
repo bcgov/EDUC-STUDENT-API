@@ -61,9 +61,7 @@ public class MessagePublisher implements Closeable {
       public void onAck(String guid, String subject, byte[] data, Exception ex) {
 
         if (ex != null) {
-          executorService.execute(() -> {
-              retryPublish(subject, data);  // NOSONAR
-          });
+          executorService.execute(() -> retryPublish(subject, data));
         } else {
           log.trace("acknowledgement received {}", guid);
         }
@@ -97,8 +95,8 @@ public class MessagePublisher implements Closeable {
           try {
             double sleepTime = (2 * numOfRetries);
             TimeUnit.SECONDS.sleep((long) sleepTime);
-          } catch (InterruptedException exc) {      // NOSONAR
-            log.error("exception occurred", exc);   // NOSONAR
+          } catch (InterruptedException exc) {
+            log.error("exception occurred", exc);
           }
 
         }
