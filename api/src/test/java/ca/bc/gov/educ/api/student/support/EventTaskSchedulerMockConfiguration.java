@@ -11,16 +11,4 @@ import org.springframework.context.annotation.Profile;
 @Profile("test-event")
 @Configuration
 public class EventTaskSchedulerMockConfiguration {
-  @Bean
-  @Primary
-  public MessagePublisher messagePublisher() {
-    return Mockito.mock(MessagePublisher.class);
-  }
-
-  @Bean
-  @Primary
-  public MessageSubscriber messageSubscriber() {
-    return Mockito.mock(MessageSubscriber.class);
-  }
-
 }

@@ -11,7 +11,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,7 +18,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import static ca.bc.gov.educ.api.student.constant.EventOutcome.STUDENT_FOUND;
@@ -40,8 +38,13 @@ public class EventTaskSchedulerTest {
   @Autowired
   private EventTaskScheduler eventTaskScheduler;
 
-  @Autowired
+  @Mock
   private MessagePublisher messagePublisher;
+
+  @Before
+  public void setUp() {
+    initMocks(this);
+  }
 
   @After
   public void tearDown(){
