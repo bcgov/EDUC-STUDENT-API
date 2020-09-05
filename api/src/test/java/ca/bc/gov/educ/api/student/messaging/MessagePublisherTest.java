@@ -35,12 +35,12 @@ public class MessagePublisherTest {
   private ApplicationProperties applicationProperties;
   @Autowired
   private EventHandlerService eventHandlerService;
+  @Autowired
   private MessagePublisher messagePublisher;
 
   @Before
   public void setUp() throws IOException, InterruptedException {
     initMocks(this);
-    messagePublisher = new MessagePublisher(applicationProperties, eventHandlerService);
     messagePublisher.setConnection(connection);
     messagePublisher.setConnectionFactory(connectionFactory);
   }

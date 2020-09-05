@@ -33,12 +33,12 @@ public class MessageSubscriberTest {
   private ApplicationProperties applicationProperties;
   @Autowired
   private EventHandlerService eventHandlerService;
+  @Autowired
   private MessageSubscriber messageSubscriber;
 
   @Before
   public void setUp() throws IOException, InterruptedException {
     initMocks(this);
-    messageSubscriber = new MessageSubscriber(applicationProperties, eventHandlerService);
     messageSubscriber.setConnection(connection);
     messageSubscriber.setConnectionFactory(connectionFactory);
   }
