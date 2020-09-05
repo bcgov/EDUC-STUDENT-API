@@ -62,6 +62,13 @@ public class MessagePublisherTest {
   }
 
   @Test
+  public void testRetryPublish_givenException_shouldLogError() throws Exception{
+    when(connection.publish(eq(STUDENT_API_TOPIC), aryEq("Test".getBytes()), any(AckHandler.class))).thenThrow(new IOException("Test"));
+    messagePublisher.retryPublish(STUDENT_API_TOPIC, "Test".getBytes());
+    verify(connection, atMostOnce()).publish(eq(STUDENT_API_TOPIC), aryEq("Test".getBytes()), any(AckHandler.class));
+  }
+
+  @Test
   public void testClose_shouldClose() throws Exception{
     messagePublisher.close();
     verify(connection, atMostOnce()).close();
@@ -80,10 +87,6 @@ public class MessagePublisherTest {
     ackHandler.onAck(UUID.randomUUID().toString(), new Exception());
     ackHandler.onAck(UUID.randomUUID().toString(), STUDENT_API_TOPIC, "Test".getBytes(), null);
     ackHandler.onAck(UUID.randomUUID().toString(), STUDENT_API_TOPIC, "Test".getBytes(), new Exception());
-    when(connection.publish(eq(STUDENT_API_TOPIC), aryEq("Test".getBytes()), any(AckHandler.class))).thenThrow(new IOException("Test"));
-    ackHandler.onAck(UUID.randomUUID().toString(), STUDENT_API_TOPIC, "Test".getBytes(), new Exception());
-    TimeUnit.SECONDS.sleep(1);
-    verify(connection, atLeast(1)).publish(eq(STUDENT_API_TOPIC), aryEq("Test".getBytes()), any(AckHandler.class));
   }
 
   @Test

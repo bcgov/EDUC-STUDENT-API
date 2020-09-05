@@ -62,13 +62,8 @@ public class MessagePublisher implements Closeable {
 
         if (ex != null) {
           executorService.execute(() -> {
-            try {
-              retryPublish(subject, data);
-            } catch (InterruptedException | TimeoutException | IOException e) {
-              log.error("Exception", e);
-            }
+              retryPublish(subject, data);  // NOSONAR
           });
-
         } else {
           log.trace("acknowledgement received {}", guid);
         }
@@ -76,9 +71,13 @@ public class MessagePublisher implements Closeable {
     };
   }
 
-  public void retryPublish(String subject, byte[] message) throws InterruptedException, TimeoutException, IOException {
+  public void retryPublish(String subject, byte[] message) {
     log.trace("retrying...");
-    connection.publish(subject, message, getAckHandler());
+    try {
+      connection.publish(subject, message, getAckHandler());
+    } catch (InterruptedException | TimeoutException | IOException e) {
+      log.error("Exception", e);
+    }
   }
 
   /**
@@ -98,8 +97,8 @@ public class MessagePublisher implements Closeable {
           try {
             double sleepTime = (2 * numOfRetries);
             TimeUnit.SECONDS.sleep((long) sleepTime);
-          } catch (InterruptedException exc) {
-            log.error("exception occurred", exc);
+          } catch (InterruptedException exc) {      // NOSONAR
+            log.error("exception occurred", exc);   // NOSONAR
           }
 
         }
