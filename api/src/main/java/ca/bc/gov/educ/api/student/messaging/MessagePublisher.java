@@ -19,7 +19,8 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 @SuppressWarnings("java:S2142")
 public class MessagePublisher implements Closeable {
-  private final ExecutorService executorService = Executors.newFixedThreadPool(2);
+  @Setter
+  private ExecutorService executorService = Executors.newFixedThreadPool(2);
   private StreamingConnection connection;
   @Setter
   private StreamingConnectionFactory connectionFactory;

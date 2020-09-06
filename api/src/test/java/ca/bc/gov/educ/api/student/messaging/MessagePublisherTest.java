@@ -15,6 +15,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.AdditionalMatchers.aryEq;
@@ -28,6 +29,8 @@ public class MessagePublisherTest {
   public static final String STUDENT_API_TOPIC = "STUDENT_API_TOPIC";
 
   @Mock
+  private ExecutorService executorService;
+  @Mock
   private StreamingConnection connection;
   @Mock
   private StreamingConnectionFactory connectionFactory;
@@ -39,6 +42,7 @@ public class MessagePublisherTest {
   public void setUp() throws IOException, InterruptedException {
     initMocks(this);
     messagePublisher = new MessagePublisher(applicationProperties, false);
+    messagePublisher.setExecutorService(executorService);
     messagePublisher.setConnectionFactory(connectionFactory);
     when(connectionFactory.createConnection()).thenReturn(connection);
     messagePublisher.connnect();
@@ -87,6 +91,7 @@ public class MessagePublisherTest {
     ackHandler.onAck(UUID.randomUUID().toString(), new Exception());
     ackHandler.onAck(UUID.randomUUID().toString(), STUDENT_API_TOPIC, "Test".getBytes(), null);
     ackHandler.onAck(UUID.randomUUID().toString(), STUDENT_API_TOPIC, "Test".getBytes(), new Exception());
+    verify(executorService, atMostOnce()).execute(any(Runnable.class));
   }
 
   @Test
