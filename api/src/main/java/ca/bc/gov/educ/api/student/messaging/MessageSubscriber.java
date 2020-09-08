@@ -6,6 +6,7 @@ import ca.bc.gov.educ.api.student.struct.Event;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.nats.streaming.*;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,17 +41,28 @@ public class MessageSubscriber implements Closeable {
   @Getter(PRIVATE)
   private final EventHandlerService eventHandlerService;
   private StreamingConnection connection;
-  private final StreamingConnectionFactory connectionFactory;
+  @Setter
+  private StreamingConnectionFactory connectionFactory;
 
   @Autowired
   public MessageSubscriber(final ApplicationProperties applicationProperties, final EventHandlerService eventHandlerService) throws IOException, InterruptedException {
+    this(applicationProperties, eventHandlerService, true);
+  }
+
+  public MessageSubscriber(final ApplicationProperties applicationProperties, final EventHandlerService eventHandlerService, final boolean connect) throws IOException, InterruptedException {
     this.eventHandlerService = eventHandlerService;
     Options options = new Options.Builder()
-            .natsUrl(applicationProperties.getNatsUrl())
-            .clusterId(applicationProperties.getNatsClusterId())
-            .clientId("student-api-subscriber" + UUID.randomUUID().toString())
-            .connectionLostHandler(this::connectionLostHandler).build();
+      .natsUrl(applicationProperties.getNatsUrl())
+      .clusterId(applicationProperties.getNatsClusterId())
+      .clientId("student-api-subscriber" + UUID.randomUUID().toString())
+      .connectionLostHandler(this::connectionLostHandler).build();
     connectionFactory = new StreamingConnectionFactory(options);
+    if(connect) {
+      this.connnect();
+    }
+  }
+
+  public void connnect() throws IOException, InterruptedException {
     connection = connectionFactory.createConnection();
   }
 
@@ -65,7 +77,7 @@ public class MessageSubscriber implements Closeable {
    *
    * @param message the string representation of {@link Event} if it not type of event then it will throw exception and will be ignored.
    */
-  private void onStudentTopicMessage(Message message) {
+  public void onStudentTopicMessage(Message message) {
     if (message != null) {
       try {
         String eventString = new String(message.getData());
@@ -83,7 +95,7 @@ public class MessageSubscriber implements Closeable {
    * This method will keep retrying for a connection.
    */
 
-  private void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
+  public void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
     if (e != null) {
       int numOfRetries = 1;
       numOfRetries = retryConnection(numOfRetries);

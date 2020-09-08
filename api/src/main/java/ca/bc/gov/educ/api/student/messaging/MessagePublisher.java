@@ -1,9 +1,8 @@
 package ca.bc.gov.educ.api.student.messaging;
 
 import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
-import ca.bc.gov.educ.api.student.service.EventHandlerService;
 import io.nats.streaming.*;
-import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,28 +15,34 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static lombok.AccessLevel.PRIVATE;
-
 @Component
 @Slf4j
 @SuppressWarnings("java:S2142")
 public class MessagePublisher implements Closeable {
-  private final ExecutorService executorService = Executors.newFixedThreadPool(2);
+  @Setter
+  private ExecutorService executorService = Executors.newFixedThreadPool(2);
   private StreamingConnection connection;
-  private final StreamingConnectionFactory connectionFactory;
-
-  @Getter(PRIVATE)
-  private final EventHandlerService eventHandlerService;
+  @Setter
+  private StreamingConnectionFactory connectionFactory;
 
   @Autowired
-  public MessagePublisher(final ApplicationProperties applicationProperties, final EventHandlerService eventHandlerService) throws IOException, InterruptedException {
-    this.eventHandlerService = eventHandlerService;
+  public MessagePublisher(final ApplicationProperties applicationProperties) throws IOException, InterruptedException {
+    this(applicationProperties, true);
+  }
+
+  public MessagePublisher(final ApplicationProperties applicationProperties, final boolean connect) throws IOException, InterruptedException {
     Options options = new Options.Builder()
-            .natsUrl(applicationProperties.getNatsUrl())
-            .clusterId(applicationProperties.getNatsClusterId())
-            .connectionLostHandler(this::connectionLostHandler)
-            .clientId("student-api-publisher" + UUID.randomUUID().toString()).build();
+      .natsUrl(applicationProperties.getNatsUrl())
+      .clusterId(applicationProperties.getNatsClusterId())
+      .connectionLostHandler(this::connectionLostHandler)
+      .clientId("student-api-publisher" + UUID.randomUUID().toString()).build();
     connectionFactory = new StreamingConnectionFactory(options);
+    if(connect) {
+      this.connnect();
+    }
+  }
+
+  public void connnect() throws IOException, InterruptedException {
     connection = connectionFactory.createConnection();
   }
 
@@ -46,7 +51,7 @@ public class MessagePublisher implements Closeable {
     connection.publish(subject, message, ackHandler);
   }
 
-  private AckHandler getAckHandler() {
+  public AckHandler getAckHandler() {
     return new AckHandler() {
       @Override
       public void onAck(String guid, Exception err) {
@@ -57,14 +62,7 @@ public class MessagePublisher implements Closeable {
       public void onAck(String guid, String subject, byte[] data, Exception ex) {
 
         if (ex != null) {
-          executorService.execute(() -> {
-            try {
-              retryPublish(subject, data);
-            } catch (InterruptedException | TimeoutException | IOException e) {
-              log.error("Exception", e);
-            }
-          });
-
+          executorService.execute(() -> retryPublish(subject, data));
         } else {
           log.trace("acknowledgement received {}", guid);
         }
@@ -72,15 +70,19 @@ public class MessagePublisher implements Closeable {
     };
   }
 
-  public void retryPublish(String subject, byte[] message) throws InterruptedException, TimeoutException, IOException {
+  public void retryPublish(String subject, byte[] message) {
     log.trace("retrying...");
-    connection.publish(subject, message, getAckHandler());
+    try {
+      connection.publish(subject, message, getAckHandler());
+    } catch (InterruptedException | TimeoutException | IOException e) {
+      log.error("Exception", e);
+    }
   }
 
   /**
    * This method will keep retrying for a connection.
    */
-  private void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
+  public void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
     if (e != null) {
       int numOfRetries = 1;
       while (true) {

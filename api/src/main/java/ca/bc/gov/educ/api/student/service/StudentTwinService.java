@@ -25,13 +25,12 @@ import java.util.stream.Collectors;
 @Service
 public class StudentTwinService {
 
-  @Getter(AccessLevel.PRIVATE)
   private final StudentTwinRepository studentTwinRepo;
 
-  @Getter(AccessLevel.PRIVATE)
   private final StudentTwinReasonCodeTableRepository studentTwinReasonCodeTableRepo;
 
-  public StudentTwinService(@Autowired final StudentTwinRepository studentTwinRepo, @Autowired final StudentTwinReasonCodeTableRepository studentTwinReasonCodeTableRepo) {
+  @Autowired
+  public StudentTwinService(final StudentTwinRepository studentTwinRepo, final StudentTwinReasonCodeTableRepository studentTwinReasonCodeTableRepo) {
     this.studentTwinRepo = studentTwinRepo;
     this.studentTwinReasonCodeTableRepo = studentTwinReasonCodeTableRepo;
   }

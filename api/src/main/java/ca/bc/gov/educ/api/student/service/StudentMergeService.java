@@ -25,17 +25,15 @@ import java.util.stream.Collectors;
 @Service
 public class StudentMergeService {
 
-  @Getter(AccessLevel.PRIVATE)
   private final StudentMergeRepository studentMergeRepo;
 
-  @Getter(AccessLevel.PRIVATE)
   private final StudentMergeDirectionCodeTableRepository studentMergeDirectionCodeTableRepo;
 
-  @Getter(AccessLevel.PRIVATE)
   private final StudentMergeSourceCodeTableRepository studentMergeSourceCodeTableRepo;
 
-  public StudentMergeService(@Autowired final StudentMergeRepository studentMergeRepo, @Autowired final StudentMergeDirectionCodeTableRepository studentMergeDirectionCodeTableRepo,
-    StudentMergeSourceCodeTableRepository studentMergeSourceCodeTableRepo) {
+  @Autowired
+  public StudentMergeService(final StudentMergeRepository studentMergeRepo, final StudentMergeDirectionCodeTableRepository studentMergeDirectionCodeTableRepo,
+                             final StudentMergeSourceCodeTableRepository studentMergeSourceCodeTableRepo) {
     this.studentMergeRepo = studentMergeRepo;
     this.studentMergeDirectionCodeTableRepo = studentMergeDirectionCodeTableRepo;
     this.studentMergeSourceCodeTableRepo = studentMergeSourceCodeTableRepo;
