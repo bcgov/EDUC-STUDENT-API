@@ -16,7 +16,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.Mockito.*;
