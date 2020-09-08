@@ -15,8 +15,11 @@ public class StudentRequestInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        if (request.getMethod() != null && request.getRequestURL() != null)
-            log.info("{} {}", request.getMethod(), request.getRequestURL());
+        if (request.getMethod() != null && request.getRequestURL() != null) {
+            String method = request.getMethod().replaceAll("[\n|\r\t]", "_");
+            String url = request.getRequestURL().toString().replaceAll("[\n|\r\t]", "_");
+            log.info("{} {}", method, url);
+        }
         if (request.getQueryString() != null)
             log.debug("Query string     : {}", request.getQueryString());
         return true;

@@ -68,7 +68,8 @@ public class StudentServiceTest {
 
   @Test
   public void testRetrieveStudent_WhenStudentDoesNotExistInDB_ShouldThrowEntityNotFoundException() {
-    assertThrows(EntityNotFoundException.class, () -> service.retrieveStudent(UUID.fromString("00000000-0000-0000-0000-f3b2d4f20000")));
+    var studentID = UUID.fromString("00000000-0000-0000-0000-f3b2d4f20000");
+    assertThrows(EntityNotFoundException.class, () -> service.retrieveStudent(studentID));
   }
 
   @Test
@@ -79,7 +80,7 @@ public class StudentServiceTest {
     student.setLegalFirstName("updatedFirstName");
     StudentEntity updateEntity = service.updateStudent(student);
     assertNotNull(updateEntity);
-    assertThat(updateEntity.getLegalFirstName().equals("updatedFirstName")).isTrue();
+    assertThat(updateEntity.getLegalFirstName()).isEqualTo("updatedFirstName");
   }
 
   @Test(expected = EntityNotFoundException.class)
