@@ -1,8 +1,5 @@
 package ca.bc.gov.educ.api.student.config;
 
-import ca.bc.gov.educ.api.student.mappers.StudentMapper;
-import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
-import ca.bc.gov.educ.api.student.struct.SexCode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
