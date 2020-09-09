@@ -12,19 +12,16 @@ import java.util.UUID;
 import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
 import ca.bc.gov.educ.api.student.model.SexCodeEntity;
 import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.struct.GenderCode;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.FieldError;
 
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.struct.SexCode;
 import ca.bc.gov.educ.api.student.struct.Student;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -52,10 +49,14 @@ public class StudentPayloadValidatorTest {
   StudentService studentService;
   @InjectMocks
   StudentPayloadValidator studentPayloadValidator;
+  @Mock
+  StudentMergeRepository studentMergeRepo;
+  @Mock
+  StudentTwinRepository studentTwinRepo;
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
     studentPayloadValidator = new StudentPayloadValidator(studentService);
   }
 

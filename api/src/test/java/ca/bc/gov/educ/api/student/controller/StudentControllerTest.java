@@ -55,10 +55,10 @@ public class StudentControllerTest {
 
   @Autowired
   StudentRepository repository;
-  
+
   @Autowired
   GenderCodeTableRepository genderRepo;
-  
+
   @Autowired
   SexCodeTableRepository sexRepo;
 
@@ -72,8 +72,14 @@ public class StudentControllerTest {
   GradeCodeTableRepository gradeRepo;
 
   @Autowired
+  StudentMergeRepository studentMergeRepository;
+
+  @Autowired
+  StudentTwinRepository studentTwinRepository;
+
+  @Autowired
   StudentPayloadValidator validator;
-  
+
   @Autowired
   StudentService studentService;
 
@@ -82,14 +88,14 @@ public class StudentControllerTest {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
-            .setControllerAdvice(new RestExceptionHandler()).build();
+        .setControllerAdvice(new RestExceptionHandler()).build();
     genderRepo.save(createGenderCodeData());
     sexRepo.save(createSexCodeData());
     demogRepo.save(createDemogCodeData());
     statusRepo.save(createStatusCodeData());
     gradeRepo.save(createGradeCodeData());
   }
-  
+
   /**
    * need to delete the records to make it working in unit tests assertion, else the records will keep growing and assertions will fail.
    */
@@ -105,32 +111,32 @@ public class StudentControllerTest {
 
   private SexCodeEntity createSexCodeData() {
     return SexCodeEntity.builder().sexCode("M").description("Male")
-            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 
   private GenderCodeEntity createGenderCodeData() {
     return GenderCodeEntity.builder().genderCode("M").description("Male")
-            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 
   private StatusCodeEntity createStatusCodeData() {
     return StatusCodeEntity.builder().statusCode("A").description("Active")
-            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 
   private DemogCodeEntity createDemogCodeData() {
     return DemogCodeEntity.builder().demogCode("A").description("Accepted")
-            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 
   private GradeCodeEntity createGradeCodeData() {
     return GradeCodeEntity.builder().gradeCode("01").description("First Grade")
-            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 
 
@@ -147,7 +153,7 @@ public class StudentControllerTest {
     StudentEntity entity = repository.save(createStudent());
     this.mockMvc.perform(get("/" + entity.getStudentID())).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.studentID").value(entity.getStudentID().toString()));
   }
-  
+
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
@@ -161,23 +167,23 @@ public class StudentControllerTest {
   public void testCreateStudent_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
     StudentEntity entity = createStudent();
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isCreated());
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isCreated());
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
-	StudentEntity entity = createStudent();
-	entity.setSexCode("J");
+    StudentEntity entity = createStudent();
+    entity.setSexCode("J");
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenMalformedPayload_ShouldReturnStatusBadRequest() throws Exception {
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-      .accept(MediaType.APPLICATION_JSON).content("{test}")).andDo(print()).andExpect(status().isBadRequest());
+        .accept(MediaType.APPLICATION_JSON).content("{test}")).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
@@ -186,7 +192,7 @@ public class StudentControllerTest {
     StudentEntity entity = createStudent();
     entity.setEmailVerified("WRONG");
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-      .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
@@ -196,7 +202,7 @@ public class StudentControllerTest {
     repository.save(entity);
     entity.setLegalFirstName("updated");
     this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName()));
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName()));
   }
 
   @Test
@@ -204,30 +210,46 @@ public class StudentControllerTest {
   public void testDeleteStudent_GivenValidId_ShouldReturnStatus204() throws Exception {
     StudentEntity entity = createStudent();
     repository.save(entity);
-    this.mockMvc.perform(delete("/"+entity.getStudentID().toString()).contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
+    StudentEntity mergedFromStudent = repository.save(createStudent());
+
+    StudentMergeEntity studentMergeFrom = new StudentMergeEntity();
+    studentMergeFrom.setStudentID(entity.getStudentID());
+    studentMergeFrom.setMergeStudent(mergedFromStudent);
+    studentMergeFrom.setStudentMergeDirectionCode("FROM");
+    studentMergeFrom.setStudentMergeSourceCode("MINISTRY");
+    studentMergeFrom.setUpdateUser("Test User");
+    studentMergeRepository.save(studentMergeFrom);
+    StudentTwinEntity penmatchTwin = new StudentTwinEntity();
+    penmatchTwin.setStudentID(entity.getStudentID());
+    penmatchTwin.setTwinStudent(mergedFromStudent);
+    penmatchTwin.setStudentTwinReasonCode("PENMATCH");
+    studentTwinRepository.save(penmatchTwin);
+
+
+    this.mockMvc.perform(delete("/" + entity.getStudentID().toString()).contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
   public void testDeleteStudent_GivenInvalidId_ShouldReturnStatus404() throws Exception {
-    this.mockMvc.perform(delete("/"+UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNotFound());
+    this.mockMvc.perform(delete("/" + UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNotFound());
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_Always_ShouldReturnStatusOk() throws Exception {
     final File file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
-            .perform(get("/paginated?pageSize=2")
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/paginated?pageSize=2")
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
   }
 
@@ -235,16 +257,17 @@ public class StudentControllerTest {
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_whenNoDataInDB_ShouldReturnStatusOk() throws Exception {
     MvcResult result = mockMvc
-            .perform(get("/paginated")
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/paginated")
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
   }
+
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginatedWithSorting_Always_ShouldReturnStatusOk() throws Exception {
     final File file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -254,9 +277,9 @@ public class StudentControllerTest {
     sortMap.put("legalFirstName", "DESC");
     String sort = new ObjectMapper().writeValueAsString(sortMap);
     MvcResult result = mockMvc
-            .perform(get("/paginated").param("pageNumber","1").param("pageSize", "5").param("sort", sort)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/paginated").param("pageNumber", "1").param("pageSize", "5").param("sort", sort)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
@@ -264,7 +287,7 @@ public class StudentControllerTest {
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenFirstNameFilter_ShouldReturnStatusOk() throws Exception {
     final File file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -276,9 +299,9 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
-            .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
@@ -286,7 +309,7 @@ public class StudentControllerTest {
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenLastNameFilter_ShouldReturnStatusOk() throws Exception {
     final File file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -298,9 +321,9 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
-            .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
@@ -308,7 +331,7 @@ public class StudentControllerTest {
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenSubmitDateBetween_ShouldReturnStatusOk() throws Exception {
     final File file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -322,9 +345,9 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
-            .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
@@ -332,7 +355,7 @@ public class StudentControllerTest {
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenFirstAndLast_ShouldReturnStatusOk() throws Exception {
     final File file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -350,9 +373,9 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
-            .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(3)));
   }
 
@@ -360,7 +383,7 @@ public class StudentControllerTest {
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameFilterIgnoreCase_ShouldReturnStatusOk() throws Exception {
     final File file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -372,9 +395,9 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
-            .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
   }
 
@@ -421,6 +444,7 @@ public class StudentControllerTest {
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
   }
+
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameStartWithIgnoreCase_ShouldReturnStatusOk() throws Exception {
@@ -442,6 +466,7 @@ public class StudentControllerTest {
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
+
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameStartWithIgnoreCase2_ShouldReturnStatusOk() throws Exception {
@@ -469,7 +494,7 @@ public class StudentControllerTest {
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_givenOperationTypeNull_ShouldReturnStatusBadRequest() throws Exception {
     var file = new File(
-      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -482,50 +507,50 @@ public class StudentControllerTest {
     var objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
     this.mockMvc.perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
-      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
+        .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_givenInvalidSearchCriterial_ShouldReturnStatusBadRequest() throws Exception {
     this.mockMvc
-      .perform(get("/paginated").param("searchCriteriaList", "{test}")
-        .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
+        .perform(get("/paginated").param("searchCriteriaList", "{test}")
+            .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetGenderCodes_ShouldReturnCodes() throws Exception {
     this.mockMvc.perform(get("/gender-codes")).andDo(print()).andExpect(status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$[0].genderCode").value("M"));
+        .andExpect(MockMvcResultMatchers.jsonPath("$[0].genderCode").value("M"));
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetSexCodes_ShouldReturnCodes() throws Exception {
     this.mockMvc.perform(get("/sex-codes")).andDo(print()).andExpect(status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$[0].sexCode").value("M"));
+        .andExpect(MockMvcResultMatchers.jsonPath("$[0].sexCode").value("M"));
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetDemogCodes_ShouldReturnCodes() throws Exception {
     this.mockMvc.perform(get("/demog-codes")).andDo(print()).andExpect(status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$[0].demogCode").value("A"));
+        .andExpect(MockMvcResultMatchers.jsonPath("$[0].demogCode").value("A"));
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetGradeCodes_ShouldReturnCodes() throws Exception {
     this.mockMvc.perform(get("/grade-codes")).andDo(print()).andExpect(status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$[0].gradeCode").value("01"));
+        .andExpect(MockMvcResultMatchers.jsonPath("$[0].gradeCode").value("01"));
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetStatusCodes_ShouldReturnCodes() throws Exception {
     this.mockMvc.perform(get("/status-codes")).andDo(print()).andExpect(status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$[0].statusCode").value("A"));
+        .andExpect(MockMvcResultMatchers.jsonPath("$[0].statusCode").value("A"));
   }
 
   private StudentEntity createStudent() {

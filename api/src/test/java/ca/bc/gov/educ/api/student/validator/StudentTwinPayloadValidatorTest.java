@@ -2,10 +2,8 @@ package ca.bc.gov.educ.api.student.validator;
 
 import ca.bc.gov.educ.api.student.model.*;
 import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.service.StudentMergeService;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.service.StudentTwinService;
-import ca.bc.gov.educ.api.student.struct.StudentMerge;
 import ca.bc.gov.educ.api.student.struct.StudentTwin;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,6 +46,9 @@ public class StudentTwinPayloadValidatorTest {
   StudentTwinRepository studentTwinRepo;
 
   @Mock
+  StudentMergeRepository studentMergeRepo;
+
+  @Mock
   StudentTwinReasonCodeTableRepository studentTwinReasonCodeTableRepo;
 
   @Mock
@@ -61,7 +62,7 @@ public class StudentTwinPayloadValidatorTest {
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
     studentTwinService = new StudentTwinService(studentTwinRepo, studentTwinReasonCodeTableRepo);
     studentTwinPayloadValidator = new StudentTwinPayloadValidator(studentTwinService, studentService);
   }

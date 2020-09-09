@@ -40,6 +40,12 @@ public class StudentService {
   @Getter(AccessLevel.PRIVATE)
   private final StudentRepository repository;
 
+  @Getter(AccessLevel.PRIVATE)
+  private final StudentMergeRepository studentMergeRepo;
+
+  @Getter(AccessLevel.PRIVATE)
+  private final StudentTwinRepository studentTwinRepo;
+
   private final GenderCodeTableRepository genderCodeTableRepo;
 
   private final SexCodeTableRepository sexCodeTableRepo;
@@ -51,9 +57,11 @@ public class StudentService {
   private final GradeCodeTableRepository gradeCodeTableRepo;
 
   @Autowired
-  public StudentService(final StudentRepository repository, final GenderCodeTableRepository genderCodeTableRepo, final SexCodeTableRepository sexCodeTableRepo,
+  public StudentService(final StudentRepository repository, StudentMergeRepository studentMergeRepo, StudentTwinRepository studentTwinRepo, final GenderCodeTableRepository genderCodeTableRepo, final SexCodeTableRepository sexCodeTableRepo,
                         final StatusCodeTableRepository statusCodeTableRepo, final DemogCodeTableRepository demogCodeTableRepo, final GradeCodeTableRepository gradeCodeTableRepo) {
     this.repository = repository;
+    this.studentMergeRepo = studentMergeRepo;
+    this.studentTwinRepo = studentTwinRepo;
     this.sexCodeTableRepo = sexCodeTableRepo;
     this.genderCodeTableRepo = genderCodeTableRepo;
     this.statusCodeTableRepo = statusCodeTableRepo;
@@ -194,8 +202,17 @@ public class StudentService {
   public void deleteById(UUID id) {
     val entityOptional = getRepository().findById(id);
     val entity = entityOptional.orElseThrow(() -> new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, id.toString()));
+    var twins = getStudentTwinRepo().findStudentTwinEntityByStudentID(entity.getStudentID());
+    if (!twins.isEmpty()) {
+      getStudentTwinRepo().deleteAll(twins);
+    }
+    var merges = getStudentMergeRepo().findStudentMergeEntityByStudentID(entity.getStudentID());
+    if (!merges.isEmpty()) {
+      getStudentMergeRepo().deleteAll(merges);
+    }
     getRepository().delete(entity);
   }
+
   @Transactional(propagation = Propagation.SUPPORTS)
   public CompletableFuture<Page<StudentEntity>> findAll(Specification<StudentEntity> studentSpecs, final Integer pageNumber, final Integer pageSize, final List<Sort.Order> sorts) {
     Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sorts));

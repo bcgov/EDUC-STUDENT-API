@@ -3,6 +3,8 @@ package ca.bc.gov.educ.api.student.service;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
 import ca.bc.gov.educ.api.student.repository.*;
+import lombok.AccessLevel;
+import lombok.Getter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,9 +52,12 @@ public class StudentMergeServiceTest {
   @Autowired
   StudentMergeSourceCodeTableRepository studentMergeSourceRepo;
 
+  @Autowired
+  StudentTwinRepository studentTwinRepo;
+
   @Before
   public void before() {
-    studentService = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
     studentMergeService = new StudentMergeService(studentMergeRepo, studentMergeDirectionRepo, studentMergeSourceRepo);
   }
 

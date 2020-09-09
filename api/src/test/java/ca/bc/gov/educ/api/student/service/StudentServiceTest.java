@@ -3,13 +3,14 @@ package ca.bc.gov.educ.api.student.service;
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.repository.*;
+import lombok.AccessLevel;
+import lombok.Getter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
@@ -46,10 +47,13 @@ public class StudentServiceTest {
 
   @Autowired
   GradeCodeTableRepository gradeRepo;
-
+  @Autowired
+  StudentMergeRepository studentMergeRepo;
+  @Autowired
+  StudentTwinRepository studentTwinRepo;
   @Before
   public void before() {
-    service = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    service = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
   }
 
   @Test
@@ -101,7 +105,7 @@ public class StudentServiceTest {
   public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() {
     var repository = mock(StudentRepository.class);
     when(repository.findAll(isNull(), any(Pageable.class))).thenThrow(EntityNotFoundException.class);
-    var service = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    var service = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
     service.findAll(null, 0, 5, new ArrayList<>());
   }
 

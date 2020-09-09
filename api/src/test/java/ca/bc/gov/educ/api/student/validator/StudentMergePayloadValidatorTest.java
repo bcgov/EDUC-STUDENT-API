@@ -7,7 +7,6 @@ import ca.bc.gov.educ.api.student.model.StudentMergeSourceCodeEntity;
 import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.service.StudentMergeService;
 import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.struct.SexCode;
 import ca.bc.gov.educ.api.student.struct.StudentMerge;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,10 +62,12 @@ public class StudentMergePayloadValidatorTest {
 
   @InjectMocks
   StudentMergePayloadValidator studentMergePayloadValidator;
+  @Mock
+  StudentTwinRepository studentTwinRepo;
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
     studentMergeService = new StudentMergeService(studentMergeRepo, studentMergeDirectionCodeTableRepo, studentMergeSourceCodeTableRepo);
     studentMergePayloadValidator = new StudentMergePayloadValidator(studentMergeService, studentService);
   }
@@ -151,7 +152,7 @@ public class StudentMergePayloadValidatorTest {
     var studentID = "8e20a9c8-6ff3-12bf-816f-f3b2d4f20000";
     var mergeStudentID = "8e20a9c8-6ff3-12bf-816f-f3b2d4f20001";
     StudentMerge merge = StudentMerge.builder().studentID(studentID).mergeStudentID(mergeStudentID).
-            studentMergeDirectionCode("TO").studentMergeSourceCode("SCHOOL").studentMergeID("123455678").build();
+        studentMergeDirectionCode("TO").studentMergeSourceCode("SCHOOL").studentMergeID("123455678").build();
     StudentMergeEntity mergeEntity = new StudentMergeEntity();
     when(repository.findById(UUID.fromString(studentID))).thenReturn(createDummyStudentRecord(studentID));
     when(repository.findById(UUID.fromString(mergeStudentID))).thenReturn(createDummyStudentRecord(mergeStudentID));
@@ -164,7 +165,7 @@ public class StudentMergePayloadValidatorTest {
 
   private List<StudentMergeDirectionCodeEntity> createDummyStudentMergeDirectionCodeRecords(LocalDateTime effectiveDate, LocalDateTime expiryDate) {
     return List.of(StudentMergeDirectionCodeEntity.builder().mergeDirectionCode("TO").effectiveDate(effectiveDate).expiryDate(expiryDate).build(),
-            StudentMergeDirectionCodeEntity.builder().mergeDirectionCode("FROM").effectiveDate(effectiveDate).expiryDate(expiryDate).build());
+        StudentMergeDirectionCodeEntity.builder().mergeDirectionCode("FROM").effectiveDate(effectiveDate).expiryDate(expiryDate).build());
   }
 
   private List<StudentMergeDirectionCodeEntity> createDummyStudentMergeDirectionCodeRecords() {
@@ -173,7 +174,7 @@ public class StudentMergePayloadValidatorTest {
 
   private List<StudentMergeSourceCodeEntity> createDummyStudentMergeSourceCodeRecords(LocalDateTime effectiveDate, LocalDateTime expiryDate) {
     return List.of(StudentMergeSourceCodeEntity.builder().mergeSourceCode("SCHOOL").effectiveDate(effectiveDate).expiryDate(expiryDate).build(),
-            StudentMergeSourceCodeEntity.builder().mergeSourceCode("MINISTRY").effectiveDate(effectiveDate).expiryDate(expiryDate).build());
+        StudentMergeSourceCodeEntity.builder().mergeSourceCode("MINISTRY").effectiveDate(effectiveDate).expiryDate(expiryDate).build());
   }
 
   private List<StudentMergeSourceCodeEntity> createDummyStudentMergeSourceCodeRecords() {

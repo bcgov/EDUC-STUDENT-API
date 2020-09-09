@@ -47,9 +47,11 @@ public class StudentTwinServiceTest {
   @Autowired
   StudentTwinReasonCodeTableRepository studentTwinReasonRepo;
 
+  @Autowired
+  StudentMergeRepository studentMergeRepo;
   @Before
   public void before() {
-    studentService = new StudentService(repository, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
     studentTwinService = new StudentTwinService(studentTwinRepo, studentTwinReasonRepo);
   }
 
