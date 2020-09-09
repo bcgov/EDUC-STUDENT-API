@@ -60,7 +60,7 @@ public class StudentMergeServiceTest {
   public void testFindStudentMerges_WhenStudentMergesDoNotExistInDB_ShouldReturnEmptyList() {
     StudentEntity student = getStudentEntity();
     assertNotNull(studentService.createStudent(student));
-    assertThat(studentMergeService.findStudentMerges(student.getStudentID()).size()).isZero();
+    assertThat(studentMergeService.findStudentMerges(student.getStudentID(), null).size()).isZero();
   }
 
   @Test
@@ -75,7 +75,23 @@ public class StudentMergeServiceTest {
     studentMerge.setStudentMergeDirectionCode("FROM");
     studentMerge.setStudentMergeSourceCode("MINISTRY");
     assertNotNull(studentMergeService.createStudentMerge(studentMerge));
-    assertThat(studentMergeService.findStudentMerges(student.getStudentID()).size()).isEqualTo(1);
+    assertThat(studentMergeService.findStudentMerges(student.getStudentID(), null).size()).isEqualTo(1);
+  }
+
+
+  @Test
+  public void testFindStudentMerges_WhenStudentMergesToExistInDB_ShouldReturnList() {
+    StudentEntity student = getStudentEntity();
+    assertNotNull(studentService.createStudent(student));
+    StudentEntity mergedStudent = getStudentEntity();
+    assertNotNull(studentService.createStudent(mergedStudent));
+    StudentMergeEntity studentMerge = new StudentMergeEntity();
+    studentMerge.setStudentID(student.getStudentID());
+    studentMerge.setMergeStudent(mergedStudent);
+    studentMerge.setStudentMergeDirectionCode("TO");
+    studentMerge.setStudentMergeSourceCode("MINISTRY");
+    assertNotNull(studentMergeService.createStudentMerge(studentMerge));
+    assertThat(studentMergeService.findStudentMerges(student.getStudentID(), "TO").size()).isEqualTo(1);
   }
 
   private StudentEntity getStudentEntity() {

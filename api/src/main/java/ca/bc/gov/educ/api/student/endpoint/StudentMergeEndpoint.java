@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.data.repository.query.Param;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public interface StudentMergeEndpoint {
   @GetMapping("/{studentID}/merges")
   @PreAuthorize("#oauth2.hasScope('READ_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "404", description = "NOT FOUND")})
-  List<StudentMerge> findStudentMerges(@PathVariable String studentID);
+  List<StudentMerge> findStudentMerges(@PathVariable String studentID, @Param("mergeDirection")  String mergeDirection);
 
   @PostMapping("/{studentID}/merges")
   @PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")
