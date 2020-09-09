@@ -48,7 +48,7 @@ public class StudentMergeService {
     if(mergeDirection == null) {
       return studentMergeRepo.findStudentMergeEntityByStudentID(studentID);
     }else {
-      return studentMergeRepo.findStudentMergeEntityByStudentIDAndStudentMergeDirectionCode(studentID, mergeDirection);
+      return studentMergeRepo.findStudentMergeEntityByStudentIDAndStudentMergeDirectionCode(studentID, mergeDirection.toUpperCase());
     }
   }
 
