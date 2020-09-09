@@ -44,8 +44,12 @@ public class StudentMergeService {
    *
    * @return {@link List<StudentMergeEntity>}
    */
-  public List<StudentMergeEntity> findStudentMerges(UUID studentID) {
-    return studentMergeRepo.findStudentMergeEntityByStudentID(studentID);
+  public List<StudentMergeEntity> findStudentMerges(UUID studentID, String mergeDirection) {
+    if(mergeDirection == null) {
+      return studentMergeRepo.findStudentMergeEntityByStudentID(studentID);
+    }else {
+      return studentMergeRepo.findStudentMergeEntityByStudentIDAndStudentMergeDirectionCode(studentID, mergeDirection);
+    }
   }
 
   /**

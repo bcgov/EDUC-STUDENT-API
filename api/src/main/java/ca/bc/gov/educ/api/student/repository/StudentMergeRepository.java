@@ -10,4 +10,5 @@ import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
 
 public interface StudentMergeRepository extends CrudRepository<StudentMergeEntity, UUID>, JpaSpecificationExecutor<StudentMergeEntity> {
   List<StudentMergeEntity> findStudentMergeEntityByStudentID(UUID studentID);
+  List<StudentMergeEntity> findStudentMergeEntityByStudentIDAndStudentMergeDirectionCode(UUID studentID, String studentMergeDirectionCode);
 }

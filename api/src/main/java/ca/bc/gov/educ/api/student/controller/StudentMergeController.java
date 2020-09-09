@@ -46,8 +46,8 @@ public class StudentMergeController extends BaseController implements StudentMer
     this.payloadValidator = payloadValidator;
   }
 
-  public List<StudentMerge> findStudentMerges(String studentID) {
-    return getService().findStudentMerges(UUID.fromString(studentID)).stream().map(mapper::toStructure).collect(Collectors.toList());
+  public List<StudentMerge> findStudentMerges(String studentID, String mergeDirection) {
+    return getService().findStudentMerges(UUID.fromString(studentID), mergeDirection).stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
   public StudentMerge createStudentMerge(String studentID, StudentMerge studentMerge) {
