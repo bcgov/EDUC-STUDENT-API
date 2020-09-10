@@ -4,6 +4,7 @@ import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
 import ca.bc.gov.educ.api.student.model.*;
 import ca.bc.gov.educ.api.student.repository.*;
+import ca.bc.gov.educ.api.student.struct.Student;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.val;
@@ -203,11 +204,19 @@ public class StudentService {
     val entityOptional = getRepository().findById(id);
     val entity = entityOptional.orElseThrow(() -> new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, id.toString()));
     var twins = getStudentTwinRepo().findStudentTwinEntityByStudentID(entity.getStudentID());
+    var twins2 = getStudentTwinRepo().findByTwinStudent(entity);
     if (!twins.isEmpty()) {
       getStudentTwinRepo().deleteAll(twins);
     }
+    if (!twins2.isEmpty()) {
+      getStudentTwinRepo().deleteAll(twins);
+    }
     var merges = getStudentMergeRepo().findStudentMergeEntityByStudentID(entity.getStudentID());
+    var merges2 = getStudentMergeRepo().findStudentMergeEntityByMergeStudent(entity);
     if (!merges.isEmpty()) {
+      getStudentMergeRepo().deleteAll(merges);
+    }
+    if (!merges2.isEmpty()) {
       getStudentMergeRepo().deleteAll(merges);
     }
     getRepository().delete(entity);

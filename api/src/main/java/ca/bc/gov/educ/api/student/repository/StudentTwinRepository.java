@@ -1,13 +1,15 @@
 package ca.bc.gov.educ.api.student.repository;
 
-import java.util.List;
-import java.util.UUID;
-
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
 
-import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
+import java.util.List;
+import java.util.UUID;
 
 public interface StudentTwinRepository extends CrudRepository<StudentTwinEntity, UUID>, JpaSpecificationExecutor<StudentTwinEntity> {
   List<StudentTwinEntity> findStudentTwinEntityByStudentID(UUID studentID);
+
+  List<StudentTwinEntity> findByTwinStudent(StudentEntity studentEntity);
 }
