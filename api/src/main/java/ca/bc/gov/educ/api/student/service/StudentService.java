@@ -209,7 +209,7 @@ public class StudentService {
       getStudentTwinRepo().deleteAll(twins);
     }
     if (!twins2.isEmpty()) {
-      getStudentTwinRepo().deleteAll(twins);
+      getStudentTwinRepo().deleteAll(twins2);
     }
     var merges = getStudentMergeRepo().findStudentMergeEntityByStudentID(entity.getStudentID());
     var merges2 = getStudentMergeRepo().findStudentMergeEntityByMergeStudent(entity);
@@ -217,7 +217,7 @@ public class StudentService {
       getStudentMergeRepo().deleteAll(merges);
     }
     if (!merges2.isEmpty()) {
-      getStudentMergeRepo().deleteAll(merges);
+      getStudentMergeRepo().deleteAll(merges2);
     }
     getRepository().delete(entity);
   }
