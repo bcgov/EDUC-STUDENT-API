@@ -7,9 +7,7 @@ import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.*;
 import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.struct.SearchCriteria;
-import ca.bc.gov.educ.api.student.struct.Student;
-import ca.bc.gov.educ.api.student.struct.ValueType;
+import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -36,6 +34,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ca.bc.gov.educ.api.student.struct.Condition.AND;
+import static ca.bc.gov.educ.api.student.struct.Condition.OR;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -294,8 +294,10 @@ public class StudentControllerTest {
     SearchCriteria criteria = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.EQUAL).value("Leonor").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
@@ -316,8 +318,10 @@ public class StudentControllerTest {
     SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.EQUAL).value("Warner").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
@@ -340,8 +344,10 @@ public class StudentControllerTest {
     SearchCriteria criteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
@@ -362,14 +368,16 @@ public class StudentControllerTest {
     String fromDate = "1990-04-01";
     String toDate = "2020-04-15";
     SearchCriteria criteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
-    SearchCriteria criteriaFirstName = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
-    SearchCriteria criteriaLastName = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
+    SearchCriteria criteriaFirstName = SearchCriteria.builder().condition(AND).key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
+    SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
     criteriaList.add(criteriaFirstName);
     criteriaList.add(criteriaLastName);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
@@ -381,6 +389,77 @@ public class StudentControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_GivenFirstAndLastOrDOB_ShouldReturnStatusOk() throws Exception {
+    final File file = new File(
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+
+    SearchCriteria criteriaFirstName = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
+    SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new LinkedList<>();
+    criteriaList.add(criteriaFirstName);
+    criteriaList.add(criteriaLastName);
+
+    String fromDate = "1990-04-01";
+    String toDate = "2020-04-15";
+    SearchCriteria dobCriteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    List<SearchCriteria> criteriaList1 = new LinkedList<>();
+    criteriaList1.add(dobCriteria);
+
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    searches.add(Search.builder().condition(OR).searchCriteriaList(criteriaList1).build());
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    MvcResult result = mockMvc
+        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(6)));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_GivenFirstORLastANDDOB_ShouldReturnStatusOk() throws Exception {
+    final File file = new File(
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+
+    SearchCriteria criteriaFirstName = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
+    SearchCriteria criteriaLastName = SearchCriteria.builder().condition(OR).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new LinkedList<>();
+    criteriaList.add(criteriaFirstName);
+    criteriaList.add(criteriaLastName);
+
+    String fromDate = "1990-04-01";
+    String toDate = "2020-04-15";
+    SearchCriteria dobCriteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    List<SearchCriteria> criteriaList1 = new LinkedList<>();
+    criteriaList1.add(dobCriteria);
+
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    searches.add(Search.builder().condition(AND).searchCriteriaList(criteriaList1).build());
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    MvcResult result = mockMvc
+        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(5)));
+  }
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameFilterIgnoreCase_ShouldReturnStatusOk() throws Exception {
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
@@ -390,8 +469,10 @@ public class StudentControllerTest {
     SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.CONTAINS_IGNORE_CASE).value("b").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
@@ -412,8 +493,10 @@ public class StudentControllerTest {
     SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH).value("Ham").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
@@ -434,8 +517,10 @@ public class StudentControllerTest {
     SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH).value("ham").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
@@ -456,8 +541,10 @@ public class StudentControllerTest {
     SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH_IGNORE_CASE).value("ham").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
@@ -481,8 +568,10 @@ public class StudentControllerTest {
     SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -504,8 +593,10 @@ public class StudentControllerTest {
     SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(null).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    var objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(criteriaList);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
     this.mockMvc.perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
         .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }

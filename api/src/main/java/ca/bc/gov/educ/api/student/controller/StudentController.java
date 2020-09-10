@@ -119,6 +119,7 @@ public class StudentController extends BaseController implements StudentEndpoint
     getService().deleteById(id);
     return ResponseEntity.noContent().build();
   }
+
   @Override
   @Transactional(propagation = Propagation.SUPPORTS)
   public CompletableFuture<Page<Student>> findAll(Integer pageNumber, Integer pageSize, String sortCriteriaJson, String searchCriteriaListJson) {
@@ -128,9 +129,13 @@ public class StudentController extends BaseController implements StudentEndpoint
     try {
       getSortCriteria(sortCriteriaJson, objectMapper, sorts);
       if (StringUtils.isNotBlank(searchCriteriaListJson)) {
-        List<SearchCriteria> criteriaList = objectMapper.readValue(searchCriteriaListJson, new TypeReference<>() {
+        List<Search> searches = objectMapper.readValue(searchCriteriaListJson, new TypeReference<>() {
         });
-        studentSpecs = getStudentEntitySpecification(criteriaList);
+        int i = 0;
+        for (var search : searches) {
+          studentSpecs = getSpecifications(studentSpecs, i, search);
+          i++;
+        }
       }
     } catch (JsonProcessingException e) {
       throw new StudentRuntimeException(e.getMessage());
@@ -152,6 +157,27 @@ public class StudentController extends BaseController implements StudentEndpoint
     }
   }
 
+  /**
+   * Gets specifications.
+   *
+   * @param studentSpecs the pen reg batch specs
+   * @param i            the
+   * @param search       the search
+   * @return the specifications
+   */
+  private Specification<StudentEntity> getSpecifications(Specification<StudentEntity> studentSpecs, int i, Search search) {
+    if (i == 0) {
+      studentSpecs = getStudentEntitySpecification(search.getSearchCriteriaList());
+    } else {
+      if (search.getCondition() == Condition.AND) {
+        studentSpecs = studentSpecs.and(getStudentEntitySpecification(search.getSearchCriteriaList()));
+      } else {
+        studentSpecs = studentSpecs.or(getStudentEntitySpecification(search.getSearchCriteriaList()));
+      }
+    }
+    return studentSpecs;
+  }
+
   private Specification<StudentEntity> getStudentEntitySpecification(List<SearchCriteria> criteriaList) {
     Specification<StudentEntity> studentSpecs = null;
     if (!criteriaList.isEmpty()) {
@@ -159,12 +185,7 @@ public class StudentController extends BaseController implements StudentEndpoint
       for (SearchCriteria criteria : criteriaList) {
         if (criteria.getKey() != null && criteria.getOperation() != null && criteria.getValueType() != null) {
           Specification<StudentEntity> typeSpecification = getTypeSpecification(criteria.getKey(), criteria.getOperation(), criteria.getValue(), criteria.getValueType());
-          if (i == 0) {
-            studentSpecs = Specification.where(typeSpecification);
-          } else {
-            assert studentSpecs != null;
-            studentSpecs = studentSpecs.and(typeSpecification);
-          }
+          studentSpecs = getSpecificationPerGroup(studentSpecs, i, criteria, typeSpecification);
           i++;
         } else {
           throw new InvalidParameterException("Search Criteria can not contain null values for key, value and operation type");
@@ -172,6 +193,28 @@ public class StudentController extends BaseController implements StudentEndpoint
       }
     }
     return studentSpecs;
+  }
+
+  /**
+   * Gets specification per group.
+   *
+   * @param studentEntitySpecification the pen request batch entity specification
+   * @param i                          the
+   * @param criteria                   the criteria
+   * @param typeSpecification          the type specification
+   * @return the specification per group
+   */
+  private Specification<StudentEntity> getSpecificationPerGroup(Specification<StudentEntity> studentEntitySpecification, int i, SearchCriteria criteria, Specification<StudentEntity> typeSpecification) {
+    if (i == 0) {
+      studentEntitySpecification = Specification.where(typeSpecification);
+    } else {
+      if (criteria.getCondition() == Condition.AND) {
+        studentEntitySpecification = studentEntitySpecification.and(typeSpecification);
+      } else {
+        studentEntitySpecification = studentEntitySpecification.or(typeSpecification);
+      }
+    }
+    return studentEntitySpecification;
   }
 
   private Specification<StudentEntity> getTypeSpecification(String key, FilterOperation filterOperation, String value, ValueType valueType) {
@@ -200,5 +243,5 @@ public class StudentController extends BaseController implements StudentEndpoint
     }
     return studentEntitySpecification;
   }
-  
+
 }

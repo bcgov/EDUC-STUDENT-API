@@ -20,4 +20,8 @@ public class SearchCriteria {
   String value;
   @NotNull
   ValueType valueType;
+  /**
+   * The Condition. ENUM to hold and AND OR
+   */
+  Condition condition;
 }
