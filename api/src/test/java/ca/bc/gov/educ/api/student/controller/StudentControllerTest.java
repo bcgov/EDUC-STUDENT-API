@@ -309,6 +309,30 @@ public class StudentControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_GivenFirstNameFilterIgnoreCase_ShouldReturnStatusOk() throws Exception {
+    final File file = new File(
+      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    SearchCriteria criteria = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.EQUAL_IGNORE_CASE).value("leonor").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    MvcResult result = mockMvc
+      .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .contentType(APPLICATION_JSON))
+      .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenLastNameFilter_ShouldReturnStatusOk() throws Exception {
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
@@ -577,6 +601,78 @@ public class StudentControllerTest {
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_LegalLastNameEndWith_ShouldReturnStatusOkAndRecord() throws Exception {
+    final File file = new File(
+      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("ton").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    MvcResult result = mockMvc
+      .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .contentType(APPLICATION_JSON))
+      .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_LegalLastNameEndWith_ShouldReturnStatusOkButNoRecord() throws Exception {
+    final File file = new File(
+      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("Ton").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    MvcResult result = mockMvc
+      .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .contentType(APPLICATION_JSON))
+      .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_LegalLastNameEndWithIgnoreCase_ShouldReturnStatusOkAndRecord() throws Exception {
+    final File file = new File(
+      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH_IGNORE_CASE).value("Ton").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    MvcResult result = mockMvc
+      .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .contentType(APPLICATION_JSON))
+      .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
   }
 
   @Test

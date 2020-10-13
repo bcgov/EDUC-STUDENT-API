@@ -7,6 +7,7 @@ import java.util.Optional;
 public enum FilterOperation {
 
   EQUAL("eq"),
+  EQUAL_IGNORE_CASE("eq_ignore_case"),
   NOT_EQUAL("neq"),
   GREATER_THAN("gt"),
   GREATER_THAN_OR_EQUAL_TO("gte"),
@@ -18,7 +19,9 @@ public enum FilterOperation {
   CONTAINS("like"),
   CONTAINS_IGNORE_CASE("like_ignore_case"),
   STARTS_WITH("starts_with"),
-  STARTS_WITH_IGNORE_CASE("starts_with_ignore_case");
+  STARTS_WITH_IGNORE_CASE("starts_with_ignore_case"),
+  ENDS_WITH("ends_with"),
+  ENDS_WITH_IGNORE_CASE("ends_with_ignore_case");
 
   private final String value;
 
