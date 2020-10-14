@@ -28,9 +28,6 @@ public class FilterSpecifications<E, T extends Comparable<T>> {
 		map.put(FilterOperation.EQUAL, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
 				.equal(root.get(filterCriteria.getFieldName()), filterCriteria.getConvertedSingleValue()));
 
-		map.put(FilterOperation.EQUAL_IGNORE_CASE, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
-			.equal(criteriaBuilder.lower(root.get(filterCriteria.getFieldName())), filterCriteria.getConvertedSingleValue().toString().toLowerCase()));
-
 		map.put(FilterOperation.NOT_EQUAL, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
 				.notEqual(root.get(filterCriteria.getFieldName()), filterCriteria.getConvertedSingleValue()));
 
@@ -63,20 +60,10 @@ public class FilterSpecifications<E, T extends Comparable<T>> {
 		map.put(FilterOperation.CONTAINS, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
 				.like(root.get(filterCriteria.getFieldName()), "%" + filterCriteria.getConvertedSingleValue() + "%"));
 
-		map.put(FilterOperation.CONTAINS_IGNORE_CASE, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
-				.like(criteriaBuilder.lower(root.get(filterCriteria.getFieldName())), "%" + filterCriteria.getConvertedSingleValue().toString().toLowerCase() + "%"));
-
     map.put(FilterOperation.STARTS_WITH, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
         .like(root.get(filterCriteria.getFieldName()), filterCriteria.getConvertedSingleValue() + "%"));
 
-    map.put(FilterOperation.STARTS_WITH_IGNORE_CASE, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
-        .like(criteriaBuilder.lower(root.get(filterCriteria.getFieldName())), filterCriteria.getConvertedSingleValue().toString().toLowerCase() + "%"));
-
 		map.put(FilterOperation.ENDS_WITH, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
 			.like(root.get(filterCriteria.getFieldName()), "%" + filterCriteria.getConvertedSingleValue()));
-
-		map.put(FilterOperation.ENDS_WITH_IGNORE_CASE, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
-			.like(criteriaBuilder.lower(root.get(filterCriteria.getFieldName())), "%" + filterCriteria.getConvertedSingleValue().toString().toLowerCase()));
-
 	}
 }
