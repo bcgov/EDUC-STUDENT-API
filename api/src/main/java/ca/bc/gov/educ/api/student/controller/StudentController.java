@@ -187,7 +187,11 @@ public class StudentController extends BaseController implements StudentEndpoint
       int i = 0;
       for (SearchCriteria criteria : criteriaList) {
         if (criteria.getKey() != null && criteria.getOperation() != null && criteria.getValueType() != null) {
-          Specification<StudentEntity> typeSpecification = getTypeSpecification(criteria.getKey(), criteria.getOperation(), criteria.getValue().toUpperCase(), criteria.getValueType());
+          var criteriaValue = criteria.getValue();
+          if(criteriaValue != null) {
+            criteriaValue = criteriaValue.toUpperCase();
+          }
+          Specification<StudentEntity> typeSpecification = getTypeSpecification(criteria.getKey(), criteria.getOperation(), criteriaValue, criteria.getValueType());
           studentSpecs = getSpecificationPerGroup(studentSpecs, i, criteria, typeSpecification);
           i++;
         } else {
