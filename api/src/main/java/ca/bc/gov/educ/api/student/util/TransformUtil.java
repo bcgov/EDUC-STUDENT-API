@@ -2,16 +2,22 @@ package ca.bc.gov.educ.api.student.util;
 
 import ca.bc.gov.educ.api.student.exception.StudentRuntimeException;
 
+import java.beans.Expression;
+import java.beans.Statement;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import static org.springframework.util.StringUtils.capitalize;
 
 public class TransformUtil {
+  private TransformUtil() {
+  }
+
   public static <T> T uppercaseFields(T record) {
-    Class<?> clazz = record.getClass();
+    var clazz = record.getClass();
     List<Field> fields = new ArrayList<>();
-    Class<?> superClazz = clazz;
+    var superClazz = clazz;
     while (!superClazz.equals(Object.class)) {
       fields.addAll(Arrays.asList(superClazz.getDeclaredFields()));
       superClazz = superClazz.getSuperclass();
@@ -27,19 +33,14 @@ public class TransformUtil {
 
     if (field.getAnnotation(UpperCase.class) != null) {
       try {
-        var unsetAccessible = false;
-        if (!field.canAccess(record)) {
-          unsetAccessible = true;
-          field.setAccessible(true);
-        }
-        String entityFieldValue = (String) field.get(record);
+        var fieldName = capitalize(field.getName());
+        var expr = new Expression(record, "get" + fieldName, new Object[0]);
+        var entityFieldValue = (String) expr.getValue();
         if (entityFieldValue != null) {
-          field.set(record, entityFieldValue.toUpperCase());
+          var stmt = new Statement(record, "set" + fieldName, new Object[]{entityFieldValue.toUpperCase()});
+          stmt.execute();
         }
-        if (unsetAccessible) {
-          field.setAccessible(false);
-        }
-      } catch (IllegalAccessException ex) {
+      } catch (Exception ex) {
         throw new StudentRuntimeException(ex.getMessage());
       }
     }
