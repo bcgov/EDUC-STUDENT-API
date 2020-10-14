@@ -9,6 +9,7 @@ import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
+import ca.bc.gov.educ.api.student.util.TransformUtil;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -167,7 +168,8 @@ public class StudentControllerTest {
   public void testCreateStudent_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
     StudentEntity entity = createStudent();
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isCreated());
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isCreated())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));
   }
 
   @Test
@@ -202,7 +204,8 @@ public class StudentControllerTest {
     repository.save(entity);
     entity.setLegalFirstName("updated");
     this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName()));
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));;
   }
 
   @Test
@@ -245,7 +248,7 @@ public class StudentControllerTest {
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated?pageSize=2")
             .contentType(APPLICATION_JSON))
@@ -271,7 +274,7 @@ public class StudentControllerTest {
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     Map<String, String> sortMap = new HashMap<>();
     sortMap.put("legalLastName", "ASC");
     sortMap.put("legalFirstName", "DESC");
@@ -299,7 +302,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -323,7 +326,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -349,7 +352,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -379,7 +382,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -415,7 +418,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -451,7 +454,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -466,7 +469,7 @@ public class StudentControllerTest {
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.CONTAINS_IGNORE_CASE).value("b").valueType(ValueType.STRING).build();
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.CONTAINS).value("b").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
     List<Search> searches = new LinkedList<>();
@@ -474,7 +477,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -498,7 +501,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -514,7 +517,7 @@ public class StudentControllerTest {
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH).value("ham").valueType(ValueType.STRING).build();
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH).value("hem").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
     List<Search> searches = new LinkedList<>();
@@ -522,36 +525,12 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
-  }
-
-  @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
-  public void testReadStudentPaginated_LegalLastNameStartWithIgnoreCase_ShouldReturnStatusOk() throws Exception {
-    final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
-    );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
-    });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH_IGNORE_CASE).value("ham").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
-    criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
-    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
-    System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
-    MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
-            .contentType(APPLICATION_JSON))
-        .andReturn();
-    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
   @Test
@@ -563,7 +542,7 @@ public class StudentControllerTest {
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     val entitiesFromDB = repository.findAll();
     SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
@@ -581,6 +560,54 @@ public class StudentControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_LegalLastNameEndWith_ShouldReturnStatusOkAndRecord() throws Exception {
+    final File file = new File(
+      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("ton").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
+    MvcResult result = mockMvc
+      .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .contentType(APPLICATION_JSON))
+      .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
+  public void testReadStudentPaginated_LegalLastNameEndWith_ShouldReturnStatusOkButNoRecord() throws Exception {
+    final File file = new File(
+      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("son").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
+    MvcResult result = mockMvc
+      .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .contentType(APPLICATION_JSON))
+      .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_givenOperationTypeNull_ShouldReturnStatusBadRequest() throws Exception {
     var file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
@@ -588,7 +615,7 @@ public class StudentControllerTest {
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(TransformUtil::uppercaseFields).map(mapper::toModel).collect(Collectors.toList()));
     val entitiesFromDB = repository.findAll();
     SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(null).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
