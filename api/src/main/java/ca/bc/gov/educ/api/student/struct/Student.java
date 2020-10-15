@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 import javax.validation.constraints.*;
 
-import ca.bc.gov.educ.api.student.util.UpperCase;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;

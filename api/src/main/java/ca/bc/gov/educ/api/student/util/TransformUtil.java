@@ -26,7 +26,7 @@ public class TransformUtil {
     return record;
   }
 
-  public static boolean isUppercaseField(Class clazz, String fieldName) {
+  public static boolean isUppercaseField(Class<?> clazz, String fieldName) {
     var superClazz = clazz;
     while (!superClazz.equals(Object.class)) {
       try {
