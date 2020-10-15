@@ -74,14 +74,12 @@ public class StudentController extends BaseController implements StudentEndpoint
   }
 
   public Student createStudent(Student student) {
-    TransformUtil.uppercaseFields(student);
     validatePayload(student, true);
     setAuditColumns(student);
     return mapper.toStructure(getService().createStudent(mapper.toModel(student)));
   }
 
   public Student updateStudent(Student student) {
-    TransformUtil.uppercaseFields(student);
     validatePayload(student, false);
     setAuditColumns(student);
     return mapper.toStructure(getService().updateStudent(mapper.toModel(student)));
@@ -188,7 +186,7 @@ public class StudentController extends BaseController implements StudentEndpoint
       for (SearchCriteria criteria : criteriaList) {
         if (criteria.getKey() != null && criteria.getOperation() != null && criteria.getValueType() != null) {
           var criteriaValue = criteria.getValue();
-          if(criteriaValue != null) {
+          if(criteriaValue != null && TransformUtil.isUppercaseField(StudentEntity.class, criteria.getKey())) {
             criteriaValue = criteriaValue.toUpperCase();
           }
           Specification<StudentEntity> typeSpecification = getTypeSpecification(criteria.getKey(), criteria.getOperation(), criteriaValue, criteria.getValueType());

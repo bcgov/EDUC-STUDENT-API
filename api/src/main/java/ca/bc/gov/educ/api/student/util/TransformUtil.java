@@ -26,6 +26,19 @@ public class TransformUtil {
     return record;
   }
 
+  public static boolean isUppercaseField(Class clazz, String fieldName) {
+    var superClazz = clazz;
+    while (!superClazz.equals(Object.class)) {
+      try {
+        Field field = superClazz.getDeclaredField(fieldName);
+        return field.getAnnotation(UpperCase.class) != null;
+      } catch (NoSuchFieldException e) {
+        superClazz = superClazz.getSuperclass();
+      }
+    }
+    return false;
+  }
+
   private static <T> void transformFieldToUppercase(Field field, T record) {
     if (!field.getType().equals(String.class)) {
       return;
