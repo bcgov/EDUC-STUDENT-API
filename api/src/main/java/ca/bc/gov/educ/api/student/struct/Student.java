@@ -2,7 +2,6 @@ package ca.bc.gov.educ.api.student.struct;
 
 import java.io.Serializable;
 
-import javax.persistence.Column;
 import javax.validation.constraints.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

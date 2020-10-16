@@ -1,5 +1,7 @@
 package ca.bc.gov.educ.api.student.model;
 
+import ca.bc.gov.educ.api.student.util.TransformUtil;
+import ca.bc.gov.educ.api.student.util.UpperCase;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
@@ -30,48 +32,63 @@ public class StudentEntity {
   @Column(name = "PEN")
   String pen;
   @Column(name = "LEGAL_FIRST_NAME")
+  @UpperCase
   String legalFirstName;
   @Column(name = "LEGAL_MIDDLE_NAMES")
+  @UpperCase
   String legalMiddleNames;
   @Column(name = "LEGAL_LAST_NAME")
+  @UpperCase
   String legalLastName;
   @Column(name = "DOB")
   @PastOrPresent
   LocalDate dob;
   @Column(name = "SEX_CODE")
+  @UpperCase
   String sexCode;
   @Column(name = "GENDER_CODE")
+  @UpperCase
   String genderCode;
   @Column(name = "USUAL_FIRST_NAME")
+  @UpperCase
   String usualFirstName;
   @Column(name = "USUAL_MIDDLE_NAMES")
+  @UpperCase
   String usualMiddleNames;
   @Column(name = "USUAL_LAST_NAME")
+  @UpperCase
   String usualLastName;
   @Email(message = "Email must be valid email address")
   @Column(name = "EMAIL")
   String email;
   @NotNull(message = "Email verified cannot be null")
   @Column(name = "EMAIL_VERIFIED")
+  @UpperCase
   String emailVerified;
   @Column(name = "DECEASED_DATE")
   @PastOrPresent
   LocalDate deceasedDate;
   @Column(name = "POSTAL_CODE")
+  @UpperCase
   String postalCode;
   @Column(name = "MINCODE")
+  @UpperCase
   String mincode;
   @Column(name = "LOCAL_ID")
+  @UpperCase
   String localID;
   @Column(name = "GRADE_CODE")
+  @UpperCase
   String gradeCode;
   @Column(name = "MEMO")
   String memo;
   @Column(name = "GRADE_YEAR")
   String gradeYear;
   @Column(name = "DEMOG_CODE")
+  @UpperCase
   String demogCode;
   @Column(name = "STATUS_CODE")
+  @UpperCase
   String statusCode;
   @Column(name = "CREATE_USER", updatable = false)
   String createUser;
@@ -84,4 +101,9 @@ public class StudentEntity {
   @PastOrPresent
   LocalDateTime updateDate;
 
+  @PrePersist
+  @PreUpdate
+  public void preSave() {
+    TransformUtil.uppercaseFields(this);
+  }
 }
