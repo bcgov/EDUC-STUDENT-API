@@ -13,7 +13,9 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -68,6 +70,13 @@ public class StudentTwinController extends BaseController implements StudentTwin
       error.addValidationErrors(validationResult);
       throw new InvalidPayloadException(error);
     }
+  }
+
+  @Override
+  @Transactional
+  public ResponseEntity<Void> deleteById(final UUID studentID, final UUID studentTwinID) {
+    getService().deleteById(studentTwinID);
+    return ResponseEntity.noContent().build();
   }
 
 }

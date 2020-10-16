@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
@@ -74,6 +75,23 @@ public class StudentTwinServiceTest {
     studentTwin.setStudentTwinReasonCode("PENMATCH");
     assertNotNull(studentTwinService.createStudentTwin(studentTwin));
     assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isEqualTo(1);
+  }
+
+  @Test
+  public void testDeleteStudentTwin_ShouldReturnTrue() {
+    StudentEntity student = getStudentEntity();
+    assertNotNull(studentService.createStudent(student));
+    StudentEntity twinedStudent = getStudentEntity();
+    assertNotNull(studentService.createStudent(twinedStudent));
+    StudentTwinEntity studentTwin = new StudentTwinEntity();
+    studentTwin.setStudentID(student.getStudentID());
+    studentTwin.setTwinStudent(twinedStudent);
+    studentTwin.setStudentTwinReasonCode("PENMATCH");
+    assertNotNull(studentTwinService.createStudentTwin(studentTwin));
+    List<StudentTwinEntity> twins = studentTwinService.findStudentTwins(student.getStudentID());
+    assertThat(twins.size()).isEqualTo(1);
+    studentTwinService.deleteById(twins.get(0).getStudentTwinID());
+    assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isZero();
   }
 
   private StudentEntity getStudentEntity() {
