@@ -91,7 +91,7 @@ public class StudentTwinServiceTest {
     List<StudentTwinEntity> twins = studentTwinService.findStudentTwins(student.getStudentID());
     assertThat(twins.size()).isEqualTo(1);
     studentTwinService.deleteById(twins.get(0).getStudentTwinID());
-    assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isEqualTo(0);
+    assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isZero();
   }
 
   private StudentEntity getStudentEntity() {
