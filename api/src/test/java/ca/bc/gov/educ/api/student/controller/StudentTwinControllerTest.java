@@ -109,6 +109,26 @@ public class StudentTwinControllerTest {
   }
 
   @Test
+  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
+  public void testDeleteStudent_GivenValidId_ShouldReturnStatus204() throws Exception {
+    StudentEntity entity = createStudent();
+    studentRepo.save(entity);
+
+    StudentEntity twinStudEntity = createStudent();
+    twinStudEntity.setPen("987654322");
+    studentRepo.save(twinStudEntity);
+
+    StudentTwinEntity penmatchTwin = new StudentTwinEntity();
+    penmatchTwin.setStudentID(entity.getStudentID());
+    penmatchTwin.setTwinStudent(twinStudEntity);
+    penmatchTwin.setStudentTwinReasonCode("PENMATCH");
+    studentTwinRepo.save(penmatchTwin);
+
+    this.mockMvc.perform(delete("/" + entity.getStudentID().toString() + "/twins/" + penmatchTwin.getStudentTwinID().toString()).contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
+  }
+
+  @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudentTwin_GivenInvalidStudentID_ShouldReturnStatusBadRequest() throws Exception {
     StudentEntity student = studentRepo.save(createStudent());
