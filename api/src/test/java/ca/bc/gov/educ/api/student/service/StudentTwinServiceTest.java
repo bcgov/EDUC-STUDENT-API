@@ -78,6 +78,20 @@ public class StudentTwinServiceTest {
   }
 
   @Test
+  public void testFindStudentTwins_WhenStudentTwinsOtherExistInDB_ShouldReturnList() {
+    StudentEntity student = getStudentEntity();
+    assertNotNull(studentService.createStudent(student));
+    StudentEntity twinedStudent = getStudentEntity();
+    assertNotNull(studentService.createStudent(twinedStudent));
+    StudentTwinEntity studentTwin = new StudentTwinEntity();
+    studentTwin.setStudentID(twinedStudent.getStudentID());
+    studentTwin.setTwinStudent(student);
+    studentTwin.setStudentTwinReasonCode("PENMATCH");
+    assertNotNull(studentTwinService.createStudentTwin(studentTwin));
+    assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isEqualTo(1);
+  }
+
+  @Test
   public void testDeleteStudentTwin_ShouldReturnTrue() {
     StudentEntity student = getStudentEntity();
     assertNotNull(studentService.createStudent(student));

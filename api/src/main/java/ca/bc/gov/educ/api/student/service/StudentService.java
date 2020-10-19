@@ -203,7 +203,7 @@ public class StudentService {
   public void deleteById(UUID id) {
     val entityOptional = getRepository().findById(id);
     val entity = entityOptional.orElseThrow(() -> new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, id.toString()));
-    var twins = getStudentTwinRepo().findStudentTwinEntityByStudentID(entity.getStudentID());
+    var twins = getStudentTwinRepo().findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(entity.getStudentID(), entity.getStudentID());
     var twins2 = getStudentTwinRepo().findByTwinStudent(entity);
     if (!twins.isEmpty()) {
       getStudentTwinRepo().deleteAll(twins);

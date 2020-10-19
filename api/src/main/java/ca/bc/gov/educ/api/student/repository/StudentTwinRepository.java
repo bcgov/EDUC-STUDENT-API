@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface StudentTwinRepository extends CrudRepository<StudentTwinEntity, UUID>, JpaSpecificationExecutor<StudentTwinEntity> {
-  List<StudentTwinEntity> findStudentTwinEntityByStudentID(UUID studentID);
+  List<StudentTwinEntity> findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(UUID studentID, UUID twinStudentID);
 
   List<StudentTwinEntity> findByTwinStudent(StudentEntity studentEntity);
 }

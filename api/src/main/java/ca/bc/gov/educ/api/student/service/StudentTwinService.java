@@ -46,7 +46,7 @@ public class StudentTwinService {
    * @return {@link List<StudentTwinEntity>}
    */
   public List<StudentTwinEntity> findStudentTwins(UUID studentID) {
-    return studentTwinRepo.findStudentTwinEntityByStudentID(studentID);
+    return studentTwinRepo.findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(studentID, studentID);
   }
 
   /**
