@@ -2,6 +2,7 @@ package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
+import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.*;
 import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.struct.Student;
@@ -19,11 +20,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
@@ -231,5 +230,44 @@ public class StudentService {
     } catch (final Exception ex) {
       throw new CompletionException(ex);
     }
+  }
+
+  @Transactional(propagation = Propagation.MANDATORY)
+  public StudentEntity createStudentWithAssociations(Student student) {
+    StudentEntity studentEntity = StudentMapper.mapper.toModel(student);
+    getRepository().save(studentEntity);
+    if(!CollectionUtils.isEmpty(student.getStudentMergeAssociations())) {
+      List<StudentMergeEntity> studentMergeEntities = new ArrayList<>();
+      for (var mergeStudent : student.getStudentMergeAssociations()) {
+        var studentMergeEntity = new StudentMergeEntity();
+        studentMergeEntity.setCreateDate(studentEntity.getCreateDate());
+        studentMergeEntity.setUpdateDate(studentEntity.getUpdateDate());
+        studentMergeEntity.setCreateUser(studentEntity.getCreateUser());
+        studentMergeEntity.setUpdateUser(studentEntity.getUpdateUser());
+        studentMergeEntity.setStudentMergeDirectionCode(mergeStudent.getStudentMergeDirectionCode());
+        studentMergeEntity.setStudentMergeSourceCode(mergeStudent.getStudentMergeSourceCode());
+        studentMergeEntity.setMergeStudent(getRepository().findById(UUID.fromString(mergeStudent.getMergeStudentID())).get());
+        studentMergeEntity.setStudentID(studentEntity.getStudentID());
+        studentMergeEntities.add(studentMergeEntity);
+      }
+      getStudentMergeRepo().saveAll(studentMergeEntities);
+    }
+    if(!CollectionUtils.isEmpty(student.getStudentTwinAssociations())) {
+      List<StudentTwinEntity> studentTwinEntities = new ArrayList<>();
+      for (var twinStudent : student.getStudentTwinAssociations()) {
+        var studentTwinEntity = new StudentTwinEntity();
+        studentTwinEntity.setCreateDate(studentEntity.getCreateDate());
+        studentTwinEntity.setUpdateDate(studentEntity.getUpdateDate());
+        studentTwinEntity.setCreateUser(studentEntity.getCreateUser());
+        studentTwinEntity.setUpdateUser(studentEntity.getUpdateUser());
+        studentTwinEntity.setStudentTwinReasonCode(twinStudent.getStudentTwinReasonCode());
+        studentTwinEntity.setTwinStudent(getRepository().findById(UUID.fromString(twinStudent.getTwinStudentID())).get());
+        studentTwinEntity.setStudentID(studentEntity.getStudentID());
+        studentTwinEntities.add(studentTwinEntity);
+      }
+      getStudentTwinRepo().saveAll(studentTwinEntities);
+    }
+
+    return studentEntity;
   }
 }

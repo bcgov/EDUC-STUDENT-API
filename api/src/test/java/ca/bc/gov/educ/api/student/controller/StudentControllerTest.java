@@ -28,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 
 import static ca.bc.gov.educ.api.student.struct.Condition.AND;
 import static ca.bc.gov.educ.api.student.struct.Condition.OR;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -83,7 +85,13 @@ public class StudentControllerTest {
 
   @Autowired
   StudentService studentService;
+  @Autowired
+  StudentMergeDirectionCodeTableRepository mergeDirectionCodeRepo;
 
+  @Autowired
+  StudentMergeSourceCodeTableRepository mergeSourceCodeRepo;
+  @Autowired
+  StudentTwinReasonCodeTableRepository twinReasonCodeRepo;
 
   @Before
   public void setUp() {
@@ -95,6 +103,9 @@ public class StudentControllerTest {
     demogRepo.save(createDemogCodeData());
     statusRepo.save(createStatusCodeData());
     gradeRepo.save(createGradeCodeData());
+    mergeDirectionCodeRepo.save(createStudentMergeDirectionCodeData());
+    mergeSourceCodeRepo.save(createStudentMergeSourceCodeData());
+    twinReasonCodeRepo.save(createStudentTwinReasonCodeData());
   }
 
   /**
@@ -108,6 +119,8 @@ public class StudentControllerTest {
     statusRepo.deleteAll();
     gradeRepo.deleteAll();
     repository.deleteAll();
+    studentMergeRepository.deleteAll();
+    studentTwinRepository.deleteAll();
   }
 
   private SexCodeEntity createSexCodeData() {
@@ -170,6 +183,63 @@ public class StudentControllerTest {
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isCreated())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  @Transactional
+  public void testCreateStudent_GivenValidPayloadWithTwinsAssociations_ShouldReturnStatusCreated() throws Exception {
+    Student student = StudentMapper.mapper.toStructure(createStudent());
+    StudentEntity studentTwin = createStudent();
+    studentTwin.setPen("120164444");
+    studentService.createStudent(studentTwin);
+    List<StudentTwinAssociation> studentTwinAssociations = new ArrayList<>();
+    StudentTwinAssociation studentTwinAssociation = new StudentTwinAssociation();
+    studentTwinAssociation.setStudentTwinReasonCode("PENMATCH");
+    studentTwinAssociation.setTwinStudentID(studentTwin.getStudentID().toString());
+    studentTwinAssociations.add(studentTwinAssociation);
+    student.setStudentTwinAssociations(studentTwinAssociations);
+
+    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isCreated())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
+
+    var studentFromDB = studentService.retrieveStudentByPen(student.getPen());
+    assertThat(studentFromDB).isPresent();
+    var twinRecords = studentTwinRepository.findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(studentFromDB.get().getStudentID(),studentFromDB.get().getStudentID());
+    assertThat(twinRecords).isNotEmpty().size().isEqualTo(1);
+    var twinRecordsFromOtherSide = studentTwinRepository.findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(studentTwin.getStudentID(), studentTwin.getStudentID());
+    assertThat(twinRecordsFromOtherSide).isNotEmpty().size().isEqualTo(1);
+
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  @Transactional
+  public void testCreateStudent_GivenValidPayloadWithMergeAssociations_ShouldReturnStatusCreated() throws Exception {
+    Student student = StudentMapper.mapper.toStructure(createStudent());
+    StudentEntity studentMerge = createStudent();
+    studentMerge.setPen("120164444");
+    studentService.createStudent(studentMerge);
+    List<StudentMergeAssociation> studentMergeAssociations = new ArrayList<>();
+    StudentMergeAssociation studentMergeAssociation = new StudentMergeAssociation();
+    studentMergeAssociation.setStudentMergeDirectionCode("FROM");
+    studentMergeAssociation.setStudentMergeSourceCode("MINISTRY");
+    studentMergeAssociation.setMergeStudentID(studentMerge.getStudentID().toString());
+    studentMergeAssociations.add(studentMergeAssociation);
+    student.setStudentMergeAssociations(studentMergeAssociations);
+
+    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isCreated())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
+
+    var studentFromDB = studentService.retrieveStudentByPen(student.getPen());
+    assertThat(studentFromDB).isPresent();
+    var mergeRecords = studentMergeRepository.findStudentMergeEntityByStudentID(studentFromDB.get().getStudentID());
+    assertThat(mergeRecords).isNotEmpty().size().isEqualTo(1);
+    var twinRecordsFromOtherSide = studentMergeRepository.findStudentMergeEntityByMergeStudent(studentMerge);
+    assertThat(twinRecordsFromOtherSide).isNotEmpty().size().isEqualTo(1);
+
   }
 
   @Test
@@ -694,5 +764,21 @@ public class StudentControllerTest {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+  private StudentTwinReasonCodeEntity createStudentTwinReasonCodeData() {
+    return StudentTwinReasonCodeEntity.builder().twinReasonCode("PENMATCH").description("PENMATCH")
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+  }
+  private StudentMergeDirectionCodeEntity createStudentMergeDirectionCodeData() {
+    return StudentMergeDirectionCodeEntity.builder().mergeDirectionCode("FROM").description("Merge From")
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+  }
+
+  private StudentMergeSourceCodeEntity createStudentMergeSourceCodeData() {
+    return StudentMergeSourceCodeEntity.builder().mergeSourceCode("MINISTRY").description("MINISTRY")
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 }

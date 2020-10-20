@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -32,7 +33,7 @@ public class EventHandlerService {
 
   public static final String NO_RECORD_SAGA_ID_EVENT_TYPE = "no record found for the saga id and event type combination, processing.";
   public static final String RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE = "record found for the saga id and event type combination, might be a duplicate or replay," +
-          " just updating the db status so that it will be polled and sent back again.";
+      " just updating the db status so that it will be polled and sent back again.";
   public static final String PAYLOAD_LOG = "payload is :: {}";
   public static final String EVENT_PAYLOAD = "event is :: {}";
   @Getter(PRIVATE)
@@ -41,10 +42,14 @@ public class EventHandlerService {
   @Getter(PRIVATE)
   private final StudentEventRepository studentEventRepository;
 
+  @Getter(PRIVATE)
+  private final StudentService studentService;
+
   @Autowired
-  public EventHandlerService(final StudentRepository studentRepository, final StudentEventRepository studentEventRepository) {
+  public EventHandlerService(final StudentRepository studentRepository, final StudentEventRepository studentEventRepository, StudentService studentService) {
     this.studentRepository = studentRepository;
     this.studentEventRepository = studentEventRepository;
+    this.studentService = studentService;
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -83,7 +88,7 @@ public class EventHandlerService {
   private void handleUpdateStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
-    if (!studentEventOptional.isPresent()) {
+    if (studentEventOptional.isEmpty()) {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       StudentEntity entity = mapper.toModel(JsonUtil.getJsonObjectFromString(Student.class, event.getEventPayload()));
@@ -112,17 +117,23 @@ public class EventHandlerService {
   private void handleCreateStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
-    if (!studentEventOptional.isPresent()) {
+    if (studentEventOptional.isEmpty()) {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
-      StudentEntity entity = mapper.toModel(JsonUtil.getJsonObjectFromString(Student.class, event.getEventPayload()));
+      Student student = JsonUtil.getJsonObjectFromString(Student.class, event.getEventPayload());
+      StudentEntity entity = mapper.toModel(student);
       val optionalStudent = getStudentRepository().findStudentEntityByPen(entity.getPen());
       if (optionalStudent.isPresent()) {
         event.setEventOutcome(EventOutcome.STUDENT_ALREADY_EXIST);
       } else {
         entity.setCreateDate(LocalDateTime.now());
         entity.setUpdateDate(LocalDateTime.now());
-        getStudentRepository().save(entity);
+        // It is expected that during messaging flow, the caller will provide a valid payload, so validation is not done.
+        if (!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())) {
+          getStudentService().createStudentWithAssociations(student);
+        } else {
+          getStudentService().createStudent(entity);
+        }
         event.setEventOutcome(EventOutcome.STUDENT_CREATED);
         event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.
       }
@@ -155,7 +166,7 @@ public class EventHandlerService {
   public void handleGetStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
-    if (!studentEventOptional.isPresent()) {
+    if (studentEventOptional.isEmpty()) {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       val optionalStudentEntity = getStudentRepository().findStudentEntityByPen(event.getEventPayload());
@@ -178,16 +189,16 @@ public class EventHandlerService {
 
   private StudentEvent createStudentEventRecord(Event event) {
     return StudentEvent.builder()
-            .createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now())
-            .createUser(event.getEventType().toString()) //need to discuss what to put here.
-            .updateUser(event.getEventType().toString())
-            .eventPayload(event.getEventPayload())
-            .eventType(event.getEventType().toString())
-            .sagaId(event.getSagaId())
-            .eventStatus(DB_COMMITTED.toString())
-            .eventOutcome(event.getEventOutcome().toString())
-            .replyChannel(event.getReplyTo())
-            .build();
+        .createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now())
+        .createUser(event.getEventType().toString()) //need to discuss what to put here.
+        .updateUser(event.getEventType().toString())
+        .eventPayload(event.getEventPayload())
+        .eventType(event.getEventType().toString())
+        .sagaId(event.getSagaId())
+        .eventStatus(DB_COMMITTED.toString())
+        .eventOutcome(event.getEventOutcome().toString())
+        .replyChannel(event.getReplyTo())
+        .build();
   }
 }
