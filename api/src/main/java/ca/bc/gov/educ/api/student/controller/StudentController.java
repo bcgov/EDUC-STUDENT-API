@@ -29,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -76,6 +77,9 @@ public class StudentController extends BaseController implements StudentEndpoint
   public Student createStudent(Student student) {
     validatePayload(student, true);
     setAuditColumns(student);
+    if(!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())){
+      return mapper.toStructure(getService().createStudentWithAssociations(student));
+    }
     return mapper.toStructure(getService().createStudent(mapper.toModel(student)));
   }
 

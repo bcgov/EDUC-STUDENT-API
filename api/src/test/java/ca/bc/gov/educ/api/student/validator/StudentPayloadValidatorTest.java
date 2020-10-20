@@ -12,6 +12,8 @@ import java.util.UUID;
 import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
 import ca.bc.gov.educ.api.student.model.SexCodeEntity;
 import ca.bc.gov.educ.api.student.repository.*;
+import ca.bc.gov.educ.api.student.service.StudentMergeService;
+import ca.bc.gov.educ.api.student.service.StudentTwinService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +49,10 @@ public class StudentPayloadValidatorTest {
 
   @Mock
   StudentService studentService;
+  @Mock
+  StudentTwinService studentTwinService;
+  @Mock
+  StudentMergeService studentMergeService;
   @InjectMocks
   StudentPayloadValidator studentPayloadValidator;
   @Mock
@@ -57,7 +63,7 @@ public class StudentPayloadValidatorTest {
   @Before
   public void before() {
     studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
-    studentPayloadValidator = new StudentPayloadValidator(studentService);
+    studentPayloadValidator = new StudentPayloadValidator(studentService, studentTwinService, studentMergeService);
   }
 
   @Test

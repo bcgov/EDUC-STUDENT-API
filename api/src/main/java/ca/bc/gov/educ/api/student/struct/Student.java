@@ -1,9 +1,5 @@
 package ca.bc.gov.educ.api.student.struct;
 
-import java.io.Serializable;
-
-import javax.validation.constraints.*;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,12 +7,20 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.List;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
+@SuppressWarnings("java:S1948")
 public class Student extends BaseRequest implements Serializable {
   private static final long serialVersionUID = 1L;
 
@@ -67,4 +71,6 @@ public class Student extends BaseRequest implements Serializable {
   String statusCode;
   @Size(max = 25)
   String memo;
+  List<StudentTwinAssociation> studentTwinAssociations;
+  List<StudentMergeAssociation> studentMergeAssociations;
 }
