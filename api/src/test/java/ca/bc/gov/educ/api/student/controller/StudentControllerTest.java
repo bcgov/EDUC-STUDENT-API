@@ -207,11 +207,9 @@ public class StudentControllerTest {
     var studentFromDB = studentService.retrieveStudentByPen(student.getPen());
     assertThat(studentFromDB).isPresent();
     var twinRecords = studentTwinRepository.findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(studentFromDB.get().getStudentID(),studentFromDB.get().getStudentID());
-    assertThat(twinRecords).isNotEmpty();
-    assertThat(twinRecords).size().isEqualTo(1);
+    assertThat(twinRecords).isNotEmpty().size().isEqualTo(1);
     var twinRecordsFromOtherSide = studentTwinRepository.findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(studentTwin.getStudentID(), studentTwin.getStudentID());
-    assertThat(twinRecordsFromOtherSide).isNotEmpty();
-    assertThat(twinRecordsFromOtherSide).size().isEqualTo(1);
+    assertThat(twinRecordsFromOtherSide).isNotEmpty().size().isEqualTo(1);
 
   }
 
@@ -238,11 +236,9 @@ public class StudentControllerTest {
     var studentFromDB = studentService.retrieveStudentByPen(student.getPen());
     assertThat(studentFromDB).isPresent();
     var mergeRecords = studentMergeRepository.findStudentMergeEntityByStudentID(studentFromDB.get().getStudentID());
-    assertThat(mergeRecords).isNotEmpty();
-    assertThat(mergeRecords).size().isEqualTo(1);
+    assertThat(mergeRecords).isNotEmpty().size().isEqualTo(1);
     var twinRecordsFromOtherSide = studentMergeRepository.findStudentMergeEntityByMergeStudent(studentMerge);
-    assertThat(twinRecordsFromOtherSide).isNotEmpty();
-    assertThat(twinRecordsFromOtherSide).size().isEqualTo(1);
+    assertThat(twinRecordsFromOtherSide).isNotEmpty().size().isEqualTo(1);
 
   }
 
