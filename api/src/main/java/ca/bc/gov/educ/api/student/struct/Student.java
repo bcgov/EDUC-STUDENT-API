@@ -28,7 +28,6 @@ public class Student extends BaseRequest implements Serializable {
   @NotNull(message = "PEN Number can not be null.")
   String pen;
   @Size(max = 40)
-  @NotNull(message = "Legal First Name can not be null.")
   String legalFirstName;
   @Size(max = 60)
   String legalMiddleNames;
