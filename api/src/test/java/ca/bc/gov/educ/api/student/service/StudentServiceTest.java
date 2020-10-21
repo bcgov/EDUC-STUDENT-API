@@ -64,6 +64,14 @@ public class StudentServiceTest {
   }
 
   @Test
+  public void testCreateStudentNoGiven_WhenPayloadIsValid_ShouldReturnSavedObject() {
+    StudentEntity student = getStudentEntity();
+    student.setLegalFirstName(null);
+    assertNotNull(service.createStudent(student));
+    assertNotNull(student.getStudentID());
+  }
+
+  @Test
   public void testRetrieveStudent_WhenStudentExistInDB_ShouldReturnStudent() {
     StudentEntity student = getStudentEntity();
     assertNotNull(service.createStudent(student));
