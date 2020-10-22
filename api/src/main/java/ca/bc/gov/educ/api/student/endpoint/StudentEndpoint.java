@@ -40,6 +40,7 @@ public interface StudentEndpoint {
   @PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "CREATED"), @ApiResponse(responseCode = "400", description = "BAD REQUEST")})
   @ResponseStatus(CREATED)
+  @Transactional
   Student createStudent(@Validated @RequestBody Student student);
 
   @PutMapping
