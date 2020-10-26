@@ -17,11 +17,12 @@ public class ApplicationProperties {
 
   public static final String STUDENT_API = "STUDENT-API";
   @Value("${nats.streaming.server.url}")
-  @Getter
   private String natsUrl;
 
   @Value("${nats.streaming.server.clusterId}")
-  @Getter
   private String natsClusterId;
+
+  @Value("${nats.steaming.pubsub.enabled}")
+  private boolean natsStreamingPubSubEnabled;
 
 }

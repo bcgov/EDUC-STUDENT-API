@@ -12,6 +12,7 @@ import java.util.UUID;
 import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
 import ca.bc.gov.educ.api.student.model.SexCodeEntity;
 import ca.bc.gov.educ.api.student.repository.*;
+import ca.bc.gov.educ.api.student.service.CodeTableService;
 import ca.bc.gov.educ.api.student.service.StudentMergeService;
 import ca.bc.gov.educ.api.student.service.StudentTwinService;
 import org.junit.Before;
@@ -33,21 +34,6 @@ public class StudentPayloadValidatorTest {
   StudentRepository repository;
 
   @Mock
-  GenderCodeTableRepository genderRepo;
-
-  @Mock
-  SexCodeTableRepository sexRepo;
-
-  @Mock
-  DemogCodeTableRepository demogRepo;
-
-  @Mock
-  StatusCodeTableRepository statusRepo;
-
-  @Mock
-  GradeCodeTableRepository gradeRepo;
-
-  @Mock
   StudentService studentService;
   @Mock
   StudentTwinService studentTwinService;
@@ -59,10 +45,12 @@ public class StudentPayloadValidatorTest {
   StudentMergeRepository studentMergeRepo;
   @Mock
   StudentTwinRepository studentTwinRepo;
+  @Mock
+  CodeTableService codeTableService;
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
     studentPayloadValidator = new StudentPayloadValidator(studentService, studentTwinService, studentMergeService);
   }
 
@@ -123,7 +111,6 @@ public class StudentPayloadValidatorTest {
     GenderCodeEntity code = dummyGenderCode();
     code.setEffectiveDate(LocalDateTime.MAX);
     code.setGenderCode("M");
-    when(genderRepo.findAll()).thenReturn(List.of(code));
     studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
   }
@@ -135,7 +122,6 @@ public class StudentPayloadValidatorTest {
     GenderCodeEntity code = dummyGenderCode();
     code.setExpiryDate(LocalDateTime.MIN);
     code.setGenderCode("M");
-    when(genderRepo.findAll()).thenReturn(List.of(code));
     studentPayloadValidator.validateGenderCode(Student.builder().genderCode("M").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
   }
@@ -155,7 +141,6 @@ public class StudentPayloadValidatorTest {
     SexCodeEntity code = dummySexCode();
     code.setEffectiveDate(LocalDateTime.MAX);
     code.setSexCode("M");
-    when(sexRepo.findAll()).thenReturn(List.of(code));
     studentPayloadValidator.validateSexCode(Student.builder().sexCode("M").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
   }
@@ -167,7 +152,6 @@ public class StudentPayloadValidatorTest {
     SexCodeEntity code = dummySexCode();
     code.setExpiryDate(LocalDateTime.MIN);
     code.setSexCode("M");
-    when(sexRepo.findAll()).thenReturn(List.of(code));
     studentPayloadValidator.validateSexCode(Student.builder().sexCode("M").pen(pen).build(), errorList);
     assertEquals(1, errorList.size());
   }

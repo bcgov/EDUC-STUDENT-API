@@ -6,6 +6,7 @@ import ca.bc.gov.educ.api.student.repository.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -50,10 +51,17 @@ public class StudentTwinServiceTest {
 
   @Autowired
   StudentMergeRepository studentMergeRepo;
+
+  @Autowired
+  StudentRepository studentRepository;
+
+  @Mock
+  CodeTableService codeTableService;
+
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
-    studentTwinService = new StudentTwinService(studentTwinRepo, studentTwinReasonRepo);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
+    studentTwinService = new StudentTwinService(studentTwinRepo, studentService, studentTwinReasonRepo);
   }
 
   @Test
@@ -71,7 +79,7 @@ public class StudentTwinServiceTest {
     assertNotNull(studentService.createStudent(twinedStudent));
     StudentTwinEntity studentTwin = new StudentTwinEntity();
     studentTwin.setStudentID(student.getStudentID());
-    studentTwin.setTwinStudent(twinedStudent);
+    studentTwin.setTwinStudentID(twinedStudent.getStudentID());
     studentTwin.setStudentTwinReasonCode("PENMATCH");
     assertNotNull(studentTwinService.createStudentTwin(studentTwin));
     assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isEqualTo(1);
@@ -85,7 +93,7 @@ public class StudentTwinServiceTest {
     assertNotNull(studentService.createStudent(twinedStudent));
     StudentTwinEntity studentTwin = new StudentTwinEntity();
     studentTwin.setStudentID(twinedStudent.getStudentID());
-    studentTwin.setTwinStudent(student);
+    studentTwin.setTwinStudentID(student.getStudentID());
     studentTwin.setStudentTwinReasonCode("PENMATCH");
     assertNotNull(studentTwinService.createStudentTwin(studentTwin));
     assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isEqualTo(1);
@@ -99,7 +107,7 @@ public class StudentTwinServiceTest {
     assertNotNull(studentService.createStudent(twinedStudent));
     StudentTwinEntity studentTwin = new StudentTwinEntity();
     studentTwin.setStudentID(student.getStudentID());
-    studentTwin.setTwinStudent(twinedStudent);
+    studentTwin.setTwinStudentID(twinedStudent.getStudentID());
     studentTwin.setStudentTwinReasonCode("PENMATCH");
     assertNotNull(studentTwinService.createStudentTwin(studentTwin));
     List<StudentTwinEntity> twins = studentTwinService.findStudentTwins(student.getStudentID());
