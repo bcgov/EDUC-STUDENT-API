@@ -21,6 +21,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,17 +73,24 @@ public class StudentTwinController extends BaseController implements StudentTwin
         } else {
           twinStudentID = twinRecord.getStudentID();
         }
-        val twinStruct = StudentTwin.builder()
-            .studentTwinID(twinRecord.getStudentTwinID().toString())
-            .studentID(studentID)
-            .twinStudentID(twinStudentID.toString())
-            .studentTwinReasonCode(twinRecord.getStudentTwinReasonCode())
-            .twinStudent(studentMapper.toStructure(getService().findStudentByID(twinStudentID)))
-            .build();
-        studentTwins.add(twinStruct);
+        studentTwins.add(createTwinRecord(studentID, twinRecord, twinStudentID));
       }
     }
     return studentTwins;
+  }
+
+  private StudentTwin createTwinRecord(String studentID, StudentTwinEntity twinRecord, UUID twinStudentID) {
+    return StudentTwin.builder()
+        .studentTwinID(twinRecord.getStudentTwinID().toString())
+        .studentID(studentID)
+        .createDate(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(twinRecord.getCreateDate()))
+        .updateDate(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(twinRecord.getUpdateDate()))
+        .createUser(twinRecord.getCreateUser())
+        .updateUser(twinRecord.getUpdateUser())
+        .twinStudentID(twinStudentID.toString())
+        .studentTwinReasonCode(twinRecord.getStudentTwinReasonCode())
+        .twinStudent(studentMapper.toStructure(getService().findStudentByID(twinStudentID)))
+        .build();
   }
 
   public StudentTwin createStudentTwin(String studentID, StudentTwin studentTwin) {

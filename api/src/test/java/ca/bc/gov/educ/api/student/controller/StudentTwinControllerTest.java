@@ -75,12 +75,16 @@ public class StudentTwinControllerTest {
     penmatchTwin.setStudentID(student.getStudentID());
     penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
+    penmatchTwin.setCreateDate(LocalDateTime.now());
+    penmatchTwin.setUpdateDate(LocalDateTime.now());
     studentTwinRepo.save(penmatchTwin);
 
     StudentTwinEntity pencreateTwin = new StudentTwinEntity();
     pencreateTwin.setStudentID(student.getStudentID());
     pencreateTwin.setTwinStudentID(pencreateTwinedStudent.getStudentID());
     pencreateTwin.setStudentTwinReasonCode("PENCREATE");
+    pencreateTwin.setCreateDate(LocalDateTime.now());
+    pencreateTwin.setUpdateDate(LocalDateTime.now());
     studentTwinRepo.save(pencreateTwin);
 
     this.mockMvc.perform(get("/" + student.getStudentID() + "/twins")).andDo(print()).andExpect(status().isOk())
@@ -185,6 +189,8 @@ public class StudentTwinControllerTest {
     student.setEmail("theduke@someplace.com");
     student.setEmailVerified("Y");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
+    student.setCreateDate(LocalDateTime.now());
+    student.setUpdateDate(LocalDateTime.now());
     return student;
   }
 
