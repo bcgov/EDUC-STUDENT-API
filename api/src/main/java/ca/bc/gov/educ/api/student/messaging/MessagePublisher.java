@@ -26,7 +26,7 @@ public class MessagePublisher extends MessagePubSub {
       .connectionLostHandler(this::connectionLostHandler)
       .clientId("student-api-publisher" + UUID.randomUUID().toString()).build();
     connectionFactory = new StreamingConnectionFactory(options);
-    if(connect) {
+    if(connect && applicationProperties.isNatsStreamingPubSubEnabled()) {
       this.connnect();
     }
   }

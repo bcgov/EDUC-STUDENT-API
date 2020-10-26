@@ -73,6 +73,11 @@ public class StudentPayloadValidator extends BasePayloadValidator {
         Optional<StudentMergeSourceCodeEntity> mergeSourceCodeEntity = studentMergeService.findStudentMergeSourceCode(studentMerge.getStudentMergeSourceCode());
         validateMergeSourceCodeAgainstDB(studentMerge.getStudentMergeSourceCode(), apiValidationErrors, mergeSourceCodeEntity);
         validateMergeDirectionCodeAgainstDB(studentMerge.getStudentMergeDirectionCode(), apiValidationErrors, mergeDirectionCodeEntity);
+        try{
+          getStudentService().retrieveStudent(UUID.fromString(studentMerge.getMergeStudentID()));
+        }catch (final Exception ex) {
+          apiValidationErrors.add(createFieldError("studentMerge", STUDENT_MERGE, studentMerge.getMergeStudentID(), "Twin Student ID does not exist."));
+        }
       }
     }
   }

@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Pageable;
@@ -51,9 +52,12 @@ public class StudentServiceTest {
   StudentMergeRepository studentMergeRepo;
   @Autowired
   StudentTwinRepository studentTwinRepo;
+  @Mock
+  CodeTableService codeTableService;
+
   @Before
   public void before() {
-    service = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
   }
 
   @Test
@@ -113,7 +117,7 @@ public class StudentServiceTest {
   public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() {
     var repository = mock(StudentRepository.class);
     when(repository.findAll(isNull(), any(Pageable.class))).thenThrow(EntityNotFoundException.class);
-    var service = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
+    var service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
     service.findAll(null, 0, 5, new ArrayList<>());
   }
 

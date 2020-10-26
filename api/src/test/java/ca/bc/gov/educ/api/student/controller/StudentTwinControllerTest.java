@@ -73,13 +73,13 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(student.getStudentID());
-    penmatchTwin.setTwinStudent(penmatchTwinendStudent);
+    penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     studentTwinRepo.save(penmatchTwin);
 
     StudentTwinEntity pencreateTwin = new StudentTwinEntity();
     pencreateTwin.setStudentID(student.getStudentID());
-    pencreateTwin.setTwinStudent(pencreateTwinedStudent);
+    pencreateTwin.setTwinStudentID(pencreateTwinedStudent.getStudentID());
     pencreateTwin.setStudentTwinReasonCode("PENCREATE");
     studentTwinRepo.save(pencreateTwin);
 
@@ -97,7 +97,7 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(student.getStudentID());
-    penmatchTwin.setTwinStudent(penmatchTwinendStudent);
+    penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     penmatchTwin.setUpdateUser("Test User");
 
@@ -120,7 +120,7 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(entity.getStudentID());
-    penmatchTwin.setTwinStudent(twinStudEntity);
+    penmatchTwin.setTwinStudentID(twinStudEntity.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     studentTwinRepo.save(penmatchTwin);
 
@@ -136,7 +136,7 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(student.getStudentID());
-    penmatchTwin.setTwinStudent(penmatchTwinendStudent);
+    penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
 
     this.mockMvc.perform(post("/" + penmatchTwinendStudent.getStudentID() + "/twins").contentType(MediaType.APPLICATION_JSON)
@@ -151,7 +151,7 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(student.getStudentID());
-    penmatchTwin.setTwinStudent(penmatchTwinendStudent);
+    penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("INVALID");
 
     this.mockMvc.perform(post("/" + student.getStudentID() + "/twins").contentType(MediaType.APPLICATION_JSON)

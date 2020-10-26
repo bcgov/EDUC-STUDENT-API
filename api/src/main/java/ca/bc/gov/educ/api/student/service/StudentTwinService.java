@@ -2,6 +2,7 @@ package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.model.StudentMergeDirectionCodeEntity;
 import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
 import ca.bc.gov.educ.api.student.model.StudentTwinReasonCodeEntity;
@@ -32,11 +33,14 @@ public class StudentTwinService {
 
   private final StudentTwinRepository studentTwinRepo;
 
+  private final StudentService studentService;
+
   private final StudentTwinReasonCodeTableRepository studentTwinReasonCodeTableRepo;
 
   @Autowired
-  public StudentTwinService(final StudentTwinRepository studentTwinRepo, final StudentTwinReasonCodeTableRepository studentTwinReasonCodeTableRepo) {
+  public StudentTwinService(final StudentTwinRepository studentTwinRepo, StudentService studentService, final StudentTwinReasonCodeTableRepository studentTwinReasonCodeTableRepo) {
     this.studentTwinRepo = studentTwinRepo;
+    this.studentService = studentService;
     this.studentTwinReasonCodeTableRepo = studentTwinReasonCodeTableRepo;
   }
 
@@ -46,7 +50,7 @@ public class StudentTwinService {
    * @return {@link List<StudentTwinEntity>}
    */
   public List<StudentTwinEntity> findStudentTwins(UUID studentID) {
-    return studentTwinRepo.findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(studentID, studentID);
+    return studentTwinRepo.findByStudentIDOrTwinStudentID(studentID, studentID);
   }
 
   /**
@@ -89,6 +93,10 @@ public class StudentTwinService {
 
   private Map<String, StudentTwinReasonCodeEntity> loadStudentTwinReasonCodes() {
     return getStudentTwinReasonCodesList().stream().collect(Collectors.toMap(StudentTwinReasonCodeEntity::getTwinReasonCode, twinReasonCodeEntity -> twinReasonCodeEntity));
+  }
+
+  public StudentEntity findStudentByID(UUID studentID){
+    return studentService.retrieveStudent(studentID);
   }
 
 }

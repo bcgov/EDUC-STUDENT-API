@@ -1,11 +1,9 @@
 package ca.bc.gov.educ.api.student.validator;
 
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
-
-import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
 import ca.bc.gov.educ.api.student.model.StudentTwinReasonCodeEntity;
-import ca.bc.gov.educ.api.student.service.StudentTwinService;
 import ca.bc.gov.educ.api.student.service.StudentService;
+import ca.bc.gov.educ.api.student.service.StudentTwinService;
 import ca.bc.gov.educ.api.student.struct.StudentTwin;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -36,13 +34,13 @@ public class StudentTwinPayloadValidator extends BasePayloadValidator {
     this.studentService = studentService;
   }
 
-  public List<FieldError> validatePayload(String studentID, StudentTwin studentTwin, boolean isCreateOperation, StudentTwinEntity studentTwinEntity) {
+  public List<FieldError> validatePayload(String studentID, StudentTwin studentTwin, boolean isCreateOperation) {
     final List<FieldError> apiValidationErrors = new ArrayList<>();
     if (isCreateOperation && studentTwin.getStudentTwinID() != null) {
       apiValidationErrors.add(createFieldError(STUDENT_TWIN, "studentTwinID", studentTwin.getStudentTwinID(), "studentTwinID should be null for post operation."));
     }
     validateStudentID(studentID, studentTwin, apiValidationErrors);
-    validateTwinStudentID(studentTwin, apiValidationErrors, studentTwinEntity);
+    validateTwinStudentID(studentTwin, apiValidationErrors);
     validateTwinReasonCode(studentTwin, apiValidationErrors);
     return apiValidationErrors;
   }
@@ -68,10 +66,9 @@ public class StudentTwinPayloadValidator extends BasePayloadValidator {
     }
   }
 
-  protected void validateTwinStudentID(StudentTwin studentTwin, List<FieldError> apiValidationErrors, StudentTwinEntity studentTwinEntity) {
+  protected void validateTwinStudentID(StudentTwin studentTwin, List<FieldError> apiValidationErrors) {
     try {
-      var twinStudent = getStudentService().retrieveStudent(UUID.fromString(studentTwin.getTwinStudentID()));
-      studentTwinEntity.setTwinStudent(twinStudent);
+      getStudentService().retrieveStudent(UUID.fromString(studentTwin.getTwinStudentID()));
     } catch (EntityNotFoundException e) {
       apiValidationErrors.add(createFieldError(STUDENT_TWIN, TWIN_STUDENT_ID, studentTwin.getTwinStudentID(), "Twin Student ID does not exist."));
     }

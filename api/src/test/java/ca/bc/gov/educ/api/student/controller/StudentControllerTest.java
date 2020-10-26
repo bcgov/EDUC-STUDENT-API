@@ -9,7 +9,6 @@ import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
-import ca.bc.gov.educ.api.student.util.TransformUtil;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -206,9 +205,9 @@ public class StudentControllerTest {
 
     var studentFromDB = studentService.retrieveStudentByPen(student.getPen());
     assertThat(studentFromDB).isPresent();
-    var twinRecords = studentTwinRepository.findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(studentFromDB.get().getStudentID(),studentFromDB.get().getStudentID());
+    var twinRecords = studentTwinRepository.findByStudentIDOrTwinStudentID(studentFromDB.get().getStudentID(),studentFromDB.get().getStudentID());
     assertThat(twinRecords).isNotEmpty().size().isEqualTo(1);
-    var twinRecordsFromOtherSide = studentTwinRepository.findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(studentTwin.getStudentID(), studentTwin.getStudentID());
+    var twinRecordsFromOtherSide = studentTwinRepository.findByStudentIDOrTwinStudentID(studentTwin.getStudentID(), studentTwin.getStudentID());
     assertThat(twinRecordsFromOtherSide).isNotEmpty().size().isEqualTo(1);
 
   }
@@ -294,7 +293,7 @@ public class StudentControllerTest {
     studentMergeRepository.save(studentMergeFrom);
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(entity.getStudentID());
-    penmatchTwin.setTwinStudent(mergedFromStudent);
+    penmatchTwin.setTwinStudentID(mergedFromStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     studentTwinRepository.save(penmatchTwin);
 

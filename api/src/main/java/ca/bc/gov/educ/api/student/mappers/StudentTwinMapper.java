@@ -14,7 +14,6 @@ public interface StudentTwinMapper {
 
   StudentTwinEntity toModel(StudentTwin studentTwin);
 
-  @Mapping(source = "twinStudent.studentID", target = "twinStudentID")
   StudentTwin toStructure(StudentTwinEntity studentTwinEntity);
 
   @Mapping(target = "updateUser", ignore = true)
