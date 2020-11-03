@@ -9,6 +9,7 @@ import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import ca.bc.gov.educ.api.student.struct.Event;
 import ca.bc.gov.educ.api.student.struct.Student;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
+import ca.bc.gov.educ.api.student.util.RequestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -121,18 +122,17 @@ public class EventHandlerService {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       Student student = JsonUtil.getJsonObjectFromString(Student.class, event.getEventPayload());
-      StudentEntity entity = mapper.toModel(student);
-      val optionalStudent = getStudentRepository().findStudentEntityByPen(entity.getPen());
+      val optionalStudent = getStudentRepository().findStudentEntityByPen(student.getPen());
       if (optionalStudent.isPresent()) {
         event.setEventOutcome(EventOutcome.STUDENT_ALREADY_EXIST);
       } else {
-        entity.setCreateDate(LocalDateTime.now());
-        entity.setUpdateDate(LocalDateTime.now());
+        RequestUtil.setAuditColumns(student);
+        StudentEntity entity;
         // It is expected that during messaging flow, the caller will provide a valid payload, so validation is not done.
         if (!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())) {
-          getStudentService().createStudentWithAssociations(student);
+          entity = getStudentService().createStudentWithAssociations(student);
         } else {
-          getStudentService().createStudent(entity);
+          entity = getStudentService().createStudent(mapper.toModel(student));
         }
         event.setEventOutcome(EventOutcome.STUDENT_CREATED);
         event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.

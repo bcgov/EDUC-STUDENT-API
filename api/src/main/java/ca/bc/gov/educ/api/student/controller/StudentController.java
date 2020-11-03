@@ -11,6 +11,7 @@ import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.*;
+import ca.bc.gov.educ.api.student.util.RequestUtil;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -49,7 +50,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @RestController
 @EnableResourceServer
 @Slf4j
-public class StudentController extends BaseController implements StudentEndpoint {
+public class StudentController implements StudentEndpoint {
   @Getter(AccessLevel.PRIVATE)
   private final StudentService service;
 
@@ -76,7 +77,7 @@ public class StudentController extends BaseController implements StudentEndpoint
 
   public Student createStudent(Student student) {
     validatePayload(student, true);
-    setAuditColumns(student);
+    RequestUtil.setAuditColumns(student);
     if(!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())){
       return mapper.toStructure(getService().createStudentWithAssociations(student));
     }
@@ -85,7 +86,7 @@ public class StudentController extends BaseController implements StudentEndpoint
 
   public Student updateStudent(Student student) {
     validatePayload(student, false);
-    setAuditColumns(student);
+    RequestUtil.setAuditColumns(student);
     return mapper.toStructure(getService().updateStudent(mapper.toModel(student)));
   }
 
