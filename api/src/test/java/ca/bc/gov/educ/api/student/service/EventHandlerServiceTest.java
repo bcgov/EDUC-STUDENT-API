@@ -4,8 +4,10 @@ import ca.bc.gov.educ.api.student.constant.Topics;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.repository.StudentEventRepository;
+import ca.bc.gov.educ.api.student.repository.StudentMergeRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import ca.bc.gov.educ.api.student.model.StudentEvent;
+import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
 import ca.bc.gov.educ.api.student.struct.Event;
 import ca.bc.gov.educ.api.student.struct.Student;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
@@ -21,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import static ca.bc.gov.educ.api.student.constant.EventOutcome.*;
@@ -40,6 +43,10 @@ public class EventHandlerServiceTest {
   private StudentRepository studentRepository;
   @Autowired
   private StudentEventRepository studentEventRepository;
+  @Autowired
+  private StudentTwinRepository studentTwinRepository;
+  @Autowired
+  private StudentMergeRepository studentMergeRepository;
 
   @Autowired
   private EventHandlerService eventHandlerServiceUnderTest;
@@ -52,6 +59,8 @@ public class EventHandlerServiceTest {
 
   @After
   public void tearDown() {
+    studentTwinRepository.deleteAll();
+    studentMergeRepository.deleteAll();
     studentRepository.deleteAll();
     studentEventRepository.deleteAll();
   }
@@ -163,6 +172,20 @@ public class EventHandlerServiceTest {
   }
 
   @Test
+  public void testHandleEvent_givenEventTypeCREATE_STUDENT_whenStudentDoNotExist_and_hasTwinAndMergeStudent_shouldHaveEventOutcomeSTUDENT_CREATED() {
+    var twinStudent = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString(Optional.of("127054022"))));
+    var mergeStudent = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString(Optional.of("127054023"))));
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(CREATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(
+      placeHolderStudentJSON(Optional.of(twinStudent.getStudentID().toString()), Optional.of(mergeStudent.getStudentID().toString()), Optional.empty())).build();
+    eventHandlerServiceUnderTest.handleEvent(event);
+    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, CREATE_STUDENT.toString());
+    assertThat(studentEventUpdated).isPresent();
+    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(DB_COMMITTED.toString());
+    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_CREATED.toString());
+  }
+
+  @Test
   public void testHandleEvent_givenEventTypeCREATE_STUDENT_whenStudentExist_shouldHaveEventOutcomeSTUDENT_ALREADY_EXIST() {
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(CREATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(placeHolderStudentJSON()).build();
@@ -202,14 +225,32 @@ public class EventHandlerServiceTest {
   }
 
   private Student getStudentEntityFromJsonString() {
+    return getStudentEntityFromJsonString(Optional.empty());
+  }
+
+  private Student getStudentEntityFromJsonString(Optional<String> pen) {
     try {
-      return new ObjectMapper().readValue(placeHolderStudentJSON(), Student.class);
+      return new ObjectMapper().readValue(placeHolderStudentJSON(pen), Student.class);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   protected String placeHolderStudentJSON() {
-    return "{\"legalFirstName\":\"Chester\",\"legalMiddleNames\":\"Grestie\",\"legalLastName\":\"Baulk\",\"dob\":\"1952-10-31\",\"genderCode\":\"M\",\"sexCode\":\"M\",\"statusCode\":\"A\",\"demogCode\":\"A\",\"email\":\"cbaulk0@bluehost.com\",\"emailVerified\":\"N\",\"currentSchool\":\"Xanthoparmelia wyomingica (Gyel.) Hale\",\"pen\":\"127054021\"}";
+    return placeHolderStudentJSON(Optional.empty(), Optional.empty(), Optional.empty());
+  }
+
+  protected String placeHolderStudentJSON(Optional<String> pen) {
+    return placeHolderStudentJSON(Optional.empty(), Optional.empty(), pen);
+  }
+
+  protected String placeHolderStudentJSON(Optional<String> twinStudentID, Optional<String> mergeStudentID, Optional<String> pen) {
+    return "{\"legalFirstName\":\"Chester\",\"legalMiddleNames\":\"Grestie\",\"legalLastName\":\"Baulk\",\"dob\":\"1952-10-31\",\"genderCode\":\"M\",\"sexCode\":\"M\"," +
+      "\"statusCode\":\"A\",\"demogCode\":\"A\",\"email\":\"cbaulk0@bluehost.com\",\"emailVerified\":\"N\",\"currentSchool\":\"Xanthoparmelia wyomingica (Gyel.) Hale\"," +
+      "\"pen\":\"" + pen.orElse("127054021") + "\", \"studentTwinAssociations\": [" +
+      (twinStudentID.isPresent() ? "{\"twinStudentID\": \"" + twinStudentID.get() + "\", \"studentTwinReasonCode\": \"PENCREATE\"}" : "") +
+      "], \"studentMergeAssociations\": [" +
+      (mergeStudentID.isPresent() ? "{\"mergeStudentID\": \"" + mergeStudentID.get() + "\", \"studentMergeDirectionCode\": \"FROM\", \"studentMergeSourceCode\": \"MINISTRY\"}" : "") +
+      "]}";
   }
 }

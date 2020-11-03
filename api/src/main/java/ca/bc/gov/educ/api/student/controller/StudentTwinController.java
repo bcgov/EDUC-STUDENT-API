@@ -7,6 +7,7 @@ import ca.bc.gov.educ.api.student.mappers.StudentTwinMapper;
 import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
 import ca.bc.gov.educ.api.student.service.StudentTwinService;
 import ca.bc.gov.educ.api.student.struct.*;
+import ca.bc.gov.educ.api.student.util.RequestUtil;
 import ca.bc.gov.educ.api.student.validator.StudentTwinPayloadValidator;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -34,7 +35,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @RestController
 @EnableResourceServer
 @Slf4j
-public class StudentTwinController extends BaseController implements StudentTwinEndpoint {
+public class StudentTwinController implements StudentTwinEndpoint {
   @Getter(AccessLevel.PRIVATE)
   private final StudentTwinService service;
 
@@ -53,7 +54,7 @@ public class StudentTwinController extends BaseController implements StudentTwin
   }
 
   public StudentTwin createStudentTwin(String studentID, StudentTwin studentTwin) {
-    setAuditColumns(studentTwin);
+    RequestUtil.setAuditColumns(studentTwin);
     StudentTwinEntity entity = mapper.toModel(studentTwin);
     validatePayload(studentID, studentTwin, true, entity);
     return mapper.toStructure(getService().createStudentTwin(entity));
