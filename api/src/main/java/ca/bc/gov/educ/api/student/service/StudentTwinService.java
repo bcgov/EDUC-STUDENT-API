@@ -64,6 +64,10 @@ public class StudentTwinService {
     return studentTwinRepo.save(studentTwin);
   }
 
+  public void addStudentTwins(List<StudentTwinEntity> studentTwinEntities){
+    studentTwinRepo.saveAll(studentTwinEntities);
+  }
+
   /**
    * Deletes a student twin by ID
    *
