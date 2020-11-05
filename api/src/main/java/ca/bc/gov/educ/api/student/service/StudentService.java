@@ -4,14 +4,15 @@ import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.*;
-import ca.bc.gov.educ.api.student.repository.*;
+import ca.bc.gov.educ.api.student.repository.StudentMergeRepository;
+import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
 import ca.bc.gov.educ.api.student.struct.Student;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.val;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,10 +23,12 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.stream.Collectors;
 
 /**
  * StudentService
@@ -46,27 +49,15 @@ public class StudentService {
   @Getter(AccessLevel.PRIVATE)
   private final StudentTwinRepository studentTwinRepo;
 
-  private final GenderCodeTableRepository genderCodeTableRepo;
-
-  private final SexCodeTableRepository sexCodeTableRepo;
-
-  private final DemogCodeTableRepository demogCodeTableRepo;
-
-  private final StatusCodeTableRepository statusCodeTableRepo;
-
-  private final GradeCodeTableRepository gradeCodeTableRepo;
+  @Getter(AccessLevel.PRIVATE)
+  private final CodeTableService codeTableService;
 
   @Autowired
-  public StudentService(final StudentRepository repository, StudentMergeRepository studentMergeRepo, StudentTwinRepository studentTwinRepo, final GenderCodeTableRepository genderCodeTableRepo, final SexCodeTableRepository sexCodeTableRepo,
-                        final StatusCodeTableRepository statusCodeTableRepo, final DemogCodeTableRepository demogCodeTableRepo, final GradeCodeTableRepository gradeCodeTableRepo) {
+  public StudentService(final StudentRepository repository, StudentMergeRepository studentMergeRepo, StudentTwinRepository studentTwinRepo, CodeTableService codeTableService) {
     this.repository = repository;
     this.studentMergeRepo = studentMergeRepo;
     this.studentTwinRepo = studentTwinRepo;
-    this.sexCodeTableRepo = sexCodeTableRepo;
-    this.genderCodeTableRepo = genderCodeTableRepo;
-    this.statusCodeTableRepo = statusCodeTableRepo;
-    this.demogCodeTableRepo = demogCodeTableRepo;
-    this.gradeCodeTableRepo = gradeCodeTableRepo;
+    this.codeTableService = codeTableService;
   }
 
   /**
@@ -131,84 +122,13 @@ public class StudentService {
   }
 
 
-  /**
-   * Returns the full list of sex codes
-   *
-   * @return {@link List<SexCodeEntity>}
-   */
-  @Cacheable("sexCodes")
-  public List<SexCodeEntity> getSexCodesList() {
-    return sexCodeTableRepo.findAll();
-  }
-
-  /**
-   * Returns the full list of demog codes
-   *
-   * @return {@link List<DemogCodeEntity>}
-   */
-  @Cacheable("demogCodes")
-  public List<DemogCodeEntity> getDemogCodesList() {
-    return demogCodeTableRepo.findAll();
-  }
-
-  /**
-   * Returns the full list of demog codes
-   *
-   * @return {@link List<DemogCodeEntity>}
-   */
-  @Cacheable("gradeCodes")
-  public List<GradeCodeEntity> getGradeCodesList() {
-    return gradeCodeTableRepo.findAll();
-  }
-
-  /**
-   * Returns the full list of status codes
-   *
-   * @return {@link List<StatusCodeEntity>}
-   */
-  @Cacheable("statusCodes")
-  public List<StatusCodeEntity> getStatusCodesList() {
-    return statusCodeTableRepo.findAll();
-  }
-
-  /**
-   * Returns the full list of access channel codes
-   *
-   * @return {@link List<GenderCodeEntity>}
-   */
-  @Cacheable("genderCodes")
-  public List<GenderCodeEntity> getGenderCodesList() {
-    return genderCodeTableRepo.findAll();
-  }
-
-  public Optional<SexCodeEntity> findSexCode(String sexCode) {
-    return Optional.ofNullable(loadAllSexCodes().get(sexCode));
-  }
-
-  public Optional<GenderCodeEntity> findGenderCode(String genderCode) {
-    return Optional.ofNullable(loadGenderCodes().get(genderCode));
-  }
-
-  private Map<String, SexCodeEntity> loadAllSexCodes() {
-    return getSexCodesList().stream().collect(Collectors.toMap(SexCodeEntity::getSexCode, sexCode -> sexCode));
-  }
-
-
-  private Map<String, GenderCodeEntity> loadGenderCodes() {
-    return getGenderCodesList().stream().collect(Collectors.toMap(GenderCodeEntity::getGenderCode, genderCodeEntity -> genderCodeEntity));
-  }
-
   @Transactional(propagation = Propagation.MANDATORY)
   public void deleteById(UUID id) {
     val entityOptional = getRepository().findById(id);
     val entity = entityOptional.orElseThrow(() -> new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, id.toString()));
-    var twins = getStudentTwinRepo().findStudentTwinEntityByStudentIDOrTwinStudent_StudentID(entity.getStudentID(), entity.getStudentID());
-    var twins2 = getStudentTwinRepo().findByTwinStudent(entity);
+    var twins = getStudentTwinRepo().findByStudentIDOrTwinStudentID(entity.getStudentID(), entity.getStudentID());
     if (!twins.isEmpty()) {
       getStudentTwinRepo().deleteAll(twins);
-    }
-    if (!twins2.isEmpty()) {
-      getStudentTwinRepo().deleteAll(twins2);
     }
     var merges = getStudentMergeRepo().findStudentMergeEntityByStudentID(entity.getStudentID());
     var merges2 = getStudentMergeRepo().findStudentMergeEntityByMergeStudent(entity);
@@ -236,7 +156,7 @@ public class StudentService {
   public StudentEntity createStudentWithAssociations(Student student) {
     StudentEntity studentEntity = StudentMapper.mapper.toModel(student);
     getRepository().save(studentEntity);
-    if(!CollectionUtils.isEmpty(student.getStudentMergeAssociations())) {
+    if (!CollectionUtils.isEmpty(student.getStudentMergeAssociations())) {
       List<StudentMergeEntity> studentMergeEntities = new ArrayList<>();
       for (var mergeStudent : student.getStudentMergeAssociations()) {
         var studentMergeEntity = new StudentMergeEntity();
@@ -252,7 +172,7 @@ public class StudentService {
       }
       getStudentMergeRepo().saveAll(studentMergeEntities);
     }
-    if(!CollectionUtils.isEmpty(student.getStudentTwinAssociations())) {
+    if (!CollectionUtils.isEmpty(student.getStudentTwinAssociations())) {
       List<StudentTwinEntity> studentTwinEntities = new ArrayList<>();
       for (var twinStudent : student.getStudentTwinAssociations()) {
         var studentTwinEntity = new StudentTwinEntity();
@@ -261,7 +181,7 @@ public class StudentService {
         studentTwinEntity.setCreateUser(studentEntity.getCreateUser());
         studentTwinEntity.setUpdateUser(studentEntity.getUpdateUser());
         studentTwinEntity.setStudentTwinReasonCode(twinStudent.getStudentTwinReasonCode());
-        studentTwinEntity.setTwinStudent(getRepository().findById(UUID.fromString(twinStudent.getTwinStudentID())).get());
+        studentTwinEntity.setTwinStudentID(UUID.fromString(twinStudent.getTwinStudentID()));
         studentTwinEntity.setStudentID(studentEntity.getStudentID());
         studentTwinEntities.add(studentTwinEntity);
       }
@@ -269,5 +189,33 @@ public class StudentService {
     }
 
     return studentEntity;
+  }
+
+  public List<GenderCodeEntity> getGenderCodesList() {
+    return getCodeTableService().getGenderCodesList();
+  }
+
+  public List<SexCodeEntity> getSexCodesList() {
+    return getCodeTableService().getSexCodesList();
+  }
+
+  public List<DemogCodeEntity> getDemogCodesList() {
+    return getCodeTableService().getDemogCodesList();
+  }
+
+  public List<GradeCodeEntity> getGradeCodesList() {
+    return getCodeTableService().getGradeCodesList();
+  }
+
+  public List<StatusCodeEntity> getStatusCodesList() {
+    return getCodeTableService().getStatusCodesList();
+  }
+
+  public Optional<GenderCodeEntity> findGenderCode(String genderCode) {
+    return getCodeTableService().findGenderCode(genderCode);
+  }
+
+  public Optional<SexCodeEntity> findSexCode(String sexCode) {
+    return getCodeTableService().findSexCode(sexCode);
   }
 }

@@ -2,6 +2,7 @@ package ca.bc.gov.educ.api.student.validator;
 
 import ca.bc.gov.educ.api.student.model.*;
 import ca.bc.gov.educ.api.student.repository.*;
+import ca.bc.gov.educ.api.student.service.CodeTableService;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.service.StudentTwinService;
 import ca.bc.gov.educ.api.student.struct.StudentTwin;
@@ -60,10 +61,13 @@ public class StudentTwinPayloadValidatorTest {
   @InjectMocks
   StudentTwinPayloadValidator studentTwinPayloadValidator;
 
+  @Mock
+  CodeTableService codeTableService;
+
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, genderRepo, sexRepo, statusRepo, demogRepo, gradeRepo);
-    studentTwinService = new StudentTwinService(studentTwinRepo, studentTwinReasonCodeTableRepo);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo,codeTableService);
+    studentTwinService = new StudentTwinService(studentTwinRepo, studentService, studentTwinReasonCodeTableRepo);
     studentTwinPayloadValidator = new StudentTwinPayloadValidator(studentTwinService, studentService);
   }
 
@@ -111,7 +115,7 @@ public class StudentTwinPayloadValidatorTest {
     StudentTwinEntity twinEntity = new StudentTwinEntity();
     List<FieldError> errorList = new ArrayList<>();
     when(repository.findById(UUID.fromString(studentID))).thenReturn(Optional.empty());
-    studentTwinPayloadValidator.validateTwinStudentID(twin, errorList, twinEntity);
+    studentTwinPayloadValidator.validateTwinStudentID(twin, errorList);
     assertEquals(1, errorList.size());
   }
 
@@ -126,7 +130,7 @@ public class StudentTwinPayloadValidatorTest {
     when(repository.findById(UUID.fromString(twinStudentID))).thenReturn(createDummyStudentRecord(twinStudentID));
     when(studentTwinReasonCodeTableRepo.findAll()).thenReturn(createDummyStudentTwinReasonCodeRecords());
 
-    var errorList = studentTwinPayloadValidator.validatePayload(studentID, twin, true, twinEntity);
+    var errorList = studentTwinPayloadValidator.validatePayload(studentID, twin, true);
     assertEquals(1, errorList.size());
   }
 

@@ -7,6 +7,7 @@ import ca.bc.gov.educ.api.student.mappers.StudentMergeMapper;
 import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
 import ca.bc.gov.educ.api.student.service.StudentMergeService;
 import ca.bc.gov.educ.api.student.struct.*;
+import ca.bc.gov.educ.api.student.util.RequestUtil;
 import ca.bc.gov.educ.api.student.validator.StudentMergePayloadValidator;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -32,7 +33,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @RestController
 @EnableResourceServer
 @Slf4j
-public class StudentMergeController extends BaseController implements StudentMergeEndpoint {
+public class StudentMergeController implements StudentMergeEndpoint {
   @Getter(AccessLevel.PRIVATE)
   private final StudentMergeService service;
 
@@ -51,7 +52,7 @@ public class StudentMergeController extends BaseController implements StudentMer
   }
 
   public StudentMerge createStudentMerge(String studentID, StudentMerge studentMerge) {
-    setAuditColumns(studentMerge);
+    RequestUtil.setAuditColumns(studentMerge);
     StudentMergeEntity entity = mapper.toModel(studentMerge);
     validatePayload(studentID, studentMerge, true, entity);
     return mapper.toStructure(getService().createStudentMerge(entity));

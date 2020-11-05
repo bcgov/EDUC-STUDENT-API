@@ -52,7 +52,7 @@ public class MessageSubscriber extends MessagePubSub {
       .clientId("student-api-subscriber" + UUID.randomUUID().toString())
       .connectionLostHandler(this::connectionLostHandler).build();
     connectionFactory = new StreamingConnectionFactory(options);
-    if(connect) {
+    if(connect && applicationProperties.isNatsStreamingPubSubEnabled()) {
       this.connnect();
     }
   }

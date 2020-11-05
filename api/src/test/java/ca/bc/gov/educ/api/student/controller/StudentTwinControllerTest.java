@@ -73,14 +73,18 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(student.getStudentID());
-    penmatchTwin.setTwinStudent(penmatchTwinendStudent);
+    penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
+    penmatchTwin.setCreateDate(LocalDateTime.now());
+    penmatchTwin.setUpdateDate(LocalDateTime.now());
     studentTwinRepo.save(penmatchTwin);
 
     StudentTwinEntity pencreateTwin = new StudentTwinEntity();
     pencreateTwin.setStudentID(student.getStudentID());
-    pencreateTwin.setTwinStudent(pencreateTwinedStudent);
+    pencreateTwin.setTwinStudentID(pencreateTwinedStudent.getStudentID());
     pencreateTwin.setStudentTwinReasonCode("PENCREATE");
+    pencreateTwin.setCreateDate(LocalDateTime.now());
+    pencreateTwin.setUpdateDate(LocalDateTime.now());
     studentTwinRepo.save(pencreateTwin);
 
     this.mockMvc.perform(get("/" + student.getStudentID() + "/twins")).andDo(print()).andExpect(status().isOk())
@@ -97,7 +101,7 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(student.getStudentID());
-    penmatchTwin.setTwinStudent(penmatchTwinendStudent);
+    penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     penmatchTwin.setUpdateUser("Test User");
 
@@ -120,7 +124,7 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(entity.getStudentID());
-    penmatchTwin.setTwinStudent(twinStudEntity);
+    penmatchTwin.setTwinStudentID(twinStudEntity.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     studentTwinRepo.save(penmatchTwin);
 
@@ -136,7 +140,7 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(student.getStudentID());
-    penmatchTwin.setTwinStudent(penmatchTwinendStudent);
+    penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
 
     this.mockMvc.perform(post("/" + penmatchTwinendStudent.getStudentID() + "/twins").contentType(MediaType.APPLICATION_JSON)
@@ -151,7 +155,7 @@ public class StudentTwinControllerTest {
 
     StudentTwinEntity penmatchTwin = new StudentTwinEntity();
     penmatchTwin.setStudentID(student.getStudentID());
-    penmatchTwin.setTwinStudent(penmatchTwinendStudent);
+    penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("INVALID");
 
     this.mockMvc.perform(post("/" + student.getStudentID() + "/twins").contentType(MediaType.APPLICATION_JSON)
@@ -185,6 +189,8 @@ public class StudentTwinControllerTest {
     student.setEmail("theduke@someplace.com");
     student.setEmailVerified("Y");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
+    student.setCreateDate(LocalDateTime.now());
+    student.setUpdateDate(LocalDateTime.now());
     return student;
   }
 
