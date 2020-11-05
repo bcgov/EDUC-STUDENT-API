@@ -4,7 +4,7 @@ pipeline{
       extJSHelper = '';
       DEBUG_OUTPUT = 'false'
 
-      NAMESPACE='mvubjx'
+      NAMESPACE='75e61b'
       TOOLS = "${NAMESPACE}-tools"
       DEV = "${NAMESPACE}-dev"
 
@@ -20,7 +20,7 @@ pipeline{
       APP_DOMAIN = 'pathfinder.gov.bc.ca'
       SOURCE_REPO_REF = 'master'
       SOURCE_REPO_URL = 'https://github.com/${OWNER}/${REPO_NAME}.git'
-      DC_URL = "https://raw.githubusercontent.com/${OWNER}/${REPO_NAME}/master/tools/openshift/api.dc.yaml"
+      DC_URL = "https://raw.githubusercontent.com/${OWNER}/${REPO_NAME}/master/tools/openshift/api.dc.ocp4.yaml"
       MIN_REPLICAS = "1"
       MAX_REPLICAS = "1"
       MIN_CPU = "50m"
