@@ -1,16 +1,18 @@
 package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
+import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.repository.*;
-import lombok.AccessLevel;
-import lombok.Getter;
+import ca.bc.gov.educ.api.student.struct.StudentUpdate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -52,12 +54,14 @@ public class StudentServiceTest {
   StudentMergeRepository studentMergeRepo;
   @Autowired
   StudentTwinRepository studentTwinRepo;
+  @Autowired
+  StudentHistoryRepository studentHistoryRepository;
   @Mock
   CodeTableService codeTableService;
 
   @Before
   public void before() {
-    service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
+    service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryRepository);
   }
 
   @Test
@@ -94,9 +98,20 @@ public class StudentServiceTest {
     StudentEntity student = getStudentEntity();
     student = service.createStudent(student);
     student.setLegalFirstName("updatedFirstName");
-    StudentEntity updateEntity = service.updateStudent(student);
+
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(student.getStudentID().toString());
+    studentUpdate.setHistoryActivityCode("USEREDIT");
+    BeanUtils.copyProperties(StudentMapper.mapper.toStructure(student), studentUpdate);
+    StudentEntity updateEntity = service.updateStudent(studentUpdate);
     assertNotNull(updateEntity);
-    assertThat(updateEntity.getLegalFirstName()).isEqualTo("updatedFirstName");
+    assertThat(updateEntity.getLegalFirstName()).isEqualTo("updatedFirstName".toUpperCase());
+
+    var history = studentHistoryRepository.findByStudentID(student.getStudentID(), PageRequest.of(0, 10));
+    assertThat(history.getTotalElements()).isEqualTo(1);
+    assertThat(history.getContent().get(0).getHistoryActivityCode()).isEqualTo("USEREDIT");
+    assertThat(history.getContent().get(0).getCreateUser()).isEqualTo(studentUpdate.getCreateUser());
+
   }
 
   @Test(expected = EntityNotFoundException.class)
@@ -105,7 +120,12 @@ public class StudentServiceTest {
     StudentEntity student = getStudentEntity();
     student.setStudentID(UUID.randomUUID());
     student.setLegalFirstName("updatedFirstName");
-    StudentEntity updateEntity = service.updateStudent(student);
+
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(student.getStudentID().toString());
+    studentUpdate.setHistoryActivityCode("USEREDIT");
+    BeanUtils.copyProperties(StudentMapper.mapper.toStructure(student), studentUpdate);
+    StudentEntity updateEntity = service.updateStudent(studentUpdate);
   }
 
   @Test
@@ -117,7 +137,7 @@ public class StudentServiceTest {
   public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() {
     var repository = mock(StudentRepository.class);
     when(repository.findAll(isNull(), any(Pageable.class))).thenThrow(EntityNotFoundException.class);
-    var service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
+    var service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryRepository);
     service.findAll(null, 0, 5, new ArrayList<>());
   }
 
@@ -138,6 +158,7 @@ public class StudentServiceTest {
     student.setEmail("theduke@someplace.com");
     student.setEmailVerified("Y");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
+    student.setCreateUser("Test");
     return student;
   }
 }

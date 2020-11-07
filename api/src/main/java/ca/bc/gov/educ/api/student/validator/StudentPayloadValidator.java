@@ -4,7 +4,9 @@ import ca.bc.gov.educ.api.student.model.*;
 import ca.bc.gov.educ.api.student.service.StudentMergeService;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.service.StudentTwinService;
-import ca.bc.gov.educ.api.student.struct.Student;
+import ca.bc.gov.educ.api.student.struct.BaseStudent;
+import ca.bc.gov.educ.api.student.struct.StudentCreate;
+import ca.bc.gov.educ.api.student.struct.StudentUpdate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,7 @@ public class StudentPayloadValidator extends BasePayloadValidator {
   public static final String GENDER_CODE = "genderCode";
   public static final String SEX_CODE = "sexCode";
   public static final String PEN = "pen";
+  public static final String HISTORY_ACTIVITY_CODE = "historyActivityCode";
   @Getter(AccessLevel.PRIVATE)
   private final StudentService studentService;
   @Getter(AccessLevel.PRIVATE)
@@ -39,7 +42,7 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     this.studentMergeService = studentMergeService;
   }
 
-  public List<FieldError> validatePayload(Student student, boolean isCreateOperation) {
+  public List<FieldError> validatePayload(BaseStudent student, boolean isCreateOperation) {
     final List<FieldError> apiValidationErrors = new ArrayList<>();
     if (isCreateOperation && student.getStudentID() != null) {
       apiValidationErrors.add(createFieldError("studentID", student.getStudentID(), "studentID should be null for post operation."));
@@ -47,12 +50,23 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     validatePEN(student, isCreateOperation, apiValidationErrors);
     validateGenderCode(student, apiValidationErrors);
     validateSexCode(student, apiValidationErrors);
+    return apiValidationErrors;
+  }
+
+  public List<FieldError> validatePayload(StudentCreate student) {
+    var apiValidationErrors = validatePayload(student, true);
     validateMergesIfPresent(student, apiValidationErrors);
     validateTwinsIfPresent(student, apiValidationErrors);
     return apiValidationErrors;
   }
 
-  private void validateTwinsIfPresent(Student student, List<FieldError> apiValidationErrors) {
+  public List<FieldError> validatePayload(StudentUpdate student) {
+    var apiValidationErrors = validatePayload(student, false);
+    validateStudentHistoryActivityCode(student, apiValidationErrors);
+    return apiValidationErrors;
+  }
+
+  private void validateTwinsIfPresent(StudentCreate student, List<FieldError> apiValidationErrors) {
     if (student.getStudentTwinAssociations() != null && !student.getStudentTwinAssociations().isEmpty()) {
       for (var studentTwin : student.getStudentTwinAssociations()) {
         Optional<StudentTwinReasonCodeEntity> twinReasonCodeEntity = studentTwinService.findStudentTwinReasonCode(studentTwin.getStudentTwinReasonCode());
@@ -66,7 +80,7 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     }
   }
 
-  private void validateMergesIfPresent(Student student, List<FieldError> apiValidationErrors) {
+  private void validateMergesIfPresent(StudentCreate student, List<FieldError> apiValidationErrors) {
     if (student.getStudentMergeAssociations() != null && !student.getStudentMergeAssociations().isEmpty()) {
       for (var studentMerge : student.getStudentMergeAssociations()) {
         Optional<StudentMergeDirectionCodeEntity> mergeDirectionCodeEntity = studentMergeService.findStudentMergeDirectionCode(studentMerge.getStudentMergeDirectionCode());
@@ -82,7 +96,7 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     }
   }
 
-  protected void validateGenderCode(Student student, List<FieldError> apiValidationErrors) {
+  protected void validateGenderCode(BaseStudent student, List<FieldError> apiValidationErrors) {
     if (student.getGenderCode() != null) {
       Optional<GenderCodeEntity> genderCodeEntity = studentService.findGenderCode(student.getGenderCode());
       if (genderCodeEntity.isEmpty()) {
@@ -95,7 +109,7 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     }
   }
 
-  protected void validateSexCode(Student student, List<FieldError> apiValidationErrors) {
+  protected void validateSexCode(BaseStudent student, List<FieldError> apiValidationErrors) {
     if (student.getSexCode() != null) {
       Optional<SexCodeEntity> sexCodeEntity = studentService.findSexCode(student.getSexCode());
       if (sexCodeEntity.isEmpty()) {
@@ -108,12 +122,25 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     }
   }
 
-  protected void validatePEN(Student student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {
+  protected void validatePEN(BaseStudent student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {
     Optional<StudentEntity> studentEntity = getStudentService().retrieveStudentByPen(student.getPen());
     if (isCreateOperation && studentEntity.isPresent()) {
       apiValidationErrors.add(createFieldError(PEN, student.getPen(), "PEN is already associated to a student."));
     } else if (studentEntity.isPresent() && !studentEntity.get().getStudentID().equals(UUID.fromString(student.getStudentID()))) {
       apiValidationErrors.add(createFieldError(PEN, student.getPen(), "Updated PEN number is already associated to a different student."));
+    }
+  }
+
+  protected void validateStudentHistoryActivityCode(StudentUpdate student, List<FieldError> apiValidationErrors) {
+    if (student.getHistoryActivityCode() != null) {
+      Optional<StudentHistoryActivityCodeEntity> historyActivityCodeEntity = studentService.findStudentHistoryActivityCode(student.getHistoryActivityCode());
+      if (historyActivityCodeEntity.isEmpty()) {
+        apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, student.getHistoryActivityCode(), "Invalid History Activity Code."));
+      } else if (historyActivityCodeEntity.get().getEffectiveDate() != null && historyActivityCodeEntity.get().getEffectiveDate().isAfter(LocalDateTime.now())) {
+        apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, student.getHistoryActivityCode(), "History Activity Code provided is not yet effective."));
+      } else if (historyActivityCodeEntity.get().getExpiryDate() != null && historyActivityCodeEntity.get().getExpiryDate().isBefore(LocalDateTime.now())) {
+        apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, student.getHistoryActivityCode(), "History Activity Code provided has expired."));
+      }
     }
   }
 

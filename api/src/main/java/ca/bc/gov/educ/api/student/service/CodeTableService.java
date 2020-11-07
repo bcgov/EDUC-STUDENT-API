@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,13 +25,17 @@ public class CodeTableService {
 
   private final GradeCodeTableRepository gradeCodeTableRepo;
 
+  private final StudentHistoryActivityCodeTableRepository historyActivityCodeTableRepo;
+
   @Autowired
-  public CodeTableService(GenderCodeTableRepository genderCodeTableRepo, SexCodeTableRepository sexCodeTableRepo, DemogCodeTableRepository demogCodeTableRepo, StatusCodeTableRepository statusCodeTableRepo, GradeCodeTableRepository gradeCodeTableRepo) {
+  public CodeTableService(GenderCodeTableRepository genderCodeTableRepo, SexCodeTableRepository sexCodeTableRepo, DemogCodeTableRepository demogCodeTableRepo,
+                          StatusCodeTableRepository statusCodeTableRepo, GradeCodeTableRepository gradeCodeTableRepo, StudentHistoryActivityCodeTableRepository historyActivityCodeTableRepo) {
     this.genderCodeTableRepo = genderCodeTableRepo;
     this.sexCodeTableRepo = sexCodeTableRepo;
     this.demogCodeTableRepo = demogCodeTableRepo;
     this.statusCodeTableRepo = statusCodeTableRepo;
     this.gradeCodeTableRepo = gradeCodeTableRepo;
+    this.historyActivityCodeTableRepo = historyActivityCodeTableRepo;
   }
 
   /**
@@ -91,13 +96,30 @@ public class CodeTableService {
     return Optional.ofNullable(loadGenderCodes().get(genderCode));
   }
 
+  public Optional<StudentHistoryActivityCodeEntity> findStudentHistoryActivityCode(String historyActivityCode) {
+    return Optional.ofNullable(loadStudentHistoryActivityCodes().get(historyActivityCode));
+  }
+
+  /**
+   * Returns the full list of student history activity codes
+   *
+   * @return {@link List<StudentHistoryActivityCodeEntity>}
+   */
+  @Cacheable("studentHistoryActivityCodes")
+  public List<StudentHistoryActivityCodeEntity> getStudentHistoryActivityCodesList() {
+    return historyActivityCodeTableRepo.findAll();
+  }
+
   private Map<String, SexCodeEntity> loadAllSexCodes() {
-    return getSexCodesList().stream().collect(Collectors.toMap(SexCodeEntity::getSexCode, sexCode -> sexCode));
+    return getSexCodesList().stream().collect(Collectors.toMap(SexCodeEntity::getSexCode, Function.identity()));
   }
 
 
   private Map<String, GenderCodeEntity> loadGenderCodes() {
-    return getGenderCodesList().stream().collect(Collectors.toMap(GenderCodeEntity::getGenderCode, genderCodeEntity -> genderCodeEntity));
+    return getGenderCodesList().stream().collect(Collectors.toMap(GenderCodeEntity::getGenderCode, Function.identity()));
   }
 
+  private Map<String, StudentHistoryActivityCodeEntity> loadStudentHistoryActivityCodes() {
+    return getStudentHistoryActivityCodesList().stream().collect(Collectors.toMap(StudentHistoryActivityCodeEntity::getHistoryActivityCode, Function.identity()));
+  }
 }

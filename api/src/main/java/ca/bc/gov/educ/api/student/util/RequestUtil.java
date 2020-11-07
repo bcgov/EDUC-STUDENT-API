@@ -16,14 +16,16 @@ public class RequestUtil {
    *
    * @param baseRequest The object which will be persisted.
    */
-  public static void setAuditColumns(@NotNull BaseRequest baseRequest) {
-    if (StringUtils.isBlank(baseRequest.getCreateUser())) {
+  public static void setAuditColumns(@NotNull BaseRequest baseRequest, boolean isCreateOperation) {
+    if (isCreateOperation && StringUtils.isBlank(baseRequest.getCreateUser())) {
       baseRequest.setCreateUser(ApplicationProperties.STUDENT_API);
     }
     if (StringUtils.isBlank(baseRequest.getUpdateUser())) {
       baseRequest.setUpdateUser(ApplicationProperties.STUDENT_API);
     }
-    baseRequest.setCreateDate(LocalDateTime.now().toString());
+    if(isCreateOperation) {
+      baseRequest.setCreateDate(LocalDateTime.now().toString());
+    }
     baseRequest.setUpdateDate(LocalDateTime.now().toString());
   }
 }

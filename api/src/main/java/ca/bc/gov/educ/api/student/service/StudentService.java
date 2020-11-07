@@ -4,10 +4,13 @@ import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.*;
+import ca.bc.gov.educ.api.student.repository.StudentHistoryRepository;
 import ca.bc.gov.educ.api.student.repository.StudentMergeRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
-import ca.bc.gov.educ.api.student.struct.Student;
+import ca.bc.gov.educ.api.student.struct.StudentCreate;
+import ca.bc.gov.educ.api.student.struct.StudentUpdate;
+import ca.bc.gov.educ.api.student.util.TransformUtil;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.val;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +48,9 @@ public class StudentService {
   private final StudentRepository repository;
 
   @Getter(AccessLevel.PRIVATE)
+  private final StudentHistoryRepository studentHistoryRepository;
+
+  @Getter(AccessLevel.PRIVATE)
   private final StudentMergeRepository studentMergeRepo;
 
   @Getter(AccessLevel.PRIVATE)
@@ -53,11 +60,13 @@ public class StudentService {
   private final CodeTableService codeTableService;
 
   @Autowired
-  public StudentService(final StudentRepository repository, StudentMergeRepository studentMergeRepo, StudentTwinRepository studentTwinRepo, CodeTableService codeTableService) {
+  public StudentService(final StudentRepository repository, StudentMergeRepository studentMergeRepo, StudentTwinRepository studentTwinRepo,
+                        CodeTableService codeTableService, StudentHistoryRepository studentHistoryRepository) {
     this.repository = repository;
     this.studentMergeRepo = studentMergeRepo;
     this.studentTwinRepo = studentTwinRepo;
     this.codeTableService = codeTableService;
+    this.studentHistoryRepository = studentHistoryRepository;
   }
 
   /**
@@ -94,31 +103,48 @@ public class StudentService {
    * @throws InvalidParameterException if Student GUID is passed in the payload for the post operation it will throw this exception.
    */
   public StudentEntity createStudent(StudentEntity student) {
+    TransformUtil.uppercaseFields(student);
     return repository.save(student);
   }
 
   /**
    * Updates a StudentEntity
    *
-   * @param student the payload which will update the DB record for the given student.
+   * @param studentUpdate the payload which will update the DB record for the given student.
    * @return the updated entity.
    * @throws EntityNotFoundException if the entity does not exist in the DB.
    */
-  public StudentEntity updateStudent(StudentEntity student) {
-
+  @Transactional(propagation = Propagation.MANDATORY, noRollbackFor = {EntityNotFoundException.class})
+  public StudentEntity updateStudent(StudentUpdate studentUpdate) {
+    var student = StudentMapper.mapper.toModel(studentUpdate);
     Optional<StudentEntity> curStudentEntity = repository.findById(student.getStudentID());
 
     if (curStudentEntity.isPresent()) {
+      createStudentHistory(studentUpdate, curStudentEntity.get());
+
       final StudentEntity newStudentEntity = curStudentEntity.get();
       val createUser = newStudentEntity.getCreateUser();
       val createDate = newStudentEntity.getCreateDate();
       BeanUtils.copyProperties(student, newStudentEntity);
       newStudentEntity.setCreateUser(createUser);
       newStudentEntity.setCreateDate(createDate);
+      TransformUtil.uppercaseFields(newStudentEntity);
       return repository.save(newStudentEntity);
     } else {
       throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, student.getStudentID().toString());
     }
+  }
+
+  private void createStudentHistory(StudentUpdate studentUpdate, StudentEntity curStudentEntity) {
+    final StudentHistoryEntity studentHistoryEntity = new StudentHistoryEntity();
+    BeanUtils.copyProperties(curStudentEntity, studentHistoryEntity);
+    studentHistoryEntity.setStudentID(curStudentEntity.getStudentID());
+    studentHistoryEntity.setHistoryActivityCode(studentUpdate.getHistoryActivityCode());
+    studentHistoryEntity.setCreateUser(studentUpdate.getCreateUser());
+    studentHistoryEntity.setCreateDate(LocalDateTime.now());
+    studentHistoryEntity.setUpdateUser(studentUpdate.getCreateUser());
+    studentHistoryEntity.setUpdateDate(LocalDateTime.now());
+    studentHistoryRepository.save(studentHistoryEntity);
   }
 
 
@@ -153,8 +179,9 @@ public class StudentService {
   }
 
   @Transactional(propagation = Propagation.MANDATORY)
-  public StudentEntity createStudentWithAssociations(Student student) {
+  public StudentEntity createStudentWithAssociations(StudentCreate student) {
     StudentEntity studentEntity = StudentMapper.mapper.toModel(student);
+    TransformUtil.uppercaseFields(studentEntity);
     getRepository().save(studentEntity);
     if (!CollectionUtils.isEmpty(student.getStudentMergeAssociations())) {
       List<StudentMergeEntity> studentMergeEntities = new ArrayList<>();
@@ -211,11 +238,19 @@ public class StudentService {
     return getCodeTableService().getStatusCodesList();
   }
 
+  public List<StudentHistoryActivityCodeEntity> getStudentHistoryActivityCodesList() {
+    return getCodeTableService().getStudentHistoryActivityCodesList();
+  }
+
   public Optional<GenderCodeEntity> findGenderCode(String genderCode) {
     return getCodeTableService().findGenderCode(genderCode);
   }
 
   public Optional<SexCodeEntity> findSexCode(String sexCode) {
     return getCodeTableService().findSexCode(sexCode);
+  }
+
+  public Optional<StudentHistoryActivityCodeEntity> findStudentHistoryActivityCode(String historyActivityCode) {
+    return getCodeTableService().findStudentHistoryActivityCode(historyActivityCode);
   }
 }

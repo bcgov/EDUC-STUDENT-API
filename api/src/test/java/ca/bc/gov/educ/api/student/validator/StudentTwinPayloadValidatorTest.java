@@ -64,9 +64,12 @@ public class StudentTwinPayloadValidatorTest {
   @Mock
   CodeTableService codeTableService;
 
+  @Mock
+  StudentHistoryRepository studentHistoryRepository;
+
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo,codeTableService);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo,codeTableService,studentHistoryRepository);
     studentTwinService = new StudentTwinService(studentTwinRepo, studentService, studentTwinReasonCodeTableRepo);
     studentTwinPayloadValidator = new StudentTwinPayloadValidator(studentTwinService, studentService);
   }

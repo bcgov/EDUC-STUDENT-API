@@ -41,12 +41,13 @@ public interface StudentEndpoint {
   @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "CREATED"), @ApiResponse(responseCode = "400", description = "BAD REQUEST")})
   @ResponseStatus(CREATED)
   @Transactional
-  Student createStudent(@Validated @RequestBody Student student);
+  Student createStudent(@Validated @RequestBody StudentCreate student);
 
   @PutMapping
   @PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "400", description = "BAD REQUEST"), @ApiResponse(responseCode = "404", description = "NOT FOUND")})
-  Student updateStudent(@Validated @RequestBody Student student);
+  @Transactional
+  Student updateStudent(@Validated @RequestBody StudentUpdate student);
   
   @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
   @GetMapping("sex-codes")
@@ -88,4 +89,9 @@ public interface StudentEndpoint {
                                               @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                               @RequestParam(name = "sort", defaultValue = "") String sortCriteriaJson,
                                               @RequestParam(name = "searchCriteriaList", required = false) String searchCriteriaListJson);
+
+  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
+  @GetMapping("student-history-activity-codes")
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
+  List<StudentHistoryActivityCode> getStudentHistoryActivityCodes();
 }

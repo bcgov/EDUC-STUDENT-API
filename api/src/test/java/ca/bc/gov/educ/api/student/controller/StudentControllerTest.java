@@ -9,6 +9,7 @@ import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
+import ca.bc.gov.educ.api.student.util.TransformUtil;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -91,6 +93,8 @@ public class StudentControllerTest {
   StudentMergeSourceCodeTableRepository mergeSourceCodeRepo;
   @Autowired
   StudentTwinReasonCodeTableRepository twinReasonCodeRepo;
+  @Autowired
+  StudentHistoryActivityCodeTableRepository studentHistoryActivityCodeTableRepo;
 
   @Before
   public void setUp() {
@@ -105,6 +109,7 @@ public class StudentControllerTest {
     mergeDirectionCodeRepo.save(createStudentMergeDirectionCodeData());
     mergeSourceCodeRepo.save(createStudentMergeSourceCodeData());
     twinReasonCodeRepo.save(createStudentTwinReasonCodeData());
+    studentHistoryActivityCodeTableRepo.save(createStudentHistoryActivityCodeData());
   }
 
   /**
@@ -117,9 +122,9 @@ public class StudentControllerTest {
     demogRepo.deleteAll();
     statusRepo.deleteAll();
     gradeRepo.deleteAll();
-    repository.deleteAll();
     studentMergeRepository.deleteAll();
     studentTwinRepository.deleteAll();
+    repository.deleteAll();
   }
 
   private SexCodeEntity createSexCodeData() {
@@ -197,10 +202,13 @@ public class StudentControllerTest {
     studentTwinAssociation.setStudentTwinReasonCode("PENMATCH");
     studentTwinAssociation.setTwinStudentID(studentTwin.getStudentID().toString());
     studentTwinAssociations.add(studentTwinAssociation);
-    student.setStudentTwinAssociations(studentTwinAssociations);
+
+    var studentCreate = new StudentCreate();
+    BeanUtils.copyProperties(student, studentCreate);
+    studentCreate.setStudentTwinAssociations(studentTwinAssociations);
 
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isCreated())
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
 
     var studentFromDB = studentService.retrieveStudentByPen(student.getPen());
@@ -226,10 +234,13 @@ public class StudentControllerTest {
     studentMergeAssociation.setStudentMergeSourceCode("MINISTRY");
     studentMergeAssociation.setMergeStudentID(studentMerge.getStudentID().toString());
     studentMergeAssociations.add(studentMergeAssociation);
-    student.setStudentMergeAssociations(studentMergeAssociations);
+
+    var studentCreate = new StudentCreate();
+    BeanUtils.copyProperties(student, studentCreate);
+    studentCreate.setStudentMergeAssociations(studentMergeAssociations);
 
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isCreated())
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
 
     var studentFromDB = studentService.retrieveStudentByPen(student.getPen());
@@ -272,8 +283,12 @@ public class StudentControllerTest {
     StudentEntity entity = createStudent();
     repository.save(entity);
     entity.setLegalFirstName("updated");
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(entity.getStudentID().toString());
+    studentUpdate.setHistoryActivityCode("USEREDIT");
+    BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
     this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isOk())
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));;
   }
 
@@ -317,7 +332,7 @@ public class StudentControllerTest {
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated?pageSize=2")
             .contentType(APPLICATION_JSON))
@@ -343,7 +358,7 @@ public class StudentControllerTest {
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     Map<String, String> sortMap = new HashMap<>();
     sortMap.put("legalLastName", "ASC");
     sortMap.put("legalFirstName", "DESC");
@@ -371,7 +386,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -395,7 +410,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -421,7 +436,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -451,7 +466,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -487,7 +502,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -523,7 +538,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -546,7 +561,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -570,7 +585,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -594,7 +609,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
         .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
@@ -611,7 +626,7 @@ public class StudentControllerTest {
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     val entitiesFromDB = repository.findAll();
     SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
@@ -643,7 +658,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
       .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
         .contentType(APPLICATION_JSON))
@@ -667,7 +682,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
       .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
         .contentType(APPLICATION_JSON))
@@ -684,7 +699,7 @@ public class StudentControllerTest {
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    repository.saveAll(entities.stream().map(mapper::toModel).collect(Collectors.toList()));
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     val entitiesFromDB = repository.findAll();
     SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(null).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
@@ -779,5 +794,11 @@ public class StudentControllerTest {
     return StudentMergeSourceCodeEntity.builder().mergeSourceCode("MINISTRY").description("MINISTRY")
         .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
         .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+  }
+
+  private StudentHistoryActivityCodeEntity createStudentHistoryActivityCodeData() {
+    return StudentHistoryActivityCodeEntity.builder().historyActivityCode("USEREDIT").description("USEREDIT")
+      .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+      .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 }

@@ -11,6 +11,7 @@ import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
 import ca.bc.gov.educ.api.student.struct.Event;
 import ca.bc.gov.educ.api.student.struct.Student;
 import ca.bc.gov.educ.api.student.struct.StudentTwin;
+import ca.bc.gov.educ.api.student.struct.StudentUpdate;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -125,8 +127,12 @@ public class EventHandlerServiceTest {
   public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenStudentDoNotExist_shouldHaveEventOutcomeSTUDENT_NOT_FOUND() throws JsonProcessingException {
     Student entity = getStudentEntityFromJsonString();
     entity.setStudentID(UUID.randomUUID().toString());
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(entity.getStudentID());
+    studentUpdate.setHistoryActivityCode("USEREDIT");
+    BeanUtils.copyProperties(entity, studentUpdate);
     var sagaId = UUID.randomUUID();
-    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(entity)).build();
+    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
     eventHandlerServiceUnderTest.handleEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, UPDATE_STUDENT.toString());
     assertThat(studentEventUpdated).isPresent();
@@ -137,8 +143,12 @@ public class EventHandlerServiceTest {
   @Test
   public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenStudentExist_shouldHaveEventOutcomeSTUDENT_UPDATED() throws JsonProcessingException {
     StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(entity.getStudentID().toString());
+    studentUpdate.setHistoryActivityCode("USEREDIT");
+    BeanUtils.copyProperties(mapper.toStructure(entity), studentUpdate);
     var sagaId = UUID.randomUUID();
-    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(entity))).build();
+    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
     eventHandlerServiceUnderTest.handleEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, UPDATE_STUDENT.toString());
     assertThat(studentEventUpdated).isPresent();

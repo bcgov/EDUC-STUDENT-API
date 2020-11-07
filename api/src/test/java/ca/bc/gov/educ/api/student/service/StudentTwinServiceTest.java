@@ -55,12 +55,15 @@ public class StudentTwinServiceTest {
   @Autowired
   StudentRepository studentRepository;
 
+  @Autowired
+  StudentHistoryRepository studentHistoryRepository;
+
   @Mock
   CodeTableService codeTableService;
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryRepository);
     studentTwinService = new StudentTwinService(studentTwinRepo, studentService, studentTwinReasonRepo);
   }
 

@@ -15,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.FieldError;
 
 import java.time.LocalDateTime;
@@ -55,9 +54,12 @@ public class StudentMergePayloadValidatorTest {
   @Mock
   CodeTableService codeTableService;
 
+  @Mock
+  StudentHistoryRepository studentHistoryRepository;
+
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryRepository);
     studentMergeService = new StudentMergeService(studentMergeRepo, studentMergeDirectionCodeTableRepo, studentMergeSourceCodeTableRepo);
     studentMergePayloadValidator = new StudentMergePayloadValidator(studentMergeService, studentService);
   }
