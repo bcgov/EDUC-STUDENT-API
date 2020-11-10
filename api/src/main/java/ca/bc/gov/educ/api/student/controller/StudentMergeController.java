@@ -52,7 +52,7 @@ public class StudentMergeController implements StudentMergeEndpoint {
   }
 
   public StudentMerge createStudentMerge(String studentID, StudentMerge studentMerge) {
-    RequestUtil.setAuditColumns(studentMerge, true);
+    RequestUtil.setAuditColumnsForCreate(studentMerge);
     StudentMergeEntity entity = mapper.toModel(studentMerge);
     validatePayload(studentID, studentMerge, true, entity);
     return mapper.toStructure(getService().createStudentMerge(entity));

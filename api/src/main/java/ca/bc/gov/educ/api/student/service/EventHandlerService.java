@@ -174,7 +174,7 @@ public class EventHandlerService {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       var student = JsonUtil.getJsonObjectFromString(StudentUpdate.class, event.getEventPayload());
-      RequestUtil.setAuditColumns(student, false);
+      RequestUtil.setAuditColumnsForCreate(student);
       try {
         val studentDBEntity = getStudentService().updateStudent(student);
         event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(studentDBEntity)));// need to convert to structure MANDATORY otherwise jackson will break.
@@ -204,7 +204,7 @@ public class EventHandlerService {
       if (optionalStudent.isPresent()) {
         event.setEventOutcome(EventOutcome.STUDENT_ALREADY_EXIST);
       } else {
-        RequestUtil.setAuditColumns(student, true);
+        RequestUtil.setAuditColumnsForCreate(student);
         StudentEntity entity;
         // It is expected that during messaging flow, the caller will provide a valid payload, so validation is not done.
         if (!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())) {

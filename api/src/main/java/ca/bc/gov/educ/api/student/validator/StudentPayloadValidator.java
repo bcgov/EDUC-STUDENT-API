@@ -53,7 +53,7 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     return apiValidationErrors;
   }
 
-  public List<FieldError> validatePayload(StudentCreate student) {
+  public List<FieldError> validateCreatePayload(StudentCreate student) {
     var apiValidationErrors = validatePayload(student, true);
     validateStudentHistoryActivityCode(student.getHistoryActivityCode(), apiValidationErrors);
     validateMergesIfPresent(student, apiValidationErrors);
@@ -61,7 +61,7 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     return apiValidationErrors;
   }
 
-  public List<FieldError> validatePayload(StudentUpdate student) {
+  public List<FieldError> validateUpdatePayload(StudentUpdate student) {
     var apiValidationErrors = validatePayload(student, false);
     validateStudentHistoryActivityCode(student.getHistoryActivityCode(), apiValidationErrors);
     return apiValidationErrors;

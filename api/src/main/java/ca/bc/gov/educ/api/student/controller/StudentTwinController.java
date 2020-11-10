@@ -95,7 +95,7 @@ public class StudentTwinController implements StudentTwinEndpoint {
   }
 
   public StudentTwin createStudentTwin(String studentID, StudentTwin studentTwin) {
-    RequestUtil.setAuditColumns(studentTwin, true);
+    RequestUtil.setAuditColumnsForCreate(studentTwin);
     StudentTwinEntity entity = mapper.toModel(studentTwin);
     validatePayload(studentID, studentTwin, true);
     val twinEntity = getService().createStudentTwin(entity);

@@ -78,8 +78,8 @@ public class StudentController implements StudentEndpoint {
   }
 
   public Student createStudent(StudentCreate student) {
-    validatePayload(() -> getPayloadValidator().validatePayload(student));
-    RequestUtil.setAuditColumns(student, true);
+    validatePayload(() -> getPayloadValidator().validateCreatePayload(student));
+    RequestUtil.setAuditColumnsForCreate(student);
     if(!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())){
       return mapper.toStructure(getService().createStudentWithAssociations(student));
     }
@@ -87,8 +87,8 @@ public class StudentController implements StudentEndpoint {
   }
 
   public Student updateStudent(StudentUpdate student) {
-    validatePayload(() -> getPayloadValidator().validatePayload(student));
-    RequestUtil.setAuditColumns(student, false);
+    validatePayload(() -> getPayloadValidator().validateUpdatePayload(student));
+    RequestUtil.setAuditColumnsForUpdate(student);
     return mapper.toStructure(getService().updateStudent(student));
   }
 
@@ -135,7 +135,7 @@ public class StudentController implements StudentEndpoint {
     final List<Sort.Order> sorts = new ArrayList<>();
     Specification<StudentEntity> studentSpecs = null;
     try {
-      getSortCriteria(sortCriteriaJson, objectMapper, sorts);
+      RequestUtil.getSortCriteria(sortCriteriaJson, objectMapper, sorts);
       if (StringUtils.isNotBlank(searchCriteriaListJson)) {
         List<Search> searches = objectMapper.readValue(searchCriteriaListJson, new TypeReference<>() {
         });
@@ -149,20 +149,6 @@ public class StudentController implements StudentEndpoint {
       throw new StudentRuntimeException(e.getMessage());
     }
     return getService().findAll(studentSpecs, pageNumber, pageSize, sorts).thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure));
-  }
-
-  private void getSortCriteria(String sortCriteriaJson, ObjectMapper objectMapper, List<Sort.Order> sorts) throws JsonProcessingException {
-    if (StringUtils.isNotBlank(sortCriteriaJson)) {
-      Map<String, String> sortMap = objectMapper.readValue(sortCriteriaJson, new TypeReference<>() {
-      });
-      sortMap.forEach((k, v) -> {
-        if ("ASC".equalsIgnoreCase(v)) {
-          sorts.add(new Sort.Order(Sort.Direction.ASC, k));
-        } else {
-          sorts.add(new Sort.Order(Sort.Direction.DESC, k));
-        }
-      });
-    }
   }
 
   /**
