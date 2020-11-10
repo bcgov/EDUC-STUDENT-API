@@ -55,6 +55,7 @@ public class StudentPayloadValidator extends BasePayloadValidator {
 
   public List<FieldError> validatePayload(StudentCreate student) {
     var apiValidationErrors = validatePayload(student, true);
+    validateStudentHistoryActivityCode(student.getHistoryActivityCode(), apiValidationErrors);
     validateMergesIfPresent(student, apiValidationErrors);
     validateTwinsIfPresent(student, apiValidationErrors);
     return apiValidationErrors;
@@ -62,7 +63,7 @@ public class StudentPayloadValidator extends BasePayloadValidator {
 
   public List<FieldError> validatePayload(StudentUpdate student) {
     var apiValidationErrors = validatePayload(student, false);
-    validateStudentHistoryActivityCode(student, apiValidationErrors);
+    validateStudentHistoryActivityCode(student.getHistoryActivityCode(), apiValidationErrors);
     return apiValidationErrors;
   }
 
@@ -131,15 +132,15 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     }
   }
 
-  protected void validateStudentHistoryActivityCode(StudentUpdate student, List<FieldError> apiValidationErrors) {
-    if (student.getHistoryActivityCode() != null) {
-      Optional<StudentHistoryActivityCodeEntity> historyActivityCodeEntity = studentService.findStudentHistoryActivityCode(student.getHistoryActivityCode());
+  protected void validateStudentHistoryActivityCode(String historyActivityCode, List<FieldError> apiValidationErrors) {
+    if (historyActivityCode != null) {
+      Optional<StudentHistoryActivityCodeEntity> historyActivityCodeEntity = studentService.findStudentHistoryActivityCode(historyActivityCode);
       if (historyActivityCodeEntity.isEmpty()) {
-        apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, student.getHistoryActivityCode(), "Invalid History Activity Code."));
+        apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, historyActivityCode, "Invalid History Activity Code."));
       } else if (historyActivityCodeEntity.get().getEffectiveDate() != null && historyActivityCodeEntity.get().getEffectiveDate().isAfter(LocalDateTime.now())) {
-        apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, student.getHistoryActivityCode(), "History Activity Code provided is not yet effective."));
+        apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, historyActivityCode, "History Activity Code provided is not yet effective."));
       } else if (historyActivityCodeEntity.get().getExpiryDate() != null && historyActivityCodeEntity.get().getExpiryDate().isBefore(LocalDateTime.now())) {
-        apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, student.getHistoryActivityCode(), "History Activity Code provided has expired."));
+        apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, historyActivityCode, "History Activity Code provided has expired."));
       }
     }
   }

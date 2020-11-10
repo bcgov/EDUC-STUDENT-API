@@ -95,6 +95,8 @@ public class StudentControllerTest {
   StudentTwinReasonCodeTableRepository twinReasonCodeRepo;
   @Autowired
   StudentHistoryActivityCodeTableRepository studentHistoryActivityCodeTableRepo;
+  @Autowired
+  StudentHistoryRepository studentHistoryRepo;
 
   @Before
   public void setUp() {
@@ -124,6 +126,7 @@ public class StudentControllerTest {
     gradeRepo.deleteAll();
     studentMergeRepository.deleteAll();
     studentTwinRepository.deleteAll();
+    studentHistoryRepo.deleteAll();
     repository.deleteAll();
   }
 
@@ -183,35 +186,32 @@ public class StudentControllerTest {
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
-    StudentEntity entity = createStudent();
+    var student = getStudentCreate();
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isCreated())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isCreated())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   @Transactional
   public void testCreateStudent_GivenValidPayloadWithTwinsAssociations_ShouldReturnStatusCreated() throws Exception {
-    Student student = StudentMapper.mapper.toStructure(createStudent());
-    StudentEntity studentTwin = createStudent();
-    studentTwin.setPen("120164444");
-    studentService.createStudent(studentTwin);
+    StudentEntity studentTwin = studentService.createStudent(getStudentCreate(Optional.of("120164444")));
+
     List<StudentTwinAssociation> studentTwinAssociations = new ArrayList<>();
     StudentTwinAssociation studentTwinAssociation = new StudentTwinAssociation();
     studentTwinAssociation.setStudentTwinReasonCode("PENMATCH");
     studentTwinAssociation.setTwinStudentID(studentTwin.getStudentID().toString());
     studentTwinAssociations.add(studentTwinAssociation);
 
-    var studentCreate = new StudentCreate();
-    BeanUtils.copyProperties(student, studentCreate);
+    var studentCreate = getStudentCreate();
     studentCreate.setStudentTwinAssociations(studentTwinAssociations);
 
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
+        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(studentCreate.getLegalFirstName().toUpperCase()));
 
-    var studentFromDB = studentService.retrieveStudentByPen(student.getPen());
+    var studentFromDB = studentService.retrieveStudentByPen(studentCreate.getPen());
     assertThat(studentFromDB).isPresent();
     var twinRecords = studentTwinRepository.findByStudentIDOrTwinStudentID(studentFromDB.get().getStudentID(),studentFromDB.get().getStudentID());
     assertThat(twinRecords).isNotEmpty().size().isEqualTo(1);
@@ -224,10 +224,8 @@ public class StudentControllerTest {
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   @Transactional
   public void testCreateStudent_GivenValidPayloadWithMergeAssociations_ShouldReturnStatusCreated() throws Exception {
-    Student student = StudentMapper.mapper.toStructure(createStudent());
-    StudentEntity studentMerge = createStudent();
-    studentMerge.setPen("120164444");
-    studentService.createStudent(studentMerge);
+    StudentEntity studentMerge = studentService.createStudent(getStudentCreate(Optional.of("120164444")));
+
     List<StudentMergeAssociation> studentMergeAssociations = new ArrayList<>();
     StudentMergeAssociation studentMergeAssociation = new StudentMergeAssociation();
     studentMergeAssociation.setStudentMergeDirectionCode("FROM");
@@ -235,15 +233,14 @@ public class StudentControllerTest {
     studentMergeAssociation.setMergeStudentID(studentMerge.getStudentID().toString());
     studentMergeAssociations.add(studentMergeAssociation);
 
-    var studentCreate = new StudentCreate();
-    BeanUtils.copyProperties(student, studentCreate);
+    var studentCreate = getStudentCreate();
     studentCreate.setStudentMergeAssociations(studentMergeAssociations);
 
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
+        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(studentCreate.getLegalFirstName().toUpperCase()));
 
-    var studentFromDB = studentService.retrieveStudentByPen(student.getPen());
+    var studentFromDB = studentService.retrieveStudentByPen(studentCreate.getPen());
     assertThat(studentFromDB).isPresent();
     var mergeRecords = studentMergeRepository.findStudentMergeEntityByStudentID(studentFromDB.get().getStudentID());
     assertThat(mergeRecords).isNotEmpty().size().isEqualTo(1);
@@ -255,10 +252,10 @@ public class StudentControllerTest {
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
-    StudentEntity entity = createStudent();
-    entity.setSexCode("J");
+    var student = getStudentCreate();
+    student.setSexCode("J");
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
@@ -271,10 +268,39 @@ public class StudentControllerTest {
   @Test
   @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenInvalidEmailVerifiedAttribute_ShouldReturnStatusBadRequest() throws Exception {
-    StudentEntity entity = createStudent();
-    entity.setEmailVerified("WRONG");
+    var student = getStudentCreate();
+    student.setEmailVerified("WRONG");
     this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMapper.mapper.toStructure(entity)))).andDo(print()).andExpect(status().isBadRequest());
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  public void testCreateStudent_GivenInvalidHistoryActivityCodeAttribute_ShouldReturnStatusBadRequest() throws Exception {
+    var student = getStudentCreate();
+    student.setHistoryActivityCode("WRONG");
+    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+      .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  @Transactional
+  public void testCreateStudent_GivenInvalidHistoryActivityCodeWithTwinsAssociations_ShouldReturnStatusBadRequest() throws Exception {
+    StudentEntity studentTwin = studentService.createStudent(getStudentCreate(Optional.of("120164444")));
+
+    List<StudentTwinAssociation> studentTwinAssociations = new ArrayList<>();
+    StudentTwinAssociation studentTwinAssociation = new StudentTwinAssociation();
+    studentTwinAssociation.setStudentTwinReasonCode("PENMATCH");
+    studentTwinAssociation.setTwinStudentID(studentTwin.getStudentID().toString());
+    studentTwinAssociations.add(studentTwinAssociation);
+
+    var studentCreate = getStudentCreate();
+    studentCreate.setHistoryActivityCode("WRONG");
+    studentCreate.setStudentTwinAssociations(studentTwinAssociations);
+
+    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+      .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
@@ -289,7 +315,21 @@ public class StudentControllerTest {
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
     this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate))).andDo(print()).andExpect(status().isOk())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));;
+        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
+  public void testUpdateStudent_GivenInvalidHistoryActivityCode_ShouldReturnStatusBadRequest() throws Exception {
+    StudentEntity entity = createStudent();
+    repository.save(entity);
+    entity.setLegalFirstName("updated");
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(entity.getStudentID().toString());
+    studentUpdate.setHistoryActivityCode("WRONG");
+    BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
+    this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
+      .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
@@ -770,6 +810,21 @@ public class StudentControllerTest {
     student.setEmailVerified("Y");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     return student;
+  }
+
+  private StudentCreate getStudentCreate(Optional<String> pen) {
+    var studentEntity = createStudent();
+    var studentCreate = new StudentCreate();
+    BeanUtils.copyProperties(mapper.toStructure(studentEntity), studentCreate);
+    studentCreate.setHistoryActivityCode("USEREDIT");
+    if(pen.isPresent()) {
+      studentCreate.setPen(pen.get());
+    }
+    return studentCreate;
+  }
+
+  private StudentCreate getStudentCreate() {
+    return getStudentCreate(Optional.empty());
   }
 
   public static String asJsonString(final Object obj) {

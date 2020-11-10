@@ -55,12 +55,4 @@ public interface StudentMapper {
   GradeCodeEntity toModel(GradeCode structure);
 
   GradeCode toStructure(GradeCodeEntity entity);
-
-  @Mapping(target = "updateUser", ignore = true)
-  @Mapping(target = "updateDate", ignore = true)
-  @Mapping(target = "createUser", ignore = true)
-  @Mapping(target = "createDate", ignore = true)
-  StudentHistoryActivityCodeEntity toModel(StudentHistoryActivityCode structure);
-
-  StudentHistoryActivityCode toStructure(StudentHistoryActivityCodeEntity entity);
 }

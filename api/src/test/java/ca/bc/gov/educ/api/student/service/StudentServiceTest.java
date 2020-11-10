@@ -4,6 +4,7 @@ import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.repository.*;
+import ca.bc.gov.educ.api.student.struct.StudentCreate;
 import ca.bc.gov.educ.api.student.struct.StudentUpdate;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 @DataJpaTest
 public class StudentServiceTest {
+  private static final StudentMapper mapper = StudentMapper.mapper;
 
   @Autowired
   StudentRepository repository;
@@ -56,33 +58,41 @@ public class StudentServiceTest {
   StudentTwinRepository studentTwinRepo;
   @Autowired
   StudentHistoryRepository studentHistoryRepository;
+  StudentHistoryService studentHistoryService;
   @Mock
   CodeTableService codeTableService;
 
   @Before
   public void before() {
-    service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryRepository);
+    studentHistoryService = new StudentHistoryService(studentHistoryRepository, codeTableService);
+    service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
   }
 
   @Test
   public void testCreateStudent_WhenPayloadIsValid_ShouldReturnSavedObject() {
-    StudentEntity student = getStudentEntity();
-    assertNotNull(service.createStudent(student));
+    StudentEntity student = service.createStudent(getStudentCreate());
+    assertNotNull(student);
     assertNotNull(student.getStudentID());
+
+    var history = studentHistoryRepository.findByStudentID(student.getStudentID(), PageRequest.of(0, 10));
+    assertThat(history.getTotalElements()).isEqualTo(1);
+    assertThat(history.getContent().get(0).getHistoryActivityCode()).isEqualTo("USERNEW");
+    assertThat(history.getContent().get(0).getCreateUser()).isEqualTo(student.getCreateUser());
   }
 
   @Test
   public void testCreateStudentNoGiven_WhenPayloadIsValid_ShouldReturnSavedObject() {
-    StudentEntity student = getStudentEntity();
+    var student = getStudentCreate();
     student.setLegalFirstName(null);
-    assertNotNull(service.createStudent(student));
-    assertNotNull(student.getStudentID());
+    var entity = service.createStudent(student);
+    assertNotNull(entity);
+    assertNotNull(entity.getStudentID());
   }
 
   @Test
   public void testRetrieveStudent_WhenStudentExistInDB_ShouldReturnStudent() {
-    StudentEntity student = getStudentEntity();
-    assertNotNull(service.createStudent(student));
+    StudentEntity student = service.createStudent(getStudentCreate());
+    assertNotNull(student);
     assertNotNull(service.retrieveStudent(student.getStudentID()));
   }
 
@@ -95,22 +105,22 @@ public class StudentServiceTest {
   @Test
   public void testUpdateStudent_WhenPayloadIsValid_ShouldReturnTheUpdatedObject() {
 
-    StudentEntity student = getStudentEntity();
-    student = service.createStudent(student);
+    StudentEntity student = service.createStudent(getStudentCreate());
     student.setLegalFirstName("updatedFirstName");
 
     var studentUpdate = new StudentUpdate();
     studentUpdate.setStudentID(student.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("USEREDIT");
+    studentUpdate.setUpdateUser("Test Update");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(student), studentUpdate);
     StudentEntity updateEntity = service.updateStudent(studentUpdate);
     assertNotNull(updateEntity);
     assertThat(updateEntity.getLegalFirstName()).isEqualTo("updatedFirstName".toUpperCase());
 
     var history = studentHistoryRepository.findByStudentID(student.getStudentID(), PageRequest.of(0, 10));
-    assertThat(history.getTotalElements()).isEqualTo(1);
-    assertThat(history.getContent().get(0).getHistoryActivityCode()).isEqualTo("USEREDIT");
-    assertThat(history.getContent().get(0).getCreateUser()).isEqualTo(studentUpdate.getCreateUser());
+    assertThat(history.getTotalElements()).isEqualTo(2);
+    assertThat(history.getContent().get(1).getHistoryActivityCode()).isEqualTo("USEREDIT");
+    assertThat(history.getContent().get(1).getCreateUser()).isEqualTo(studentUpdate.getUpdateUser());
 
   }
 
@@ -137,7 +147,7 @@ public class StudentServiceTest {
   public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() {
     var repository = mock(StudentRepository.class);
     when(repository.findAll(isNull(), any(Pageable.class))).thenThrow(EntityNotFoundException.class);
-    var service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryRepository);
+    var service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
     service.findAll(null, 0, 5, new ArrayList<>());
   }
 
@@ -159,6 +169,15 @@ public class StudentServiceTest {
     student.setEmailVerified("Y");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     student.setCreateUser("Test");
+    student.setUpdateUser("Test Update");
     return student;
+  }
+
+  private StudentCreate getStudentCreate() {
+    var studentEntity = getStudentEntity();
+    var studentCreate = new StudentCreate();
+    BeanUtils.copyProperties(mapper.toStructure(studentEntity), studentCreate);
+    studentCreate.setHistoryActivityCode("USERNEW");
+    return studentCreate;
   }
 }

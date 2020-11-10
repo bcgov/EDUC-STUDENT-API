@@ -210,7 +210,7 @@ public class EventHandlerService {
         if (!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())) {
           entity = getStudentService().createStudentWithAssociations(student);
         } else {
-          entity = getStudentService().createStudent(mapper.toModel(student));
+          entity = getStudentService().createStudent(student);
         }
         event.setEventOutcome(EventOutcome.STUDENT_CREATED);
         event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.

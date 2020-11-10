@@ -6,6 +6,7 @@ import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
 import ca.bc.gov.educ.api.student.model.StudentMergeSourceCodeEntity;
 import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.service.CodeTableService;
+import ca.bc.gov.educ.api.student.service.StudentHistoryService;
 import ca.bc.gov.educ.api.student.service.StudentMergeService;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.StudentMerge;
@@ -55,11 +56,11 @@ public class StudentMergePayloadValidatorTest {
   CodeTableService codeTableService;
 
   @Mock
-  StudentHistoryRepository studentHistoryRepository;
+  StudentHistoryService studentHistoryService;
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryRepository);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
     studentMergeService = new StudentMergeService(studentMergeRepo, studentMergeDirectionCodeTableRepo, studentMergeSourceCodeTableRepo);
     studentMergePayloadValidator = new StudentMergePayloadValidator(studentMergeService, studentService);
   }

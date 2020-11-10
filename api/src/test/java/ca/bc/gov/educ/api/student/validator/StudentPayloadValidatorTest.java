@@ -12,9 +12,7 @@ import java.util.UUID;
 import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
 import ca.bc.gov.educ.api.student.model.SexCodeEntity;
 import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.service.CodeTableService;
-import ca.bc.gov.educ.api.student.service.StudentMergeService;
-import ca.bc.gov.educ.api.student.service.StudentTwinService;
+import ca.bc.gov.educ.api.student.service.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,7 +22,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.validation.FieldError;
 
 import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.Student;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -48,11 +45,11 @@ public class StudentPayloadValidatorTest {
   @Mock
   CodeTableService codeTableService;
   @Mock
-  StudentHistoryRepository studentHistoryRepository;
+  StudentHistoryService studentHistoryService;
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryRepository);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
     studentPayloadValidator = new StudentPayloadValidator(studentService, studentTwinService, studentMergeService);
   }
 

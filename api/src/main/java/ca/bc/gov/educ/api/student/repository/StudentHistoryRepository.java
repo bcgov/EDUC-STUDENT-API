@@ -9,4 +9,5 @@ import java.util.UUID;
 
 public interface StudentHistoryRepository extends JpaRepository<StudentHistoryEntity, UUID> {
   Page<StudentHistoryEntity> findByStudentID(UUID studentID, Pageable pageable);
+  Long deleteByStudentID(UUID studentID);
 }

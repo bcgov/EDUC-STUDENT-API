@@ -83,7 +83,7 @@ public class StudentController implements StudentEndpoint {
     if(!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())){
       return mapper.toStructure(getService().createStudentWithAssociations(student));
     }
-    return mapper.toStructure(getService().createStudent(mapper.toModel(student)));
+    return mapper.toStructure(getService().createStudent(student));
   }
 
   public Student updateStudent(StudentUpdate student) {
@@ -149,10 +149,6 @@ public class StudentController implements StudentEndpoint {
       throw new StudentRuntimeException(e.getMessage());
     }
     return getService().findAll(studentSpecs, pageNumber, pageSize, sorts).thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure));
-  }
-
-  public List<StudentHistoryActivityCode> getStudentHistoryActivityCodes() {
-    return getService().getStudentHistoryActivityCodesList().stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
   private void getSortCriteria(String sortCriteriaJson, ObjectMapper objectMapper, List<Sort.Order> sorts) throws JsonProcessingException {

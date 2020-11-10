@@ -23,7 +23,8 @@ import java.util.concurrent.CompletableFuture;
 import static org.springframework.http.HttpStatus.CREATED;
 
 @RequestMapping("/")
-@OpenAPIDefinition(info = @Info(title = "API for Student CRU.", description = "This CRU API is related to student data.", version = "1"), security = {@SecurityRequirement(name = "OAUTH2", scopes = {"READ_STUDENT", "WRITE_STUDENT"})})
+@OpenAPIDefinition(info = @Info(title = "API for Student CRU.", description = "This CRU API is related to student data.", version = "1"),
+  security = {@SecurityRequirement(name = "OAUTH2", scopes = {"READ_STUDENT", "WRITE_STUDENT", "READ_STUDENT_HISTORY", "READ_STUDENT_CODES", "DELETE_STUDENT"})})
 public interface StudentEndpoint {
 
   @GetMapping("/{studentID}")
@@ -89,9 +90,4 @@ public interface StudentEndpoint {
                                               @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                               @RequestParam(name = "sort", defaultValue = "") String sortCriteriaJson,
                                               @RequestParam(name = "searchCriteriaList", required = false) String searchCriteriaListJson);
-
-  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
-  @GetMapping("student-history-activity-codes")
-  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
-  List<StudentHistoryActivityCode> getStudentHistoryActivityCodes();
 }
