@@ -14,6 +14,9 @@ import java.io.Serializable;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @SuppressWarnings("java:S1948")
-public class Student extends BaseStudent implements Serializable {
+public class StudentHistory extends BaseStudent implements Serializable {
   private static final long serialVersionUID = 1L;
+
+  String studentHistoryID;
+  String historyActivityCode;
 }

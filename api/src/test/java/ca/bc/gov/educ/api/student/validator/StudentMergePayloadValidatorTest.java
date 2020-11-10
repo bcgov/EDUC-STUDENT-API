@@ -6,6 +6,7 @@ import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
 import ca.bc.gov.educ.api.student.model.StudentMergeSourceCodeEntity;
 import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.service.CodeTableService;
+import ca.bc.gov.educ.api.student.service.StudentHistoryService;
 import ca.bc.gov.educ.api.student.service.StudentMergeService;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.StudentMerge;
@@ -15,7 +16,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.FieldError;
 
 import java.time.LocalDateTime;
@@ -55,9 +55,12 @@ public class StudentMergePayloadValidatorTest {
   @Mock
   CodeTableService codeTableService;
 
+  @Mock
+  StudentHistoryService studentHistoryService;
+
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
     studentMergeService = new StudentMergeService(studentMergeRepo, studentMergeDirectionCodeTableRepo, studentMergeSourceCodeTableRepo);
     studentMergePayloadValidator = new StudentMergePayloadValidator(studentMergeService, studentService);
   }

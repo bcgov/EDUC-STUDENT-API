@@ -31,11 +31,13 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -75,23 +77,23 @@ public class StudentController implements StudentEndpoint {
     return studentsResponse.map(mapper::toStructure).map(Collections::singletonList).orElseGet(Collections::emptyList);
   }
 
-  public Student createStudent(Student student) {
-    validatePayload(student, true);
-    RequestUtil.setAuditColumns(student);
+  public Student createStudent(StudentCreate student) {
+    validatePayload(() -> getPayloadValidator().validateCreatePayload(student));
+    RequestUtil.setAuditColumnsForCreate(student);
     if(!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())){
       return mapper.toStructure(getService().createStudentWithAssociations(student));
     }
-    return mapper.toStructure(getService().createStudent(mapper.toModel(student)));
+    return mapper.toStructure(getService().createStudent(student));
   }
 
-  public Student updateStudent(Student student) {
-    validatePayload(student, false);
-    RequestUtil.setAuditColumns(student);
-    return mapper.toStructure(getService().updateStudent(mapper.toModel(student)));
+  public Student updateStudent(StudentUpdate student) {
+    validatePayload(() -> getPayloadValidator().validateUpdatePayload(student));
+    RequestUtil.setAuditColumnsForUpdate(student);
+    return mapper.toStructure(getService().updateStudent(student));
   }
 
-  private void validatePayload(Student student, boolean isCreateOperation) {
-    val validationResult = getPayloadValidator().validatePayload(student, isCreateOperation);
+  private void validatePayload(Supplier<List<FieldError>> validator) {
+    val validationResult = validator.get();
     if (!validationResult.isEmpty()) {
       ApiError error = ApiError.builder().timestamp(LocalDateTime.now()).message("Payload contains invalid data.").status(BAD_REQUEST).build();
       error.addValidationErrors(validationResult);
@@ -133,7 +135,7 @@ public class StudentController implements StudentEndpoint {
     final List<Sort.Order> sorts = new ArrayList<>();
     Specification<StudentEntity> studentSpecs = null;
     try {
-      getSortCriteria(sortCriteriaJson, objectMapper, sorts);
+      RequestUtil.getSortCriteria(sortCriteriaJson, objectMapper, sorts);
       if (StringUtils.isNotBlank(searchCriteriaListJson)) {
         List<Search> searches = objectMapper.readValue(searchCriteriaListJson, new TypeReference<>() {
         });
@@ -147,20 +149,6 @@ public class StudentController implements StudentEndpoint {
       throw new StudentRuntimeException(e.getMessage());
     }
     return getService().findAll(studentSpecs, pageNumber, pageSize, sorts).thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure));
-  }
-
-  private void getSortCriteria(String sortCriteriaJson, ObjectMapper objectMapper, List<Sort.Order> sorts) throws JsonProcessingException {
-    if (StringUtils.isNotBlank(sortCriteriaJson)) {
-      Map<String, String> sortMap = objectMapper.readValue(sortCriteriaJson, new TypeReference<>() {
-      });
-      sortMap.forEach((k, v) -> {
-        if ("ASC".equalsIgnoreCase(v)) {
-          sorts.add(new Sort.Order(Sort.Direction.ASC, k));
-        } else {
-          sorts.add(new Sort.Order(Sort.Direction.DESC, k));
-        }
-      });
-    }
   }
 
   /**
