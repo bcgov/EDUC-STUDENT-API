@@ -105,7 +105,7 @@ public class StudentService {
     var student = StudentMapper.mapper.toModel(studentCreate);
     TransformUtil.uppercaseFields(student);
     repository.save(student);
-    studentHistoryService.createStudentHistory(student, studentCreate.getHistoryActivityCode(), studentCreate.getCreateUser());
+    studentHistoryService.createStudentHistory(student, studentCreate.getHistoryActivityCode(), student.getCreateUser());
     return student;
   }
 
@@ -122,8 +122,6 @@ public class StudentService {
     Optional<StudentEntity> curStudentEntity = repository.findById(student.getStudentID());
 
     if (curStudentEntity.isPresent()) {
-      studentHistoryService.createStudentHistory(curStudentEntity.get(), studentUpdate.getHistoryActivityCode(), studentUpdate.getUpdateUser());
-
       final StudentEntity newStudentEntity = curStudentEntity.get();
       val createUser = newStudentEntity.getCreateUser();
       val createDate = newStudentEntity.getCreateDate();
@@ -131,6 +129,7 @@ public class StudentService {
       newStudentEntity.setCreateUser(createUser);
       newStudentEntity.setCreateDate(createDate);
       TransformUtil.uppercaseFields(newStudentEntity);
+      studentHistoryService.createStudentHistory(newStudentEntity, studentUpdate.getHistoryActivityCode(), newStudentEntity.getUpdateUser());
       return repository.save(newStudentEntity);
     } else {
       throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, student.getStudentID().toString());

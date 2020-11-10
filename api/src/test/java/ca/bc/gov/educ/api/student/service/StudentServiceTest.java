@@ -78,6 +78,7 @@ public class StudentServiceTest {
     assertThat(history.getTotalElements()).isEqualTo(1);
     assertThat(history.getContent().get(0).getHistoryActivityCode()).isEqualTo("USERNEW");
     assertThat(history.getContent().get(0).getCreateUser()).isEqualTo(student.getCreateUser());
+    assertThat(history.getContent().get(0).getLegalFirstName()).isEqualTo(student.getLegalFirstName());
   }
 
   @Test
@@ -121,6 +122,7 @@ public class StudentServiceTest {
     assertThat(history.getTotalElements()).isEqualTo(2);
     assertThat(history.getContent().get(1).getHistoryActivityCode()).isEqualTo("USEREDIT");
     assertThat(history.getContent().get(1).getCreateUser()).isEqualTo(studentUpdate.getUpdateUser());
+    assertThat(history.getContent().get(1).getLegalFirstName()).isEqualTo(studentUpdate.getLegalFirstName().toUpperCase());
 
   }
 
