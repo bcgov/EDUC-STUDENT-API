@@ -42,6 +42,7 @@ import static lombok.AccessLevel.PRIVATE;
  */
 @Service
 @Slf4j
+@SuppressWarnings("java:S3864")
 public class EventHandlerService {
 
   /**
@@ -152,7 +153,7 @@ public class EventHandlerService {
       CollectionType javaType = objectMapper.getTypeFactory()
                                             .constructCollectionType(List.class, StudentTwin.class);
       List<StudentTwin> studentTwins = objectMapper.readValue(event.getEventPayload(), javaType);
-      List<StudentTwinEntity> studentTwinEntities = studentTwins.stream().map(twinMapper::toModel).collect(Collectors.toList());
+      List<StudentTwinEntity> studentTwinEntities = studentTwins.stream().peek(RequestUtil::setAuditColumnsForCreate).map(twinMapper::toModel).collect(Collectors.toList());
       getStudentTwinService().addStudentTwins(studentTwinEntities);
       event.setEventPayload(JsonUtil.getJsonStringFromObject(studentTwinEntities.stream().map(twinMapper::toStructure).collect(Collectors.toList())));// need to convert to structure MANDATORY otherwise jackson will break.
       event.setEventOutcome(EventOutcome.STUDENT_TWINS_ADDED);
