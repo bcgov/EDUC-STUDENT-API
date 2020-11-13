@@ -1,12 +1,15 @@
 package ca.bc.gov.educ.api.student.service;
 
+import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
 import ca.bc.gov.educ.api.student.repository.*;
+import ca.bc.gov.educ.api.student.struct.StudentCreate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -20,6 +23,7 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(SpringRunner.class)
 @DataJpaTest
 public class StudentTwinServiceTest {
+  private static final StudentMapper mapper = StudentMapper.mapper;
 
   @Autowired
   StudentRepository repository;
@@ -56,27 +60,30 @@ public class StudentTwinServiceTest {
   StudentRepository studentRepository;
 
   @Mock
+  StudentHistoryService studentHistoryService;
+
+  @Mock
   CodeTableService codeTableService;
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService);
+    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
     studentTwinService = new StudentTwinService(studentTwinRepo, studentService, studentTwinReasonRepo);
   }
 
   @Test
   public void testFindStudentTwins_WhenStudentTwinsDoNotExistInDB_ShouldReturnEmptyList() {
-    StudentEntity student = getStudentEntity();
-    assertNotNull(studentService.createStudent(student));
+    StudentEntity student = studentService.createStudent(getStudentCreate());
+    assertNotNull(student);
     assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isZero();
   }
 
   @Test
   public void testFindStudentTwins_WhenStudentTwinsExistInDB_ShouldReturnList() {
-    StudentEntity student = getStudentEntity();
-    assertNotNull(studentService.createStudent(student));
-    StudentEntity twinedStudent = getStudentEntity();
-    assertNotNull(studentService.createStudent(twinedStudent));
+    StudentEntity student = studentService.createStudent(getStudentCreate());
+    assertNotNull(student);
+    StudentEntity twinedStudent = studentService.createStudent(getStudentCreate());
+    assertNotNull(twinedStudent);
     StudentTwinEntity studentTwin = new StudentTwinEntity();
     studentTwin.setStudentID(student.getStudentID());
     studentTwin.setTwinStudentID(twinedStudent.getStudentID());
@@ -87,10 +94,10 @@ public class StudentTwinServiceTest {
 
   @Test
   public void testFindStudentTwins_WhenStudentTwinsOtherExistInDB_ShouldReturnList() {
-    StudentEntity student = getStudentEntity();
-    assertNotNull(studentService.createStudent(student));
-    StudentEntity twinedStudent = getStudentEntity();
-    assertNotNull(studentService.createStudent(twinedStudent));
+    StudentEntity student = studentService.createStudent(getStudentCreate());
+    assertNotNull(student);
+    StudentEntity twinedStudent = studentService.createStudent(getStudentCreate());
+    assertNotNull(twinedStudent);
     StudentTwinEntity studentTwin = new StudentTwinEntity();
     studentTwin.setStudentID(twinedStudent.getStudentID());
     studentTwin.setTwinStudentID(student.getStudentID());
@@ -101,10 +108,10 @@ public class StudentTwinServiceTest {
 
   @Test
   public void testDeleteStudentTwin_ShouldReturnTrue() {
-    StudentEntity student = getStudentEntity();
-    assertNotNull(studentService.createStudent(student));
-    StudentEntity twinedStudent = getStudentEntity();
-    assertNotNull(studentService.createStudent(twinedStudent));
+    StudentEntity student = studentService.createStudent(getStudentCreate());
+    assertNotNull(student);
+    StudentEntity twinedStudent = studentService.createStudent(getStudentCreate());
+    assertNotNull(twinedStudent);
     StudentTwinEntity studentTwin = new StudentTwinEntity();
     studentTwin.setStudentID(student.getStudentID());
     studentTwin.setTwinStudentID(twinedStudent.getStudentID());
@@ -134,5 +141,13 @@ public class StudentTwinServiceTest {
     student.setEmailVerified("Y");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     return student;
+  }
+
+  private StudentCreate getStudentCreate() {
+    var studentEntity = getStudentEntity();
+    var studentCreate = new StudentCreate();
+    BeanUtils.copyProperties(mapper.toStructure(studentEntity), studentCreate);
+    studentCreate.setHistoryActivityCode("USERNEW");
+    return studentCreate;
   }
 }

@@ -11,6 +11,7 @@ import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
 import ca.bc.gov.educ.api.student.struct.Event;
 import ca.bc.gov.educ.api.student.struct.Student;
 import ca.bc.gov.educ.api.student.struct.StudentTwin;
+import ca.bc.gov.educ.api.student.struct.StudentUpdate;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,10 +19,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.TransactionSystemException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,6 +37,7 @@ import static ca.bc.gov.educ.api.student.constant.EventStatus.DB_COMMITTED;
 import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
 import static ca.bc.gov.educ.api.student.constant.EventType.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
@@ -125,8 +129,12 @@ public class EventHandlerServiceTest {
   public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenStudentDoNotExist_shouldHaveEventOutcomeSTUDENT_NOT_FOUND() throws JsonProcessingException {
     Student entity = getStudentEntityFromJsonString();
     entity.setStudentID(UUID.randomUUID().toString());
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(entity.getStudentID());
+    studentUpdate.setHistoryActivityCode("USEREDIT");
+    BeanUtils.copyProperties(entity, studentUpdate);
     var sagaId = UUID.randomUUID();
-    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(entity)).build();
+    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
     eventHandlerServiceUnderTest.handleEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, UPDATE_STUDENT.toString());
     assertThat(studentEventUpdated).isPresent();
@@ -137,8 +145,12 @@ public class EventHandlerServiceTest {
   @Test
   public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenStudentExist_shouldHaveEventOutcomeSTUDENT_UPDATED() throws JsonProcessingException {
     StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(entity.getStudentID().toString());
+    studentUpdate.setHistoryActivityCode("USEREDIT");
+    BeanUtils.copyProperties(mapper.toStructure(entity), studentUpdate);
     var sagaId = UUID.randomUUID();
-    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(entity))).build();
+    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
     eventHandlerServiceUnderTest.handleEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, UPDATE_STUDENT.toString());
     assertThat(studentEventUpdated).isPresent();
@@ -164,6 +176,18 @@ public class EventHandlerServiceTest {
   }
 
   @Test
+  public void testHandleEvent_givenEventTypeUPDATE_STUDENT_and_InvalidHistoryActivityCode_shouldThrowException() throws JsonProcessingException {
+    StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(entity.getStudentID().toString());
+    BeanUtils.copyProperties(mapper.toStructure(entity), studentUpdate);
+    studentUpdate.setHistoryActivityCode(null);
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
+    assertThrows(TransactionSystemException.class, () -> eventHandlerServiceUnderTest.handleEvent(event));
+  }
+
+  @Test
   public void testHandleEvent_givenEventTypeCREATE_STUDENT_whenStudentDoNotExist_shouldHaveEventOutcomeSTUDENT_CREATED() {
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(CREATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(placeHolderStudentJSON()).build();
@@ -186,6 +210,14 @@ public class EventHandlerServiceTest {
     assertThat(studentEventUpdated).isPresent();
     assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(DB_COMMITTED.toString());
     assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_CREATED.toString());
+  }
+
+  @Test
+  public void testHandleEvent_givenEventTypeCREATE_STUDENT_and_InvalidHistoryActivityCode_shouldThrowException() {
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(CREATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC)
+      .eventPayload(placeHolderStudentJSONWithHistoryActivityCode(Optional.empty())).build();
+    assertThrows(TransactionSystemException.class, () -> eventHandlerServiceUnderTest.handleEvent(event));
   }
 
   @Test
@@ -298,17 +330,26 @@ public class EventHandlerServiceTest {
   }
 
   protected String placeHolderStudentJSON() {
-    return placeHolderStudentJSON(Optional.empty(), Optional.empty(), Optional.empty());
+    return placeHolderStudentJSON(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("USERNEW"));
   }
 
   protected String placeHolderStudentJSON(Optional<String> pen) {
-    return placeHolderStudentJSON(Optional.empty(), Optional.empty(), pen);
+    return placeHolderStudentJSON(Optional.empty(), Optional.empty(), pen, Optional.of("USERNEW"));
+  }
+
+  protected String placeHolderStudentJSONWithHistoryActivityCode(Optional<String> historyActivityCode) {
+    return placeHolderStudentJSON(Optional.empty(), Optional.empty(), Optional.empty(), historyActivityCode);
   }
 
   protected String placeHolderStudentJSON(Optional<String> twinStudentID, Optional<String> mergeStudentID, Optional<String> pen) {
+    return placeHolderStudentJSON(twinStudentID, mergeStudentID, pen, Optional.of("USERNEW"));
+  }
+
+  protected String placeHolderStudentJSON(Optional<String> twinStudentID, Optional<String> mergeStudentID, Optional<String> pen, Optional<String> historyActivityCode) {
     return "{\"legalFirstName\":\"Chester\",\"legalMiddleNames\":\"Grestie\",\"legalLastName\":\"Baulk\",\"dob\":\"1952-10-31\",\"genderCode\":\"M\",\"sexCode\":\"M\"," +
         "\"statusCode\":\"A\",\"demogCode\":\"A\",\"email\":\"cbaulk0@bluehost.com\",\"emailVerified\":\"N\",\"currentSchool\":\"Xanthoparmelia wyomingica (Gyel.) Hale\"," +
-        "\"pen\":\"" + pen.orElse("127054021") + "\", \"studentTwinAssociations\": [" +
+        "\"pen\":\"" + pen.orElse("127054021") + "\"," + (historyActivityCode.isPresent() ? "\"historyActivityCode\":\"" + historyActivityCode.get() + "\"," : "") +
+        "\"studentTwinAssociations\": [" +
         (twinStudentID.isPresent() ? "{\"twinStudentID\": \"" + twinStudentID.get() + "\", \"studentTwinReasonCode\": \"PENCREATE\"}" : "") +
         "], \"studentMergeAssociations\": [" +
         (mergeStudentID.isPresent() ? "{\"mergeStudentID\": \"" + mergeStudentID.get() + "\", \"studentMergeDirectionCode\": \"FROM\", \"studentMergeSourceCode\": \"MINISTRY\"}" : "") +

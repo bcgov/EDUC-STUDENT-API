@@ -12,7 +12,7 @@ public interface StudentMapper {
 
   StudentMapper mapper = Mappers.getMapper(StudentMapper.class);
 
-  StudentEntity toModel(Student student);
+  StudentEntity toModel(BaseStudent student);
 
   Student toStructure(StudentEntity studentEntity);
 

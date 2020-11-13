@@ -7,7 +7,9 @@ import ca.bc.gov.educ.api.student.model.*;
 import ca.bc.gov.educ.api.student.repository.StudentMergeRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
-import ca.bc.gov.educ.api.student.struct.Student;
+import ca.bc.gov.educ.api.student.struct.StudentCreate;
+import ca.bc.gov.educ.api.student.struct.StudentUpdate;
+import ca.bc.gov.educ.api.student.util.TransformUtil;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.val;
@@ -44,6 +46,9 @@ public class StudentService {
   private final StudentRepository repository;
 
   @Getter(AccessLevel.PRIVATE)
+  private final StudentHistoryService studentHistoryService;
+
+  @Getter(AccessLevel.PRIVATE)
   private final StudentMergeRepository studentMergeRepo;
 
   @Getter(AccessLevel.PRIVATE)
@@ -53,11 +58,13 @@ public class StudentService {
   private final CodeTableService codeTableService;
 
   @Autowired
-  public StudentService(final StudentRepository repository, StudentMergeRepository studentMergeRepo, StudentTwinRepository studentTwinRepo, CodeTableService codeTableService) {
+  public StudentService(final StudentRepository repository, StudentMergeRepository studentMergeRepo, StudentTwinRepository studentTwinRepo,
+                        CodeTableService codeTableService, StudentHistoryService studentHistoryService) {
     this.repository = repository;
     this.studentMergeRepo = studentMergeRepo;
     this.studentTwinRepo = studentTwinRepo;
     this.codeTableService = codeTableService;
+    this.studentHistoryService = studentHistoryService;
   }
 
   /**
@@ -89,23 +96,29 @@ public class StudentService {
   /**
    * Creates a StudentEntity
    *
-   * @param student the payload which will create the student record.
+   * @param studentCreate the payload which will create the student record.
    * @return the saved instance.
    * @throws InvalidParameterException if Student GUID is passed in the payload for the post operation it will throw this exception.
    */
-  public StudentEntity createStudent(StudentEntity student) {
-    return repository.save(student);
+  @Transactional(propagation = Propagation.MANDATORY)
+  public StudentEntity createStudent(StudentCreate studentCreate) {
+    var student = StudentMapper.mapper.toModel(studentCreate);
+    TransformUtil.uppercaseFields(student);
+    repository.save(student);
+    studentHistoryService.createStudentHistory(student, studentCreate.getHistoryActivityCode(), student.getCreateUser());
+    return student;
   }
 
   /**
    * Updates a StudentEntity
    *
-   * @param student the payload which will update the DB record for the given student.
+   * @param studentUpdate the payload which will update the DB record for the given student.
    * @return the updated entity.
    * @throws EntityNotFoundException if the entity does not exist in the DB.
    */
-  public StudentEntity updateStudent(StudentEntity student) {
-
+  @Transactional(propagation = Propagation.MANDATORY, noRollbackFor = {EntityNotFoundException.class})
+  public StudentEntity updateStudent(StudentUpdate studentUpdate) {
+    var student = StudentMapper.mapper.toModel(studentUpdate);
     Optional<StudentEntity> curStudentEntity = repository.findById(student.getStudentID());
 
     if (curStudentEntity.isPresent()) {
@@ -115,12 +128,13 @@ public class StudentService {
       BeanUtils.copyProperties(student, newStudentEntity);
       newStudentEntity.setCreateUser(createUser);
       newStudentEntity.setCreateDate(createDate);
+      TransformUtil.uppercaseFields(newStudentEntity);
+      studentHistoryService.createStudentHistory(newStudentEntity, studentUpdate.getHistoryActivityCode(), newStudentEntity.getUpdateUser());
       return repository.save(newStudentEntity);
     } else {
       throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, student.getStudentID().toString());
     }
   }
-
 
   @Transactional(propagation = Propagation.MANDATORY)
   public void deleteById(UUID id) {
@@ -138,6 +152,7 @@ public class StudentService {
     if (!merges2.isEmpty()) {
       getStudentMergeRepo().deleteAll(merges2);
     }
+    getStudentHistoryService().deleteByStudentID(id);
     getRepository().delete(entity);
   }
 
@@ -153,9 +168,11 @@ public class StudentService {
   }
 
   @Transactional(propagation = Propagation.MANDATORY)
-  public StudentEntity createStudentWithAssociations(Student student) {
+  public StudentEntity createStudentWithAssociations(StudentCreate student) {
     StudentEntity studentEntity = StudentMapper.mapper.toModel(student);
+    TransformUtil.uppercaseFields(studentEntity);
     getRepository().save(studentEntity);
+    studentHistoryService.createStudentHistory(studentEntity, student.getHistoryActivityCode(), student.getCreateUser());
     if (!CollectionUtils.isEmpty(student.getStudentMergeAssociations())) {
       List<StudentMergeEntity> studentMergeEntities = new ArrayList<>();
       for (var mergeStudent : student.getStudentMergeAssociations()) {
@@ -217,5 +234,9 @@ public class StudentService {
 
   public Optional<SexCodeEntity> findSexCode(String sexCode) {
     return getCodeTableService().findSexCode(sexCode);
+  }
+
+  public Optional<StudentHistoryActivityCodeEntity> findStudentHistoryActivityCode(String historyActivityCode) {
+    return getCodeTableService().findStudentHistoryActivityCode(historyActivityCode);
   }
 }
