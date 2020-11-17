@@ -20,14 +20,14 @@ public interface StudentHistoryEndpoint {
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
   List<StudentHistoryActivityCode> getStudentHistoryActivityCodes();
 
-  @GetMapping("/student-history/paginated")
+  @GetMapping("/{studentID}/student-history/paginated")
   @Async
   @PreAuthorize("#oauth2.hasScope('READ_STUDENT_HISTORY')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR.")})
   @Transactional(readOnly = true)
   @Tag(name = "Endpoint to support student history data table view in frontend, with sort, filter and pagination.", description = "This API endpoint exposes flexible way to query the entity by leveraging JPA specifications.")
-  CompletableFuture<Page<StudentHistory>> findStudentHistoryByStudentID(@RequestParam(name = "pageNumber", defaultValue = "0") Integer pageNumber,
+  CompletableFuture<Page<StudentHistory>> findStudentHistoryByStudentID(@PathVariable String studentID,
+                                                                        @RequestParam(name = "pageNumber", defaultValue = "0") Integer pageNumber,
                                                                         @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
-                                                                        @RequestParam(name = "sort", defaultValue = "") String sortCriteriaJson,
-                                                                        @RequestParam(name = "studentID") String studentID);
+                                                                        @RequestParam(name = "sort", defaultValue = "") String sortCriteriaJson);
 }

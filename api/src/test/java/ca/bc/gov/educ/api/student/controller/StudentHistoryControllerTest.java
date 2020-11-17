@@ -95,7 +95,7 @@ public class StudentHistoryControllerTest {
     String sort = new ObjectMapper().writeValueAsString(sortMap);
 
     MvcResult result = mockMvc
-      .perform(get("/student-history/paginated").param("studentID", entitiesFromDB.get(0).getStudentID().toString()).param("sort", sort)
+      .perform(get("/" + entitiesFromDB.get(0).getStudentID().toString() + "/student-history/paginated").param("sort", sort)
         .contentType(APPLICATION_JSON))
       .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)))
@@ -123,7 +123,7 @@ public class StudentHistoryControllerTest {
     String sort = new ObjectMapper().writeValueAsString(sortMap);
 
     MvcResult result = mockMvc
-      .perform(get("/student-history/paginated").param("studentID", UUID.randomUUID().toString()).param("sort", sort)
+      .perform(get("/" + UUID.randomUUID().toString() + "/student-history/paginated").param("sort", sort)
         .contentType(APPLICATION_JSON))
       .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));

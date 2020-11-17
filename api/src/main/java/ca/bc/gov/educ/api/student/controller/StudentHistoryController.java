@@ -47,7 +47,7 @@ public class StudentHistoryController implements StudentHistoryEndpoint {
   }
 
   @Override
-  public CompletableFuture<Page<StudentHistory>> findStudentHistoryByStudentID(Integer pageNumber, Integer pageSize, String sortCriteriaJson, String studentID) {
+  public CompletableFuture<Page<StudentHistory>> findStudentHistoryByStudentID(String studentID, Integer pageNumber, Integer pageSize, String sortCriteriaJson) {
     final ObjectMapper objectMapper = new ObjectMapper();
     final List<Sort.Order> sorts = new ArrayList<>();
     try {
