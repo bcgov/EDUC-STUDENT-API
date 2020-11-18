@@ -126,6 +126,11 @@ public class EventHandlerService {
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           handleAddStudentTwins(event);
           break;
+        case DELETE_STUDENT_TWINS:
+          log.info("received DELETE_STUDENT_TWINS event :: ");
+          log.trace(PAYLOAD_LOG, event.getEventPayload());
+          handleDeleteStudentTwins(event);
+          break;
         default:
           log.info("silently ignoring other events.");
           break;
@@ -157,6 +162,37 @@ public class EventHandlerService {
       getStudentTwinService().addStudentTwins(studentTwinEntities);
       event.setEventPayload(JsonUtil.getJsonStringFromObject(studentTwinEntities.stream().map(twinMapper::toStructure).collect(Collectors.toList())));// need to convert to structure MANDATORY otherwise jackson will break.
       event.setEventOutcome(EventOutcome.STUDENT_TWINS_ADDED);
+      studentEvent = createStudentEventRecord(event);
+    } else {
+      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
+      studentEvent = studentEventOptional.get();
+      studentEvent.setEventStatus(DB_COMMITTED.toString());
+    }
+
+    getStudentEventRepository().save(studentEvent);
+  }
+
+  /**
+   * This messaging handler expects clients to send array of twin student ID.
+   * Also it is expected that the payload given contains valid data.
+   * <b> The clients responsibility is to provide valid payload in messaging flow.</b>
+   *
+   * @param event the event
+   * @throws JsonProcessingException the json processing exception
+   */
+  protected void handleDeleteStudentTwins(Event event) throws JsonProcessingException {
+    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
+    StudentEvent studentEvent;
+    if (studentEventOptional.isEmpty()) {
+      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
+      final ObjectMapper objectMapper = new ObjectMapper();
+      CollectionType javaType = objectMapper.getTypeFactory()
+        .constructCollectionType(List.class, UUID.class);
+      List<UUID> studentTwinIDs = objectMapper.readValue(event.getEventPayload(), javaType);
+      getStudentTwinService().deleteAllByIds(studentTwinIDs);
+      event.setEventOutcome(EventOutcome.STUDENT_TWINS_DELETED);
       studentEvent = createStudentEventRecord(event);
     } else {
       log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);

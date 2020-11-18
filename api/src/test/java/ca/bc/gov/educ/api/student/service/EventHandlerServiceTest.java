@@ -2,6 +2,7 @@ package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.constant.Topics;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
+import ca.bc.gov.educ.api.student.mappers.StudentTwinMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.model.StudentEvent;
 import ca.bc.gov.educ.api.student.repository.StudentEventRepository;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static ca.bc.gov.educ.api.student.constant.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.constant.EventStatus.DB_COMMITTED;
@@ -315,6 +317,47 @@ public class EventHandlerServiceTest {
     assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_TWINS_ADDED.toString());
   }
 
+  @Test
+  public void testHandleEvent_givenEventTypeDELETE_STUDENT_TWINS_shouldDeleteTwins() throws JsonProcessingException {
+    var twinStudent = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString(Optional.of("127054022"))));
+    var twinStudent2 = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString(Optional.of("120164447"))));
+    List<StudentTwin> studentTwins = new ArrayList<>();
+    studentTwins.add(StudentTwin.builder()
+      .studentID(twinStudent.getStudentID().toString())
+      .twinStudentID(twinStudent2.getStudentID().toString())
+      .studentTwinReasonCode("PENCREATE")
+      .createUser("TEST_USER")
+      .updateUser("TEST_USER")
+      .updateDate(LocalDateTime.now().toString())
+      .createDate(LocalDateTime.now().toString()).build());
+    studentTwinRepository.saveAll(studentTwins.stream().map(StudentTwinMapper.mapper::toModel).collect(Collectors.toList()));
+
+    var studentTwinIDs = studentTwins.stream().map(StudentTwin::getStudentTwinID).collect(Collectors.toList());
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(DELETE_STUDENT_TWINS).sagaId(sagaId).replyTo(STUDENT_API_TOPIC)
+      .eventPayload(JsonUtil.getJsonStringFromObject(studentTwinIDs)).build();
+    eventHandlerServiceUnderTest.handleEvent(event);
+    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, DELETE_STUDENT_TWINS.toString());
+    assertThat(studentEventUpdated).isPresent();
+    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(DB_COMMITTED.toString());
+    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_TWINS_DELETED.toString());
+  }
+
+  @Test
+  public void testHandleEvent_givenEventTypeDELETE_STUDENT_TWINS__whenDuplicateSagaMessage_shouldHaveEventOutcomeSTUDENT_TWINS_DELETED() throws JsonProcessingException {
+    var payload = JsonUtil.getJsonStringFromObject(List.of(UUID.randomUUID().toString()));
+    var sagaId = UUID.randomUUID();
+    var studentEvent = StudentEvent.builder().sagaId(sagaId).replyChannel(STUDENT_API_TOPIC).eventType(DELETE_STUDENT_TWINS.toString()).eventOutcome(STUDENT_TWINS_DELETED.toString()).
+      eventStatus(MESSAGE_PUBLISHED.toString()).eventPayload(payload).createDate(LocalDateTime.now()).createUser("TEST").build();
+    studentEventRepository.save(studentEvent);
+
+    final Event event = Event.builder().eventType(DELETE_STUDENT_TWINS).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(payload).build();
+    eventHandlerServiceUnderTest.handleEvent(event);
+    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, DELETE_STUDENT_TWINS.toString());
+    assertThat(studentEventUpdated).isPresent();
+    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(DB_COMMITTED.toString());
+    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_TWINS_DELETED.toString());
+  }
 
 
   private Student getStudentEntityFromJsonString() {

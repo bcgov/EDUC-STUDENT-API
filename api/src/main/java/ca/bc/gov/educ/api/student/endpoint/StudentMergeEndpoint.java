@@ -16,7 +16,6 @@ import static org.springframework.http.HttpStatus.CREATED;
 import java.util.List;
 
 @RequestMapping("/")
-@OpenAPIDefinition(info = @Info(title = "API for Student Merge CRU.", description = "This CRU API is related to student merge data.", version = "1"), security = {@SecurityRequirement(name = "OAUTH2", scopes = {"READ_STUDENT", "WRITE_STUDENT", "READ_STUDENT_CODES"})})
 public interface StudentMergeEndpoint {
   @GetMapping("/{studentID}/merges")
   @PreAuthorize("#oauth2.hasScope('READ_STUDENT')")

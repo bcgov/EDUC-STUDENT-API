@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 
 @RequestMapping("/")
-@OpenAPIDefinition(info = @Info(title = "API for Student Twin CRU.", description = "This CRU API is related to student twin data.", version = "1"), security = {@SecurityRequirement(name = "OAUTH2", scopes = {"READ_STUDENT", "WRITE_STUDENT", "READ_STUDENT_CODES"})})
 public interface StudentTwinEndpoint {
   @GetMapping("/{studentID}/twins")
   @PreAuthorize("#oauth2.hasScope('READ_STUDENT')")
