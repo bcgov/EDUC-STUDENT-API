@@ -82,6 +82,17 @@ public class StudentTwinService {
   }
 
   /**
+   * Deletes student twins by IDs
+   *
+   * @param ids Student Twin IDs
+   */
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void deleteAllByIds(List<UUID> ids) {
+    val studentTwinEntities = studentTwinRepo.findByStudentTwinIDIn(ids);
+    studentTwinRepo.deleteInBatch(studentTwinEntities);
+  }
+
+  /**
    * Returns the full list of student twin reason codes
    *
    * @return {@link List<StudentMergeDirectionCodeEntity>}

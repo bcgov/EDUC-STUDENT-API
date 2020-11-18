@@ -16,6 +16,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
@@ -120,6 +122,27 @@ public class StudentTwinServiceTest {
     List<StudentTwinEntity> twins = studentTwinService.findStudentTwins(student.getStudentID());
     assertThat(twins.size()).isEqualTo(1);
     studentTwinService.deleteById(twins.get(0).getStudentTwinID());
+    assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isZero();
+  }
+
+  @Test
+  public void testDeleteStudentTwinByIDs_ShouldReturnTrue() {
+    StudentEntity student = studentService.createStudent(getStudentCreate());
+    assertNotNull(student);
+    var studentTwins = IntStream.rangeClosed(1, 3).mapToObj(count -> {
+      var twinedStudent = studentService.createStudent(getStudentCreate());
+      var studentTwin = new StudentTwinEntity();
+      studentTwin.setStudentID(student.getStudentID());
+      studentTwin.setTwinStudentID(twinedStudent.getStudentID());
+      studentTwin.setStudentTwinReasonCode("PENMATCH");
+      return studentTwin;
+    }).collect(Collectors.toList()); ;
+
+
+    studentTwinService.addStudentTwins(studentTwins);
+    List<StudentTwinEntity> twins = studentTwinService.findStudentTwins(student.getStudentID());
+    assertThat(twins.size()).isEqualTo(3);
+    studentTwinService.deleteAllByIds(twins.stream().map(StudentTwinEntity::getStudentTwinID).collect(Collectors.toList()));
     assertThat(studentTwinService.findStudentTwins(student.getStudentID()).size()).isZero();
   }
 
