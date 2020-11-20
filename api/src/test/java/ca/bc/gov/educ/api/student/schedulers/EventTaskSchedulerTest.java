@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -25,7 +26,6 @@ import static ca.bc.gov.educ.api.student.constant.EventStatus.DB_COMMITTED;
 import static ca.bc.gov.educ.api.student.constant.EventType.GET_STUDENT;
 import static ca.bc.gov.educ.api.student.constant.EventType.STUDENT_EVENT_OUTBOX_PROCESSED;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test-event")
@@ -43,7 +43,7 @@ public class EventTaskSchedulerTest {
 
   @Before
   public void setUp() {
-    initMocks(this);
+    MockitoAnnotations.openMocks(this);
   }
 
   @After

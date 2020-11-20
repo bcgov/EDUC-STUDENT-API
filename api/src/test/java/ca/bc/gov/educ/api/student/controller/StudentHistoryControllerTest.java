@@ -3,9 +3,13 @@ package ca.bc.gov.educ.api.student.controller;
 import ca.bc.gov.educ.api.student.StudentApiApplication;
 import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
-import ca.bc.gov.educ.api.student.model.*;
-import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.struct.*;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.model.StudentHistoryActivityCodeEntity;
+import ca.bc.gov.educ.api.student.model.StudentHistoryEntity;
+import ca.bc.gov.educ.api.student.repository.StudentHistoryActivityCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.StudentHistoryRepository;
+import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.struct.Student;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,7 +37,8 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,7 +63,7 @@ public class StudentHistoryControllerTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(new RestExceptionHandler()).build();
     studentHistoryActivityCodeTableRepo.save(createStudentHistoryActivityCodeData());

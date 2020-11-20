@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.constant.EventStatus.DB_COMMITTED;
 import static ca.bc.gov.educ.api.student.constant.EventType.STUDENT_EVENT_OUTBOX_PROCESSED;
@@ -42,7 +41,7 @@ public class EventTaskScheduler {
   @Scheduled(cron = "${scheduled.jobs.poll.events}")  // "0/1 * * * * *"
   @SchedulerLock(name = "EventTablePoller",
           lockAtLeastFor = "${scheduled.jobs.poll.events.lockAtLeastFor}", lockAtMostFor = "${scheduled.jobs.poll.events.lockAtMostFor}")
-  public void pollEventTableAndPublish() throws InterruptedException, IOException, TimeoutException {
+  public void pollEventTableAndPublish() throws IOException {
     List<StudentEvent> events = getStudentEventRepository().findByEventStatus(DB_COMMITTED.toString());
     if (!events.isEmpty()) {
       for (StudentEvent event : events) {
@@ -51,7 +50,7 @@ public class EventTaskScheduler {
             getMessagePubSub().dispatchMessage(event.getReplyChannel(), studentEventProcessed(event));
           }
           getMessagePubSub().dispatchMessage(STUDENT_API_TOPIC.toString(), createOutboxEvent(event));
-        } catch (InterruptedException | TimeoutException | IOException e) {
+        } catch (IOException e) {
           log.error("exception occurred", e);
           throw e;
         }
