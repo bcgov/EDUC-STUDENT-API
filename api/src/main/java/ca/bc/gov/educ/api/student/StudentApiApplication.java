@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @SpringBootApplication
@@ -29,6 +30,7 @@ public class StudentApiApplication {
     SpringApplication.run(StudentApiApplication.class, args);
   }
 
+
   /**
    * Add security exceptions for swagger UI and prometheus.
    */
@@ -36,6 +38,14 @@ public class StudentApiApplication {
   static
   class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
+    /**
+     * Instantiates a new Web security configuration.
+     * This makes sure that security context is propagated to async threads as well.
+     */
+    public WebSecurityConfiguration() {
+      super();
+      SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+    }
     @Override
     public void configure(WebSecurity web) {
       web.ignoring().antMatchers("/v3/api-docs/**",
