@@ -18,7 +18,9 @@
       src/main/java/ca/bc/gov/educ/api/student/mappers/**,
       src/main/java/ca/bc/gov/educ/api/student/exception/**,
       src/main/java/ca/bc/gov/educ/api/student/model/**,
-      src/main/java/ca/bc/gov/educ/api/student/struct/**
+      src/main/java/ca/bc/gov/educ/api/student/struct/**,
+      src/main/java/ca/bc/gov/educ/api/student/scheduler/**,
+      src/main/java/ca/bc/gov/educ/api/student/messaging/**
     </sonar.exclusions>
     <java.version>11</java.version>
 

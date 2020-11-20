@@ -3,11 +3,16 @@ package ca.bc.gov.educ.api.student.controller;
 import ca.bc.gov.educ.api.student.StudentApiApplication;
 import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.mappers.StudentMergeMapper;
-import ca.bc.gov.educ.api.student.model.*;
-import ca.bc.gov.educ.api.student.repository.*;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.model.StudentMergeDirectionCodeEntity;
+import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
+import ca.bc.gov.educ.api.student.model.StudentMergeSourceCodeEntity;
+import ca.bc.gov.educ.api.student.repository.StudentMergeDirectionCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.StudentMergeRepository;
+import ca.bc.gov.educ.api.student.repository.StudentMergeSourceCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import ca.bc.gov.educ.api.student.struct.StudentMerge;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
-
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
@@ -26,7 +31,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -52,7 +58,7 @@ public class StudentMergeControllerTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(new RestExceptionHandler()).build();
     mergeDirectionCodeRepo.save(createStudentMergeDirectionCodeData());
