@@ -134,11 +134,21 @@ public class StudentHistoryControllerTest {
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
   }
 
-  private StudentHistoryEntity createStudentHistoryEntity(StudentEntity student, String historyActivityCode, int yeasBefore) {
+  private StudentHistoryEntity createStudentHistoryEntity(StudentEntity student, String historyActivityCode, int yearsBefore) {
     var studentHistory = new StudentHistoryEntity();
     BeanUtils.copyProperties(student, studentHistory);
     studentHistory.setHistoryActivityCode(historyActivityCode);
-    studentHistory.setCreateDate(LocalDateTime.now().minusYears(yeasBefore));
+    studentHistory.setCreateDate(LocalDateTime.now().minusYears(yearsBefore));
+    return studentHistory;
+  }
+
+  private StudentHistoryEntity createStudentHistoryEntityWithLegalNameChange(StudentEntity student, String historyActivityCode, int yearsBefore, String legalFirstName, String legalLastName) {
+    var studentHistory = new StudentHistoryEntity();
+    BeanUtils.copyProperties(student, studentHistory);
+    studentHistory.setLegalFirstName(legalFirstName);
+    studentHistory.setLegalLastName(legalLastName);
+    studentHistory.setHistoryActivityCode(historyActivityCode);
+    studentHistory.setCreateDate(LocalDateTime.now().minusYears(yearsBefore));
     return studentHistory;
   }
 
@@ -147,6 +157,60 @@ public class StudentHistoryControllerTest {
   public void testGetStudentHistoryActivityCodes_ShouldReturnCodes() throws Exception {
     this.mockMvc.perform(get("/student-history-activity-codes")).andDo(print()).andExpect(status().isOk())
       .andExpect(MockMvcResultMatchers.jsonPath("$[0].historyActivityCode").value("USEREDIT"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryNameVariant_givenStudentID_ShouldReturnStatusOkAndNoRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntity(student, "USEREDIT", 2), createStudentHistoryEntity(student, "USERNEW", 1)).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    this.mockMvc
+            .perform(get("/student-history/name-variant")
+                    .param("legalFirstName", "NO-NAME")
+            ).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.legalFirstNames").isEmpty())
+            .andExpect(jsonPath("$.legalLastNames").isEmpty())
+            .andExpect(jsonPath("$.legalMiddleNames").isEmpty())
+            .andExpect(jsonPath("$.usualFirstNames").isEmpty())
+            .andExpect(jsonPath("$.usualLastNames").isEmpty())
+            .andExpect(jsonPath("$.usualMiddleNames").isEmpty());
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryNameVariants_givenStudentID_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1, student.getLegalFirstName() + "Test2", student.getLegalLastName()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2, student.getLegalFirstName() + "Test1", student.getLegalLastName())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    this.mockMvc
+            .perform(get("/student-history/name-variant")
+                    .param("legalFirstName", entitiesFromDB.get(0).getLegalFirstName() + "Test2" )
+                    .param("legalLastName", entitiesFromDB.get(0).getLegalLastName())
+                    .param("legalMiddleNames", entitiesFromDB.get(0).getLegalMiddleNames())
+            ).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.legalFirstNames[0]").value(entitiesFromDB.get(0).getLegalFirstName()));
   }
 
   public static String asJsonString(final Object obj) {

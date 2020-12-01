@@ -64,7 +64,7 @@ public class StudentServiceTest {
 
   @Before
   public void before() {
-    studentHistoryService = new StudentHistoryService(studentHistoryRepository, codeTableService);
+    studentHistoryService = new StudentHistoryService(studentHistoryRepository, repository, codeTableService);
     service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
   }
 

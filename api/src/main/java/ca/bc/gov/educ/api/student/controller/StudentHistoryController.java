@@ -57,4 +57,13 @@ public class StudentHistoryController implements StudentHistoryEndpoint {
     }
     return getService().findStudentHistoryByStudentID(pageNumber, pageSize, sorts, studentID).thenApplyAsync(studentHistoryEntities -> studentHistoryEntities.map(mapper::toStructure));
   }
+
+  @Override
+  public NameVariant findCurrentStudentNameVariantByAuditHistory(
+          String legalFirstName, String legalLastName, String legalMiddleNames,
+          String usualFirstName, String usualLastName, String usualMiddleNames) {
+    return getService().findNameVariantByAuditHistory(
+            legalFirstName, legalLastName, legalMiddleNames,
+            usualFirstName, usualLastName, usualMiddleNames);
+  }
 }

@@ -30,4 +30,17 @@ public interface StudentHistoryEndpoint {
                                                                         @RequestParam(name = "pageNumber", defaultValue = "0") Integer pageNumber,
                                                                         @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                                                         @RequestParam(name = "sort", defaultValue = "") String sortCriteriaJson);
+
+  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_HISTORY')")
+  @GetMapping("/student-history/name-variant")
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "404", description = "NOT FOUND ERROR."), @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR.")})
+  @Transactional(readOnly = true)
+  @Tag(name = "Endpoint to retrieve a name variant of the current student by audit history using names.", description = "Endpoint to retrieve a name variant of the current student by audit history using names.")
+  NameVariant findCurrentStudentNameVariantByAuditHistory(
+          @RequestParam(name = "legalFirstName", defaultValue = "") String legalFirstName,
+          @RequestParam(name = "legalLastName", defaultValue = "") String legalLastName,
+          @RequestParam(name = "legalMiddleNames", defaultValue = "") String legalMiddleNames,
+          @RequestParam(name = "usualFirstName", defaultValue = "") String usualFirstName,
+          @RequestParam(name = "usualLastName", defaultValue = "") String usualLastName,
+          @RequestParam(name = "usualMiddleNames", defaultValue = "") String usualMiddleNames);
 }
