@@ -142,11 +142,17 @@ public class StudentHistoryControllerTest {
     return studentHistory;
   }
 
-  private StudentHistoryEntity createStudentHistoryEntityWithLegalNameChange(StudentEntity student, String historyActivityCode, int yearsBefore, String legalFirstName, String legalLastName) {
+  private StudentHistoryEntity createStudentHistoryEntityWithLegalNameChange(StudentEntity student, String historyActivityCode, int yearsBefore,
+                                                                             String legalFirstName, String legalLastName, String legalMiddleNames,
+                                                                             String usualFirstName, String usualLastName, String usualMiddleNames) {
     var studentHistory = new StudentHistoryEntity();
     BeanUtils.copyProperties(student, studentHistory);
     studentHistory.setLegalFirstName(legalFirstName);
     studentHistory.setLegalLastName(legalLastName);
+    studentHistory.setLegalMiddleNames(legalMiddleNames);
+    studentHistory.setUsualFirstName(usualFirstName);
+    studentHistory.setUsualLastName(usualLastName);
+    studentHistory.setUsualMiddleNames(usualMiddleNames);
     studentHistory.setHistoryActivityCode(historyActivityCode);
     studentHistory.setCreateDate(LocalDateTime.now().minusYears(yearsBefore));
     return studentHistory;
@@ -189,7 +195,7 @@ public class StudentHistoryControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistoryNameVariants_givenStudentID_ShouldReturnStatusOkAndRecord() throws Exception {
+  public void testReadStudentHistoryNameVariant_ByLegalFirstName_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
             Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -199,8 +205,10 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1, student.getLegalFirstName() + "Test2", student.getLegalLastName()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2, student.getLegalFirstName() + "Test1", student.getLegalLastName())).stream()
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    student.getLegalFirstName() + "Test2", student.getLegalLastName(), student.getLegalMiddleNames(),"", "", ""),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                    student.getLegalFirstName() + "Test1", student.getLegalLastName(), student.getLegalMiddleNames(),"", "", "")).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -211,6 +219,146 @@ public class StudentHistoryControllerTest {
                     .param("legalMiddleNames", entitiesFromDB.get(0).getLegalMiddleNames())
             ).andDo(print()).andExpect(status().isOk())
             .andExpect(jsonPath("$.legalFirstNames[0]").value(entitiesFromDB.get(0).getLegalFirstName()));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryNameVariant_ByLegalLastName_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    student.getLegalFirstName(), student.getLegalLastName() + "Test2", student.getLegalMiddleNames(),"", "", ""),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            student.getLegalFirstName(), student.getLegalLastName() + "Test2", student.getLegalMiddleNames(),"", "", "")).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    this.mockMvc
+            .perform(get("/student-history/name-variant")
+                    .param("legalFirstName", entitiesFromDB.get(0).getLegalFirstName())
+                    .param("legalLastName", entitiesFromDB.get(0).getLegalLastName() + "Test2")
+                    .param("legalMiddleNames", entitiesFromDB.get(0).getLegalMiddleNames())
+            ).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.legalLastNames[0]").value(entitiesFromDB.get(0).getLegalLastName()));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryNameVariant_ByLegalMiddleNames_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    student.getLegalFirstName(), student.getLegalLastName(), student.getLegalMiddleNames() + "Test2","", "", ""),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            student.getLegalFirstName(), student.getLegalLastName(), student.getLegalMiddleNames() + "Test2","", "", "")).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    this.mockMvc
+            .perform(get("/student-history/name-variant")
+                    .param("legalFirstName", entitiesFromDB.get(0).getLegalFirstName())
+                    .param("legalLastName", entitiesFromDB.get(0).getLegalLastName())
+                    .param("legalMiddleNames", entitiesFromDB.get(0).getLegalMiddleNames() + "Test2")
+            ).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.legalMiddleNames[0]").value(entitiesFromDB.get(0).getLegalMiddleNames()));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryNameVariant_ByUsualFirstName_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    "", "", "", student.getUsualFirstName() + "Test2", student.getUsualLastName(), student.getUsualMiddleNames()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                    "", "", "", student.getUsualFirstName() + "Test2", student.getUsualLastName(), student.getUsualMiddleNames())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    this.mockMvc
+            .perform(get("/student-history/name-variant")
+                    .param("usualFirstName", entitiesFromDB.get(0).getUsualFirstName() + "Test2" )
+                    .param("usualLastName", entitiesFromDB.get(0).getUsualLastName())
+                    .param("usualMiddleNames", entitiesFromDB.get(0).getUsualMiddleNames())
+            ).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.usualFirstNames").value(entitiesFromDB.get(0).getUsualFirstName()));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryNameVariant_ByUsualLastName_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    "", "", "", student.getUsualFirstName(), student.getUsualLastName() + "Test2", student.getUsualMiddleNames()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                    "", "", "", student.getUsualFirstName(), student.getUsualLastName() + "Test2", student.getUsualMiddleNames())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    this.mockMvc
+            .perform(get("/student-history/name-variant")
+                    .param("usualFirstName", entitiesFromDB.get(0).getUsualFirstName())
+                    .param("usualLastName", entitiesFromDB.get(0).getUsualLastName() + "Test2")
+                    .param("usualMiddleNames", entitiesFromDB.get(0).getUsualMiddleNames())
+            ).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.usualLastNames[0]").value(entitiesFromDB.get(0).getUsualLastName()));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryNameVariant_ByUsualMiddleNames_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    "", "", "", student.getUsualFirstName(), student.getUsualLastName(), student.getUsualMiddleNames() + "Test2"),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            "", "", "", student.getUsualFirstName(), student.getUsualLastName(), student.getUsualMiddleNames() + "Test2")).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    this.mockMvc
+            .perform(get("/student-history/name-variant")
+                    .param("usualFirstName", entitiesFromDB.get(0).getUsualFirstName())
+                    .param("usualLastName", entitiesFromDB.get(0).getUsualLastName())
+                    .param("usualMiddleNames", entitiesFromDB.get(0).getUsualMiddleNames() + "Test2")
+            ).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.usualMiddleNames[0]").value(entitiesFromDB.get(0).getUsualMiddleNames()));
   }
 
   public static String asJsonString(final Object obj) {
