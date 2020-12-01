@@ -62,6 +62,6 @@ public abstract class BaseStudent extends BaseRequest {
   String demogCode;
   @Size(max = 1)
   String statusCode;
-  @Size(max = 25)
+  @Size(max = 4000)
   String memo;
 }
