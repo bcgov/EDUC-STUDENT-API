@@ -362,7 +362,7 @@ public class StudentHistoryControllerTest {
     sortMap.put("legalLastName", "DESC");
     String sort = new ObjectMapper().writeValueAsString(sortMap);
 
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("ttTEST2").valueType(ValueType.STRING).build();
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("TEST2").valueType(ValueType.STRING).build();
     List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
     List<Search> searches = new LinkedList<>();
@@ -373,15 +373,14 @@ public class StudentHistoryControllerTest {
 
     MvcResult result = mockMvc
             .perform(get("/student-history/paginated")
-                    .param("pageNumber", "0").param("pageSize", "5")
+                    .param("pageNumber", "0").param("pageSize", "10")
                     .param("sort", sort)
                     .param("searchCriteriaList", criteriaJSON)
                     .contentType(APPLICATION_JSON))
             .andReturn();
 
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.content", hasSize(1)))
-            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+            .andExpect(jsonPath("$.content", hasSize(6)));
   }
 
   @Test
@@ -489,6 +488,54 @@ public class StudentHistoryControllerTest {
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
             .andExpect(jsonPath("$.content", hasSize(1)))
             .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryPaginated_legalLastNameOrlegalFirstNameOrGivenUUID_ShouldReturnStatusBadRequest() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    SearchCriteria lastNameCriteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getLegalLastName() + "TEST2").valueType(ValueType.STRING).build();
+    SearchCriteria firstNameCriteria = SearchCriteria.builder().condition(OR).key("legalFirstName").operation(FilterOperation.CONTAINS).value(entitiesFromDB.get(0).getLegalFirstName()).valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList1 = new ArrayList<>();
+    criteriaList1.add(lastNameCriteria);
+    criteriaList1.add(firstNameCriteria);
+
+    SearchCriteria uuidCriteria = SearchCriteria.builder().key("studentHistoryID").operation(FilterOperation.EQUAL).value(studentHistoryEntities.get(0).getStudentHistoryID().toString()).valueType(ValueType.UUID).build();
+    List<SearchCriteria> criteriaList2 = new ArrayList<>();
+    criteriaList2.add(uuidCriteria);
+
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList1).build());
+    searches.add(Search.builder().condition(OR).searchCriteriaList(criteriaList2).build());
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+
+    MvcResult result = mockMvc
+            .perform(get("/student-history/paginated")
+                    .param("pageNumber", "0").param("pageSize", "5")
+                    .param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(2)));
   }
 
   @Test

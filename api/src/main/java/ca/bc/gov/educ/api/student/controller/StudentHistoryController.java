@@ -6,7 +6,6 @@ import ca.bc.gov.educ.api.student.exception.StudentRuntimeException;
 import ca.bc.gov.educ.api.student.filter.FilterOperation;
 import ca.bc.gov.educ.api.student.filter.StudentHistoryFilterSpecs;
 import ca.bc.gov.educ.api.student.mappers.StudentHistoryMapper;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.model.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.service.StudentHistoryService;
 import ca.bc.gov.educ.api.student.struct.*;
@@ -101,25 +100,25 @@ public class StudentHistoryController implements StudentHistoryEndpoint {
    */
   private Specification<StudentHistoryEntity> getSpecifications(Specification<StudentHistoryEntity> studentHistorySpecs, int i, Search search) {
     if (i == 0) {
-      studentHistorySpecs = getStudentEntitySpecification(search.getSearchCriteriaList());
+      studentHistorySpecs = getStudentHistoryEntitySpecification(search.getSearchCriteriaList());
     } else {
       if (search.getCondition() == Condition.AND) {
-        studentHistorySpecs = studentHistorySpecs.and(getStudentEntitySpecification(search.getSearchCriteriaList()));
+        studentHistorySpecs = studentHistorySpecs.and(getStudentHistoryEntitySpecification(search.getSearchCriteriaList()));
       } else {
-        studentHistorySpecs = studentHistorySpecs.or(getStudentEntitySpecification(search.getSearchCriteriaList()));
+        studentHistorySpecs = studentHistorySpecs.or(getStudentHistoryEntitySpecification(search.getSearchCriteriaList()));
       }
     }
     return studentHistorySpecs;
   }
 
-  private Specification<StudentHistoryEntity> getStudentEntitySpecification(List<SearchCriteria> criteriaList) {
+  private Specification<StudentHistoryEntity> getStudentHistoryEntitySpecification(List<SearchCriteria> criteriaList) {
     Specification<StudentHistoryEntity> studentHistorySpecs = null;
     if (!criteriaList.isEmpty()) {
       int i = 0;
       for (SearchCriteria criteria : criteriaList) {
         if (criteria.getKey() != null && criteria.getOperation() != null && criteria.getValueType() != null) {
           var criteriaValue = criteria.getValue();
-          if(criteriaValue != null && TransformUtil.isUppercaseField(StudentEntity.class, criteria.getKey())) {
+          if(criteriaValue != null && TransformUtil.isUppercaseField(StudentHistoryEntity.class, criteria.getKey())) {
             criteriaValue = criteriaValue.toUpperCase();
           }
           Specification<StudentHistoryEntity> typeSpecification = getTypeSpecification(criteria.getKey(), criteria.getOperation(), criteriaValue, criteria.getValueType());
