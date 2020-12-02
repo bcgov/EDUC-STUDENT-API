@@ -2,6 +2,7 @@ package ca.bc.gov.educ.api.student.controller;
 
 import ca.bc.gov.educ.api.student.StudentApiApplication;
 import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
+import ca.bc.gov.educ.api.student.filter.FilterOperation;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
 import ca.bc.gov.educ.api.student.model.StudentHistoryActivityCodeEntity;
@@ -9,7 +10,10 @@ import ca.bc.gov.educ.api.student.model.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.StudentHistoryActivityCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.StudentHistoryRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.struct.Search;
+import ca.bc.gov.educ.api.student.struct.SearchCriteria;
 import ca.bc.gov.educ.api.student.struct.Student;
+import ca.bc.gov.educ.api.student.struct.ValueType;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -143,16 +147,12 @@ public class StudentHistoryControllerTest {
   }
 
   private StudentHistoryEntity createStudentHistoryEntityWithLegalNameChange(StudentEntity student, String historyActivityCode, int yearsBefore,
-                                                                             String legalFirstName, String legalLastName, String legalMiddleNames,
-                                                                             String usualFirstName, String usualLastName, String usualMiddleNames) {
+                                                                             String legalFirstName, String legalLastName, String legalMiddleNames) {
     var studentHistory = new StudentHistoryEntity();
     BeanUtils.copyProperties(student, studentHistory);
     studentHistory.setLegalFirstName(legalFirstName);
     studentHistory.setLegalLastName(legalLastName);
     studentHistory.setLegalMiddleNames(legalMiddleNames);
-    studentHistory.setUsualFirstName(usualFirstName);
-    studentHistory.setUsualLastName(usualLastName);
-    studentHistory.setUsualMiddleNames(usualMiddleNames);
     studentHistory.setHistoryActivityCode(historyActivityCode);
     studentHistory.setCreateDate(LocalDateTime.now().minusYears(yearsBefore));
     return studentHistory;
@@ -167,7 +167,7 @@ public class StudentHistoryControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistoryNameVariant_givenStudentID_ShouldReturnStatusOkAndNoRecord() throws Exception {
+  public void testReadStudentHistory_ShouldReturnStatusOkAndEmptyRecord() throws Exception {
     var file = new File(
             Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -181,21 +181,33 @@ public class StudentHistoryControllerTest {
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
-    this.mockMvc
-            .perform(get("/student-history/name-variant")
-                    .param("legalFirstName", "NO-NAME")
-            ).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.legalFirstNames").isEmpty())
-            .andExpect(jsonPath("$.legalLastNames").isEmpty())
-            .andExpect(jsonPath("$.legalMiddleNames").isEmpty())
-            .andExpect(jsonPath("$.usualFirstNames").isEmpty())
-            .andExpect(jsonPath("$.usualLastNames").isEmpty())
-            .andExpect(jsonPath("$.usualMiddleNames").isEmpty());
+    Map<String, String> sortMap = new HashMap<>();
+    sortMap.put("legalFirstName", "DESC");
+    String sort = new ObjectMapper().writeValueAsString(sortMap);
+
+    SearchCriteria criteria = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.EQUAL).value("NO_NAME").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+
+    MvcResult result = mockMvc
+            .perform(get("/student-history/paginated")
+                    .param("sort", sort)
+                    .param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(0)));
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistoryNameVariant_ByLegalFirstName_ShouldReturnStatusOkAndRecord() throws Exception {
+  public void testReadStudentHistory_By_LegalFirstName_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
             Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -206,24 +218,41 @@ public class StudentHistoryControllerTest {
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
             List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName() + "Test2", student.getLegalLastName(), student.getLegalMiddleNames(),"", "", ""),
+                    student.getLegalFirstName() + "TEST2", student.getLegalLastName(), student.getLegalMiddleNames()),
                     createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                    student.getLegalFirstName() + "Test1", student.getLegalLastName(), student.getLegalMiddleNames(),"", "", "")).stream()
+                    student.getLegalFirstName() + "TEST1", student.getLegalLastName(), student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
-    this.mockMvc
-            .perform(get("/student-history/name-variant")
-                    .param("legalFirstName", entitiesFromDB.get(0).getLegalFirstName() + "Test2" )
-                    .param("legalLastName", entitiesFromDB.get(0).getLegalLastName())
-                    .param("legalMiddleNames", entitiesFromDB.get(0).getLegalMiddleNames())
-            ).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.legalFirstNames[0]").value(entitiesFromDB.get(0).getLegalFirstName()));
+    Map<String, String> sortMap = new HashMap<>();
+    sortMap.put("legalFirstName", "DESC");
+    String sort = new ObjectMapper().writeValueAsString(sortMap);
+
+    SearchCriteria criteria = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getLegalFirstName() + "TEST2").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+
+    MvcResult result = mockMvc
+            .perform(get("/student-history/paginated")
+                    .param("pageNumber", "0").param("pageSize", "5")
+                    .param("sort", sort)
+                    .param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(1)))
+            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
   }
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistoryNameVariant_ByLegalLastName_ShouldReturnStatusOkAndRecord() throws Exception {
+  public void testReadStudentHistory_By_LegalLastName_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
             Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -234,131 +263,36 @@ public class StudentHistoryControllerTest {
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
             List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName(), student.getLegalLastName() + "Test2", student.getLegalMiddleNames(),"", "", ""),
+                      student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
                     createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                            student.getLegalFirstName(), student.getLegalLastName() + "Test2", student.getLegalMiddleNames(),"", "", "")).stream()
+                      student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
-    this.mockMvc
-            .perform(get("/student-history/name-variant")
-                    .param("legalFirstName", entitiesFromDB.get(0).getLegalFirstName())
-                    .param("legalLastName", entitiesFromDB.get(0).getLegalLastName() + "Test2")
-                    .param("legalMiddleNames", entitiesFromDB.get(0).getLegalMiddleNames())
-            ).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.legalLastNames[0]").value(entitiesFromDB.get(0).getLegalLastName()));
-  }
+    Map<String, String> sortMap = new HashMap<>();
+    sortMap.put("legalLastName", "DESC");
+    String sort = new ObjectMapper().writeValueAsString(sortMap);
 
-  @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistoryNameVariant_ByLegalMiddleNames_ShouldReturnStatusOkAndRecord() throws Exception {
-    var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
-    );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
-    });
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getLegalLastName() + "TEST2").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
 
-    val entitiesFromDB = repository.findAll();
-    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName(), student.getLegalLastName(), student.getLegalMiddleNames() + "Test2","", "", ""),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                            student.getLegalFirstName(), student.getLegalLastName(), student.getLegalMiddleNames() + "Test2","", "", "")).stream()
-    ).collect(Collectors.toList());
-    studentHistoryRepo.saveAll(studentHistoryEntities);
+    MvcResult result = mockMvc
+            .perform(get("/student-history/paginated")
+                    .param("pageNumber", "0").param("pageSize", "5")
+                    .param("sort", sort)
+                    .param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
 
-    this.mockMvc
-            .perform(get("/student-history/name-variant")
-                    .param("legalFirstName", entitiesFromDB.get(0).getLegalFirstName())
-                    .param("legalLastName", entitiesFromDB.get(0).getLegalLastName())
-                    .param("legalMiddleNames", entitiesFromDB.get(0).getLegalMiddleNames() + "Test2")
-            ).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.legalMiddleNames[0]").value(entitiesFromDB.get(0).getLegalMiddleNames()));
-  }
-
-  @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistoryNameVariant_ByUsualFirstName_ShouldReturnStatusOkAndRecord() throws Exception {
-    var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
-    );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
-    });
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-
-    val entitiesFromDB = repository.findAll();
-    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    "", "", "", student.getUsualFirstName() + "Test2", student.getUsualLastName(), student.getUsualMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                    "", "", "", student.getUsualFirstName() + "Test2", student.getUsualLastName(), student.getUsualMiddleNames())).stream()
-    ).collect(Collectors.toList());
-    studentHistoryRepo.saveAll(studentHistoryEntities);
-
-    this.mockMvc
-            .perform(get("/student-history/name-variant")
-                    .param("usualFirstName", entitiesFromDB.get(0).getUsualFirstName() + "Test2" )
-                    .param("usualLastName", entitiesFromDB.get(0).getUsualLastName())
-                    .param("usualMiddleNames", entitiesFromDB.get(0).getUsualMiddleNames())
-            ).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.usualFirstNames").value(entitiesFromDB.get(0).getUsualFirstName()));
-  }
-
-  @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistoryNameVariant_ByUsualLastName_ShouldReturnStatusOkAndRecord() throws Exception {
-    var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
-    );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
-    });
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-
-    val entitiesFromDB = repository.findAll();
-    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    "", "", "", student.getUsualFirstName(), student.getUsualLastName() + "Test2", student.getUsualMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                    "", "", "", student.getUsualFirstName(), student.getUsualLastName() + "Test2", student.getUsualMiddleNames())).stream()
-    ).collect(Collectors.toList());
-    studentHistoryRepo.saveAll(studentHistoryEntities);
-
-    this.mockMvc
-            .perform(get("/student-history/name-variant")
-                    .param("usualFirstName", entitiesFromDB.get(0).getUsualFirstName())
-                    .param("usualLastName", entitiesFromDB.get(0).getUsualLastName() + "Test2")
-                    .param("usualMiddleNames", entitiesFromDB.get(0).getUsualMiddleNames())
-            ).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.usualLastNames[0]").value(entitiesFromDB.get(0).getUsualLastName()));
-  }
-
-  @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistoryNameVariant_ByUsualMiddleNames_ShouldReturnStatusOkAndRecord() throws Exception {
-    var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
-    );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
-    });
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-
-    val entitiesFromDB = repository.findAll();
-    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    "", "", "", student.getUsualFirstName(), student.getUsualLastName(), student.getUsualMiddleNames() + "Test2"),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                            "", "", "", student.getUsualFirstName(), student.getUsualLastName(), student.getUsualMiddleNames() + "Test2")).stream()
-    ).collect(Collectors.toList());
-    studentHistoryRepo.saveAll(studentHistoryEntities);
-
-    this.mockMvc
-            .perform(get("/student-history/name-variant")
-                    .param("usualFirstName", entitiesFromDB.get(0).getUsualFirstName())
-                    .param("usualLastName", entitiesFromDB.get(0).getUsualLastName())
-                    .param("usualMiddleNames", entitiesFromDB.get(0).getUsualMiddleNames() + "Test2")
-            ).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.usualMiddleNames[0]").value(entitiesFromDB.get(0).getUsualMiddleNames()));
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(1)))
+            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
   }
 
   public static String asJsonString(final Object obj) {
