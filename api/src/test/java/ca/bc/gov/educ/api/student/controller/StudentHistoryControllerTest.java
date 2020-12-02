@@ -10,10 +10,7 @@ import ca.bc.gov.educ.api.student.model.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.StudentHistoryActivityCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.StudentHistoryRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.struct.Search;
-import ca.bc.gov.educ.api.student.struct.SearchCriteria;
-import ca.bc.gov.educ.api.student.struct.Student;
-import ca.bc.gov.educ.api.student.struct.ValueType;
+import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -39,6 +36,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ca.bc.gov.educ.api.student.struct.Condition.AND;
+import static ca.bc.gov.educ.api.student.struct.Condition.OR;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -167,7 +166,7 @@ public class StudentHistoryControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistory_ShouldReturnStatusOkAndEmptyRecord() throws Exception {
+  public void testReadStudentHistoryPaginated_ShouldReturnStatusOkAndEmptyRecord() throws Exception {
     var file = new File(
             Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -207,7 +206,7 @@ public class StudentHistoryControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistory_By_LegalFirstName_ShouldReturnStatusOkAndRecord() throws Exception {
+  public void testReadStudentHistoryPaginated_legalFirstName_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
             Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -252,7 +251,7 @@ public class StudentHistoryControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
-  public void testReadStudentHistory_By_LegalLastName_ShouldReturnStatusOkAndRecord() throws Exception {
+  public void testReadStudentHistoryPaginated_legalLastName_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
             Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -293,6 +292,243 @@ public class StudentHistoryControllerTest {
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
             .andExpect(jsonPath("$.content", hasSize(1)))
             .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryPaginated_legalLastNameStartWith_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    Map<String, String> sortMap = new HashMap<>();
+    sortMap.put("legalLastName", "DESC");
+    String sort = new ObjectMapper().writeValueAsString(sortMap);
+
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH).value(entitiesFromDB.get(0).getLegalLastName()).valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+
+    MvcResult result = mockMvc
+            .perform(get("/student-history/paginated")
+                    .param("pageNumber", "0").param("pageSize", "5")
+                    .param("sort", sort)
+                    .param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(2)))
+            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryPaginated_legalLastNameEndWith_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    Map<String, String> sortMap = new HashMap<>();
+    sortMap.put("legalLastName", "DESC");
+    String sort = new ObjectMapper().writeValueAsString(sortMap);
+
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("ttTEST2").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+
+    MvcResult result = mockMvc
+            .perform(get("/student-history/paginated")
+                    .param("pageNumber", "0").param("pageSize", "5")
+                    .param("sort", sort)
+                    .param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(1)))
+            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryPaginated_legalFirstNameOrLegalLastNameAndDOB_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    Map<String, String> sortMap = new HashMap<>();
+    sortMap.put("legalLastName", "DESC");
+    String sort = new ObjectMapper().writeValueAsString(sortMap);
+
+
+    SearchCriteria lastNameCriteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getLegalLastName() + "TEST2").valueType(ValueType.STRING).build();
+    SearchCriteria firstNameCriteria = SearchCriteria.builder().condition(OR).key("legalFirstName").operation(FilterOperation.CONTAINS).value(entitiesFromDB.get(0).getLegalFirstName()).valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList1 = new ArrayList<>();
+    criteriaList1.add(lastNameCriteria);
+    criteriaList1.add(firstNameCriteria);
+
+    String fromDate = "2017-12-01";
+    String toDate = "2018-06-01";
+    SearchCriteria dobCriteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    List<SearchCriteria> criteriaList2 = new ArrayList<>();
+    criteriaList2.add(dobCriteria);
+
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList1).build());
+    searches.add(Search.builder().condition(AND).searchCriteriaList(criteriaList2).build());
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+
+    MvcResult result = mockMvc
+            .perform(get("/student-history/paginated")
+                    .param("pageNumber", "0").param("pageSize", "5")
+                    .param("sort", sort)
+                    .param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(2)))
+            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"))
+            .andExpect(jsonPath("$.content[1].historyActivityCode").value("USERNEW"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryPaginated_givenSubmitDataBetween_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    Map<String, String> sortMap = new HashMap<>();
+    sortMap.put("legalLastName", "DESC");
+    String sort = new ObjectMapper().writeValueAsString(sortMap);
+
+    String fromDate = "2017-12-01";
+    String toDate = "2018-06-01";
+    SearchCriteria criteria1 = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getLegalLastName() + "TEST2").valueType(ValueType.STRING).build();
+    SearchCriteria criteria2 = SearchCriteria.builder().condition(AND).key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria1);
+    criteriaList.add(criteria2);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+
+    MvcResult result = mockMvc
+            .perform(get("/student-history/paginated")
+                    .param("pageNumber", "0").param("pageSize", "5")
+                    .param("sort", sort)
+                    .param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(1)))
+            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryPaginated_givenOperationTypeNull_ShouldReturnStatusBadRequest() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(null).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+
+    this.mockMvc.perform(get("/student-history/paginated").param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
+  public void testReadStudentHistoryPaginated_givenInvalidSearchCriteria_ShouldReturnStatusBadRequest() throws Exception {
+    this.mockMvc
+            .perform(get("/student-history/paginated").param("searchCriteriaList", "{test}")
+                    .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   public static String asJsonString(final Object obj) {
