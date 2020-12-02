@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +47,17 @@ public class StudentHistoryService {
     Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sorts));
     try {
       val result = getStudentHistoryRepository().findByStudentID(UUID.fromString(studentID), paging);
+      return CompletableFuture.completedFuture(result);
+    } catch (final Exception ex) {
+      throw new CompletionException(ex);
+    }
+  }
+
+  @Transactional(propagation = Propagation.SUPPORTS)
+  public CompletableFuture<Page<StudentHistoryEntity>> findAll(Specification<StudentHistoryEntity> studentHistorySpecs, final Integer pageNumber, final Integer pageSize, final List<Sort.Order> sorts) {
+    Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sorts));
+    try {
+      val result = getStudentHistoryRepository().findAll(studentHistorySpecs, paging);
       return CompletableFuture.completedFuture(result);
     } catch (final Exception ex) {
       throw new CompletionException(ex);
