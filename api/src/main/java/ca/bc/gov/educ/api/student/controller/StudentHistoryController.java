@@ -180,5 +180,4 @@ public class StudentHistoryController implements StudentHistoryEndpoint {
     }
     return studentHistoryEntitySpecification;
   }
-
 }
