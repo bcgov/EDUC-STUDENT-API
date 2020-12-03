@@ -47,8 +47,7 @@ public abstract class BaseStudent extends BaseRequest {
   @Pattern(regexp = "[YN]")
   String emailVerified;
   String deceasedDate;
-  @Size(max = 7)
-  @Pattern(regexp = "^([A-Z]\\d[A-Z]\\d[A-Z]\\d|)$")
+  @Size(max = 6)
   String postalCode;
   @Size(max = 8)
   String mincode;
