@@ -2,7 +2,6 @@ package ca.bc.gov.educ.api.student.support;
 
 import ca.bc.gov.educ.api.student.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.messaging.MessageSubscriber;
-import ca.bc.gov.educ.api.student.schedulers.EventTaskScheduler;
 import io.nats.client.Connection;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;

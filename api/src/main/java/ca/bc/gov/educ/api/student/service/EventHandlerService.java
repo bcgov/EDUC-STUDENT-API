@@ -1,6 +1,7 @@
 package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.constant.EventOutcome;
+import ca.bc.gov.educ.api.student.constant.EventType;
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.mappers.StudentTwinMapper;
@@ -53,7 +54,7 @@ public class EventHandlerService {
    * The constant RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE.
    */
   public static final String RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE = "record found for the saga id and event type combination, might be a duplicate or replay," +
-      " just updating the db status so that it will be polled and sent back again.";
+    " just updating the db status so that it will be polled and sent back again.";
   /**
    * The constant PAYLOAD_LOG.
    */
@@ -92,53 +93,6 @@ public class EventHandlerService {
     this.studentTwinService = studentTwinService;
   }
 
-  /**
-   * Handle event.
-   *
-   * @param event the event
-   */
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void handleEvent(Event event) {
-    try {
-      switch (event.getEventType()) {
-        case STUDENT_EVENT_OUTBOX_PROCESSED:
-          log.info("received outbox processed event :: ");
-          log.trace(PAYLOAD_LOG, event.getEventPayload());
-          handleStudentOutboxProcessedEvent(event.getEventPayload());
-          break;
-        case GET_STUDENT:
-          log.info("received get student event :: ");
-          log.trace(PAYLOAD_LOG, event.getEventPayload());
-          handleGetStudentEvent(event);
-          break;
-        case CREATE_STUDENT:
-          log.info("received create student event :: ");
-          log.trace(PAYLOAD_LOG, event.getEventPayload());
-          handleCreateStudentEvent(event);
-          break;
-        case UPDATE_STUDENT:
-          log.info("received update student event :: ");
-          log.trace(PAYLOAD_LOG, event.getEventPayload());
-          handleUpdateStudentEvent(event);
-          break;
-        case ADD_STUDENT_TWINS:
-          log.info("received ADD_STUDENT_TWINS event :: ");
-          log.trace(PAYLOAD_LOG, event.getEventPayload());
-          handleAddStudentTwins(event);
-          break;
-        case DELETE_STUDENT_TWINS:
-          log.info("received DELETE_STUDENT_TWINS event :: ");
-          log.trace(PAYLOAD_LOG, event.getEventPayload());
-          handleDeleteStudentTwins(event);
-          break;
-        default:
-          log.info("silently ignoring other events.");
-          break;
-      }
-    } catch (final Exception e) {
-      log.error("Exception", e);
-    }
-  }
 
   /**
    * This messaging handler expects clients to send array of twins.
@@ -148,7 +102,8 @@ public class EventHandlerService {
    * @param event the event
    * @throws JsonProcessingException the json processing exception
    */
-  protected void handleAddStudentTwins(Event event) throws JsonProcessingException {
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public byte[] handleAddStudentTwins(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (studentEventOptional.isEmpty()) {
@@ -156,7 +111,7 @@ public class EventHandlerService {
       log.trace(EVENT_PAYLOAD, event);
       final ObjectMapper objectMapper = new ObjectMapper();
       CollectionType javaType = objectMapper.getTypeFactory()
-                                            .constructCollectionType(List.class, StudentTwin.class);
+        .constructCollectionType(List.class, StudentTwin.class);
       List<StudentTwin> studentTwins = objectMapper.readValue(event.getEventPayload(), javaType);
       List<StudentTwinEntity> studentTwinEntities = studentTwins.stream().peek(RequestUtil::setAuditColumnsForCreate).map(twinMapper::toModel).collect(Collectors.toList());
       getStudentTwinService().addStudentTwins(studentTwinEntities);
@@ -167,10 +122,11 @@ public class EventHandlerService {
       log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       studentEvent = studentEventOptional.get();
-      studentEvent.setEventStatus(DB_COMMITTED.toString());
+      studentEvent.setUpdateDate(LocalDateTime.now());
     }
 
     getStudentEventRepository().save(studentEvent);
+    return createResponseEvent(studentEvent);
   }
 
   /**
@@ -181,7 +137,8 @@ public class EventHandlerService {
    * @param event the event
    * @throws JsonProcessingException the json processing exception
    */
-  protected void handleDeleteStudentTwins(Event event) throws JsonProcessingException {
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public byte[] handleDeleteStudentTwins(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (studentEventOptional.isEmpty()) {
@@ -198,13 +155,15 @@ public class EventHandlerService {
       log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       studentEvent = studentEventOptional.get();
-      studentEvent.setEventStatus(DB_COMMITTED.toString());
+      studentEvent.setUpdateDate(LocalDateTime.now());
     }
 
     getStudentEventRepository().save(studentEvent);
+    return createResponseEvent(studentEvent);
   }
 
-  private void handleUpdateStudentEvent(Event event) throws JsonProcessingException {
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public byte[] handleUpdateStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (studentEventOptional.isEmpty()) {
@@ -224,13 +183,15 @@ public class EventHandlerService {
       log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       studentEvent = studentEventOptional.get();
-      studentEvent.setEventStatus(DB_COMMITTED.toString());
+      studentEvent.setUpdateDate(LocalDateTime.now());
     }
 
     getStudentEventRepository().save(studentEvent);
+    return createResponseEvent(studentEvent);
   }
 
-  private void handleCreateStudentEvent(Event event) throws JsonProcessingException {
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public byte[] handleCreateStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (studentEventOptional.isEmpty()) {
@@ -257,20 +218,13 @@ public class EventHandlerService {
       log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       studentEvent = studentEventOptional.get();
-      studentEvent.setEventStatus(DB_COMMITTED.toString());
+      studentEvent.setUpdateDate(LocalDateTime.now());
     }
 
     getStudentEventRepository().save(studentEvent);
+    return createResponseEvent(studentEvent);
   }
 
-  private void handleStudentOutboxProcessedEvent(String studentEventId) {
-    val studentEventFromDB = getStudentEventRepository().findById(UUID.fromString(studentEventId));
-    if (studentEventFromDB.isPresent()) {
-      val studEvent = studentEventFromDB.get();
-      studEvent.setEventStatus(MESSAGE_PUBLISHED.toString());
-      getStudentEventRepository().save(studEvent);
-    }
-  }
 
   /**
    * Saga should never be null for this type of event.
@@ -279,7 +233,8 @@ public class EventHandlerService {
    * @param event containing the student PEN.
    * @throws JsonProcessingException the json processing exception
    */
-  public void handleGetStudentEvent(Event event) throws JsonProcessingException {
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public byte[] handleGetStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (studentEventOptional.isEmpty()) {
@@ -298,23 +253,33 @@ public class EventHandlerService {
       log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       studentEvent = studentEventOptional.get();
-      studentEvent.setEventStatus(DB_COMMITTED.toString());
+      studentEvent.setUpdateDate(LocalDateTime.now());
     }
     getStudentEventRepository().save(studentEvent);
+    return createResponseEvent(studentEvent);
   }
 
   private StudentEvent createStudentEventRecord(Event event) {
     return StudentEvent.builder()
-                       .createDate(LocalDateTime.now())
-                       .updateDate(LocalDateTime.now())
-                       .createUser(event.getEventType().toString()) //need to discuss what to put here.
-                       .updateUser(event.getEventType().toString())
-                       .eventPayload(event.getEventPayload())
-                       .eventType(event.getEventType().toString())
-                       .sagaId(event.getSagaId())
-                       .eventStatus(DB_COMMITTED.toString())
-                       .eventOutcome(event.getEventOutcome().toString())
-                       .replyChannel(event.getReplyTo())
-                       .build();
+      .createDate(LocalDateTime.now())
+      .updateDate(LocalDateTime.now())
+      .createUser(event.getEventType().toString()) //need to discuss what to put here.
+      .updateUser(event.getEventType().toString())
+      .eventPayload(event.getEventPayload())
+      .eventType(event.getEventType().toString())
+      .sagaId(event.getSagaId())
+      .eventStatus(MESSAGE_PUBLISHED.toString())
+      .eventOutcome(event.getEventOutcome().toString())
+      .replyChannel(event.getReplyTo())
+      .build();
+  }
+
+  private byte[] createResponseEvent(StudentEvent event) throws JsonProcessingException {
+    Event responseEvent = Event.builder()
+      .sagaId(event.getSagaId())
+      .eventType(EventType.valueOf(event.getEventType()))
+      .eventOutcome(EventOutcome.valueOf(event.getEventOutcome()))
+      .eventPayload(event.getEventPayload()).build();
+    return JsonUtil.getJsonSBytesFromObject(responseEvent);
   }
 }

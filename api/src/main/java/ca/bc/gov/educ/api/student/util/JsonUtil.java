@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.util;
 
+import ca.bc.gov.educ.api.student.struct.Event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,4 +37,7 @@ public class JsonUtil {
     return mapper.readValue(payload, clazz);
   }
 
+  public static byte[] getJsonSBytesFromObject(Object payload) throws JsonProcessingException {
+    return new ObjectMapper().writeValueAsBytes(payload);
+  }
 }
