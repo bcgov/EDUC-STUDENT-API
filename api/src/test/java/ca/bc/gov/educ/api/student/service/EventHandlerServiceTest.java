@@ -73,7 +73,6 @@ public class EventHandlerServiceTest {
     studentEventRepository.deleteAll();
   }
 
-
   @Test
   public void testHandleEvent_givenEventTypeGET_STUDENT__whenNoStudentExist_shouldHaveEventOutcomeSTUDENT_NOT_FOUND() throws JsonProcessingException {
     var sagaId = UUID.randomUUID();
