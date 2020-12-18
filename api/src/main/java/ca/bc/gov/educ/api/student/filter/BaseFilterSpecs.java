@@ -8,8 +8,9 @@ import java.util.UUID;
 import java.util.function.Function;
 
 /**
- *
+ * this is the generic class to support all kind of filter specifications for different entities
  * @param <R> the entity type.
+ * @author Om
  */
 public abstract class BaseFilterSpecs<R>{
 
