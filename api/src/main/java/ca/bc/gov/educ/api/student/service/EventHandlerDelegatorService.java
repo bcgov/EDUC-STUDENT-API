@@ -41,12 +41,12 @@ public class EventHandlerDelegatorService {
    */
   public void handleEvent(final Event event, final Message message) {
     byte[] response;
+    boolean isSynchronous = message.getReplyTo() != null;
     try {
       switch (event.getEventType()) {
         case GET_STUDENT:
           log.info("received get student event :: ");
           log.trace(PAYLOAD_LOG, event.getEventPayload());
-          boolean isSynchronous = message.getReplyTo() != null;
           response = eventHandlerService.handleGetStudentEvent(event, isSynchronous);
           if (isSynchronous) { // sync, req/reply pattern of nats
             messagePublisher.dispatchMessage(message.getReplyTo(), response);
@@ -85,11 +85,10 @@ public class EventHandlerDelegatorService {
           eventHandlerService
               .handleGetPaginatedStudent(event)
               .thenAcceptAsync(resBytes -> {
-                if (message.getReplyTo() != null) { // sync, req/reply pattern of nats
+                if (isSynchronous) { // sync, req/reply pattern of nats
                   messagePublisher.dispatchMessage(message.getReplyTo(), resBytes);
-                  log.info("responded back to NATS");
                 }
-                if (event.getReplyTo() != null) { // async, pub/sub
+                else  { // async, pub/sub
                   messagePublisher.dispatchMessage(event.getReplyTo(), resBytes);
                 }
               });
