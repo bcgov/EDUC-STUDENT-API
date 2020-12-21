@@ -20,6 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
@@ -137,20 +138,20 @@ public class StudentServiceTest {
     studentUpdate.setStudentID(student.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("USEREDIT");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(student), studentUpdate);
-    StudentEntity updateEntity = service.updateStudent(studentUpdate);
+    service.updateStudent(studentUpdate);
   }
 
   @Test
-  public void testFindAllStudent_WhenPayloadIsValid_ShouldReturnAllStudentsObject() {
-    assertNotNull(service.findAll(null, 0, 5, new ArrayList<>()));
+  public void testFindAllStudent_WhenPayloadIsValid_ShouldReturnAllStudentsObject() throws ExecutionException, InterruptedException {
+    assertNotNull(service.findAll(null, 0, 5, new ArrayList<>()).get());
   }
 
   @Test(expected = Exception.class)
-  public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() {
+  public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() throws ExecutionException, InterruptedException {
     var repository = mock(StudentRepository.class);
     when(repository.findAll(isNull(), any(Pageable.class))).thenThrow(EntityNotFoundException.class);
     var service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
-    service.findAll(null, 0, 5, new ArrayList<>());
+    service.findAll(null, 0, 5, new ArrayList<>()).get();
   }
 
   private StudentEntity getStudentEntity() {
