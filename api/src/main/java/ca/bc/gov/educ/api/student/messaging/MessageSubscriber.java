@@ -49,7 +49,7 @@ public class MessageSubscriber extends MessagePubSub {
         try {
           var eventString = new String(message.getData());
           var event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
-          eventHandlerDelegatorService.handleEvent(event);
+          eventHandlerDelegatorService.handleEvent(event, message);
         } catch (final Exception e) {
           log.error("Exception ", e);
         }

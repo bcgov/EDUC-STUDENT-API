@@ -10,11 +10,7 @@ import ca.bc.gov.educ.api.student.model.StudentEvent;
 import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
 import ca.bc.gov.educ.api.student.repository.StudentEventRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.struct.Event;
-import ca.bc.gov.educ.api.student.struct.Student;
-import ca.bc.gov.educ.api.student.struct.StudentTwin;
-import ca.bc.gov.educ.api.student.struct.StudentCreate;
-import ca.bc.gov.educ.api.student.struct.StudentUpdate;
+import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,17 +20,22 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static ca.bc.gov.educ.api.student.constant.EventStatus.DB_COMMITTED;
 import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
 import static lombok.AccessLevel.PRIVATE;
 
@@ -54,7 +55,7 @@ public class EventHandlerService {
    * The constant RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE.
    */
   public static final String RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE = "record found for the saga id and event type combination, might be a duplicate or replay," +
-    " just updating the db status so that it will be polled and sent back again.";
+      " just updating the db status so that it will be polled and sent back again.";
   /**
    * The constant PAYLOAD_LOG.
    */
@@ -77,6 +78,28 @@ public class EventHandlerService {
   @Getter(PRIVATE)
   private final StudentTwinService studentTwinService;
 
+  @Getter(PRIVATE)
+  private final StudentSearchService studentSearchService;
+
+  /**
+   * The constant SEARCH_CRITERIA_LIST.
+   */
+  public static final String SEARCH_CRITERIA_LIST = "searchCriteriaList";
+  /**
+   * The constant PAGE_SIZE.
+   */
+  public static final String PAGE_SIZE = "pageSize";
+
+  /**
+   * The constant PAGE_SIZE.
+   */
+  public static final String PAGE_NUMBER = "pageNumber";
+
+  /**
+   * The constant PAGE_SIZE.
+   */
+  public static final String SORT_CRITERIA = "sortCriteriaJson";
+
   /**
    * Instantiates a new Event handler service.
    *
@@ -84,13 +107,15 @@ public class EventHandlerService {
    * @param studentEventRepository the student event repository
    * @param studentService         the student service
    * @param studentTwinService     the student twin service
+   * @param studentSearchService   the student search service
    */
   @Autowired
-  public EventHandlerService(final StudentRepository studentRepository, final StudentEventRepository studentEventRepository, StudentService studentService, StudentTwinService studentTwinService) {
+  public EventHandlerService(final StudentRepository studentRepository, final StudentEventRepository studentEventRepository, StudentService studentService, StudentTwinService studentTwinService, StudentSearchService studentSearchService) {
     this.studentRepository = studentRepository;
     this.studentEventRepository = studentEventRepository;
     this.studentService = studentService;
     this.studentTwinService = studentTwinService;
+    this.studentSearchService = studentSearchService;
   }
 
 
@@ -100,6 +125,7 @@ public class EventHandlerService {
    * <b> The clients responsibility is to provide valid payload in messaging flow.</b>
    *
    * @param event the event
+   * @return the byte [ ]
    * @throws JsonProcessingException the json processing exception
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -111,7 +137,7 @@ public class EventHandlerService {
       log.trace(EVENT_PAYLOAD, event);
       final ObjectMapper objectMapper = new ObjectMapper();
       CollectionType javaType = objectMapper.getTypeFactory()
-        .constructCollectionType(List.class, StudentTwin.class);
+          .constructCollectionType(List.class, StudentTwin.class);
       List<StudentTwin> studentTwins = objectMapper.readValue(event.getEventPayload(), javaType);
       List<StudentTwinEntity> studentTwinEntities = studentTwins.stream().peek(RequestUtil::setAuditColumnsForCreate).map(twinMapper::toModel).collect(Collectors.toList());
       getStudentTwinService().addStudentTwins(studentTwinEntities);
@@ -135,6 +161,7 @@ public class EventHandlerService {
    * <b> The clients responsibility is to provide valid payload in messaging flow.</b>
    *
    * @param event the event
+   * @return the byte [ ]
    * @throws JsonProcessingException the json processing exception
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -146,7 +173,7 @@ public class EventHandlerService {
       log.trace(EVENT_PAYLOAD, event);
       final ObjectMapper objectMapper = new ObjectMapper();
       CollectionType javaType = objectMapper.getTypeFactory()
-        .constructCollectionType(List.class, UUID.class);
+          .constructCollectionType(List.class, UUID.class);
       List<UUID> studentTwinIDs = objectMapper.readValue(event.getEventPayload(), javaType);
       getStudentTwinService().deleteAllByIds(studentTwinIDs);
       event.setEventOutcome(EventOutcome.STUDENT_TWINS_DELETED);
@@ -162,6 +189,13 @@ public class EventHandlerService {
     return createResponseEvent(studentEvent);
   }
 
+  /**
+   * Handle update student event byte [ ].
+   *
+   * @param event the event
+   * @return the byte [ ]
+   * @throws JsonProcessingException the json processing exception
+   */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public byte[] handleUpdateStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
@@ -190,6 +224,13 @@ public class EventHandlerService {
     return createResponseEvent(studentEvent);
   }
 
+  /**
+   * Handle create student event byte [ ].
+   *
+   * @param event the event
+   * @return the byte [ ]
+   * @throws JsonProcessingException the json processing exception
+   */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public byte[] handleCreateStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
@@ -230,11 +271,21 @@ public class EventHandlerService {
    * Saga should never be null for this type of event.
    * this method expects that the event payload contains a pen number.
    *
-   * @param event containing the student PEN.
+   * @param event         containing the student PEN.
+   * @param isSynchronous the is synchronous
+   * @return the byte [ ]
    * @throws JsonProcessingException the json processing exception
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public byte[] handleGetStudentEvent(Event event) throws JsonProcessingException {
+  public byte[] handleGetStudentEvent(Event event, boolean isSynchronous) throws JsonProcessingException {
+    if (isSynchronous) {
+      val optionalStudentEntity = getStudentRepository().findStudentEntityByPen(event.getEventPayload());
+      if (optionalStudentEntity.isPresent()) {
+        return JsonUtil.getJsonBytesFromObject(mapper.toStructure(optionalStudentEntity.get()));
+      } else {
+        return new byte[0];
+      }
+    }
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (studentEventOptional.isEmpty()) {
@@ -261,25 +312,74 @@ public class EventHandlerService {
 
   private StudentEvent createStudentEventRecord(Event event) {
     return StudentEvent.builder()
-      .createDate(LocalDateTime.now())
-      .updateDate(LocalDateTime.now())
-      .createUser(event.getEventType().toString()) //need to discuss what to put here.
-      .updateUser(event.getEventType().toString())
-      .eventPayload(event.getEventPayload())
-      .eventType(event.getEventType().toString())
-      .sagaId(event.getSagaId())
-      .eventStatus(MESSAGE_PUBLISHED.toString())
-      .eventOutcome(event.getEventOutcome().toString())
-      .replyChannel(event.getReplyTo())
-      .build();
+        .createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now())
+        .createUser(event.getEventType().toString()) //need to discuss what to put here.
+        .updateUser(event.getEventType().toString())
+        .eventPayload(event.getEventPayload())
+        .eventType(event.getEventType().toString())
+        .sagaId(event.getSagaId())
+        .eventStatus(MESSAGE_PUBLISHED.toString())
+        .eventOutcome(event.getEventOutcome().toString())
+        .replyChannel(event.getReplyTo())
+        .build();
   }
 
   private byte[] createResponseEvent(StudentEvent event) throws JsonProcessingException {
     Event responseEvent = Event.builder()
-      .sagaId(event.getSagaId())
-      .eventType(EventType.valueOf(event.getEventType()))
-      .eventOutcome(EventOutcome.valueOf(event.getEventOutcome()))
-      .eventPayload(event.getEventPayload()).build();
-    return JsonUtil.getJsonSBytesFromObject(responseEvent);
+        .sagaId(event.getSagaId())
+        .eventType(EventType.valueOf(event.getEventType()))
+        .eventOutcome(EventOutcome.valueOf(event.getEventOutcome()))
+        .eventPayload(event.getEventPayload()).build();
+    return JsonUtil.getJsonBytesFromObject(responseEvent);
   }
+
+  /**
+   * Handle get paginated student byte [ ].
+   *
+   * @param event the event
+   * @return the byte [ ]
+   */
+  public CompletableFuture<byte[]> handleGetPaginatedStudent(Event event) {
+    String sortCriteriaJson = null;
+    String searchCriteriaListJson = null;
+    int pageNumber = 0;
+    int pageSize = 100000;
+    var params = event.getEventPayload().split("&");
+    for (String param : params) {
+      if (param != null) {
+        var keyValPair = param.split("=");
+        if (SEARCH_CRITERIA_LIST.equalsIgnoreCase(keyValPair[0])) {
+          searchCriteriaListJson = URLDecoder.decode(keyValPair[1], StandardCharsets.UTF_8);
+        } else if (PAGE_SIZE.equalsIgnoreCase(keyValPair[0])) {
+          pageSize = Integer.parseInt(keyValPair[1]);
+        } else if (PAGE_NUMBER.equalsIgnoreCase(keyValPair[0])) {
+          pageNumber = Integer.parseInt(keyValPair[1]);
+        } else if (SORT_CRITERIA.equalsIgnoreCase(keyValPair[0])) {
+          sortCriteriaJson = keyValPair[1];
+        }
+      }
+    }
+
+
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final List<Sort.Order> sorts = new ArrayList<>();
+    Specification<StudentEntity> studentSpecs = studentSearchService.setSpecificationAndSortCriteria(sortCriteriaJson, searchCriteriaListJson, objectMapper, sorts);
+    return getStudentService()
+        .findAll(studentSpecs, pageNumber, pageSize, sorts)
+        .thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure))
+        .thenApplyAsync(studentEntities -> {
+          try {
+            val resBytes =  objectMapper.writeValueAsBytes(studentEntities);
+            log.info("response prepared, response length {}", resBytes.length);
+            return resBytes;
+          } catch (JsonProcessingException e) {
+            log.error("Error during get paginated student :: {} {}", event, e);
+          }
+          return new byte[0];
+        });
+
+  }
+
+
 }

@@ -16,4 +16,8 @@ import java.io.Serializable;
 @SuppressWarnings("java:S1948")
 public class Student extends BaseStudent implements Serializable {
   private static final long serialVersionUID = 1L;
+
+  public String toString() {
+    return super.toString();
+  }
 }

@@ -1,6 +1,7 @@
 package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.constant.Topics;
+import ca.bc.gov.educ.api.student.filter.FilterOperation;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.mappers.StudentTwinMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
@@ -9,12 +10,11 @@ import ca.bc.gov.educ.api.student.repository.StudentEventRepository;
 import ca.bc.gov.educ.api.student.repository.StudentMergeRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
-import ca.bc.gov.educ.api.student.struct.Event;
-import ca.bc.gov.educ.api.student.struct.Student;
-import ca.bc.gov.educ.api.student.struct.StudentTwin;
-import ca.bc.gov.educ.api.student.struct.StudentUpdate;
+import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
+import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
@@ -28,16 +28,20 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static ca.bc.gov.educ.api.student.constant.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
 import static ca.bc.gov.educ.api.student.constant.EventType.*;
+import static ca.bc.gov.educ.api.student.struct.Condition.AND;
+import static ca.bc.gov.educ.api.student.struct.Condition.OR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -46,6 +50,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 public class EventHandlerServiceTest {
 
+  /**
+   * The constant SEARCH_CRITERIA_LIST.
+   */
+  public static final String SEARCH_CRITERIA_LIST = "searchCriteriaList";
+  /**
+   * The constant PAGE_SIZE.
+   */
+  public static final String PAGE_SIZE = "pageSize";
   public static final String STUDENT_API_TOPIC = Topics.STUDENT_API_TOPIC.toString();
   @Autowired
   private StudentRepository studentRepository;
@@ -59,7 +71,7 @@ public class EventHandlerServiceTest {
   @Autowired
   private EventHandlerService eventHandlerServiceUnderTest;
   private static final StudentMapper mapper = StudentMapper.mapper;
-
+  private final boolean isSynchronous = false;
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
@@ -77,7 +89,7 @@ public class EventHandlerServiceTest {
   public void testHandleEvent_givenEventTypeGET_STUDENT__whenNoStudentExist_shouldHaveEventOutcomeSTUDENT_NOT_FOUND() throws JsonProcessingException {
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(UUID.randomUUID().toString()).build();
-    eventHandlerServiceUnderTest.handleGetStudentEvent(event);
+    eventHandlerServiceUnderTest.handleGetStudentEvent(event, isSynchronous);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT.toString());
     assertThat(studentEventUpdated).isPresent();
     assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
@@ -89,7 +101,7 @@ public class EventHandlerServiceTest {
     StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(entity.getPen()).build();
-    eventHandlerServiceUnderTest.handleGetStudentEvent(event);
+    eventHandlerServiceUnderTest.handleGetStudentEvent(event, isSynchronous);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT.toString());
     assertThat(studentEventUpdated).isPresent();
     assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
@@ -106,11 +118,62 @@ public class EventHandlerServiceTest {
     studentEventRepository.save(studentEvent);
 
     final Event event = Event.builder().eventType(GET_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(entity.getPen()).build();
-    eventHandlerServiceUnderTest.handleGetStudentEvent(event);
+    eventHandlerServiceUnderTest.handleGetStudentEvent(event, isSynchronous);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT.toString());
     assertThat(studentEventUpdated).isPresent();
     assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
     assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_FOUND.toString());
+  }
+
+  @Test
+  public void testHandleEvent_givenEventTypeGET_STUDENT__whenStudentExistAndSynchronousNatsMessage_shouldRespondWithStudentData() throws JsonProcessingException {
+    StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
+    var studentBytes = JsonUtil.getJsonBytesFromObject(mapper.toStructure(entity));
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(GET_STUDENT).sagaId(sagaId).eventPayload(entity.getPen()).build();
+    var response = eventHandlerServiceUnderTest.handleGetStudentEvent(event, true);
+    assertThat(studentBytes).isEqualTo(response);
+  }
+  @Test
+  public void testHandleEvent_givenEventTypeGET_STUDENT__whenStudentDoesNotExistAndSynchronousNatsMessage_shouldRespondWithBlankObjectData() throws JsonProcessingException {
+    var studentBytes = new byte[0];
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(GET_STUDENT).sagaId(sagaId).eventPayload("123456789").build();
+    var response = eventHandlerServiceUnderTest.handleGetStudentEvent(event, true);
+    assertThat(studentBytes).isEqualTo(response);
+  }
+
+  @Test
+  public void testHandleEvent_givenEventTypeGET_PAGINATED_STUDENT_BY_CRITERIA__whenStudentDoesNotExistAndSynchronousNatsMessage_shouldRespondWithBlankObjectData() throws IOException, ExecutionException, InterruptedException {
+    final File file = new File(
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+
+    SearchCriteria criteriaFirstName = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
+    SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new LinkedList<>();
+    criteriaList.add(criteriaFirstName);
+    criteriaList.add(criteriaLastName);
+
+    String fromDate = "1990-04-01";
+    String toDate = "2020-04-15";
+    SearchCriteria dobCriteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    List<SearchCriteria> criteriaList1 = new LinkedList<>();
+    criteriaList1.add(dobCriteria);
+
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    searches.add(Search.builder().condition(OR).searchCriteriaList(criteriaList1).build());
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    studentRepository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(GET_PAGINATED_STUDENT_BY_CRITERIA).sagaId(sagaId).eventPayload(SEARCH_CRITERIA_LIST.concat("=").concat(URLEncoder.encode(criteriaJSON, StandardCharsets.UTF_8)).concat("&").concat(PAGE_SIZE).concat("=").concat("100000").concat("&pageNumber=0")).build();
+    var response = eventHandlerServiceUnderTest.handleGetPaginatedStudent(event).get();
+    assertThat(response).hasSizeGreaterThan(3000);
   }
 
   @Test

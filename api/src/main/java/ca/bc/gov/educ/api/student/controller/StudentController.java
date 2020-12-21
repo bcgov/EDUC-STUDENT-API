@@ -1,27 +1,20 @@
 package ca.bc.gov.educ.api.student.controller;
 
 import ca.bc.gov.educ.api.student.endpoint.StudentEndpoint;
-import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
 import ca.bc.gov.educ.api.student.exception.InvalidPayloadException;
-import ca.bc.gov.educ.api.student.exception.StudentRuntimeException;
 import ca.bc.gov.educ.api.student.exception.errors.ApiError;
-import ca.bc.gov.educ.api.student.filter.FilterOperation;
-import ca.bc.gov.educ.api.student.filter.StudentFilterSpecs;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.service.StudentSearchService;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.*;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
-import ca.bc.gov.educ.api.student.util.TransformUtil;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -59,13 +52,13 @@ public class StudentController implements StudentEndpoint {
   @Getter(AccessLevel.PRIVATE)
   private final StudentPayloadValidator payloadValidator;
   private static final StudentMapper mapper = StudentMapper.mapper;
-  private final StudentFilterSpecs studentFilterSpecs;
+  private final StudentSearchService studentSearchService;
 
   @Autowired
-  StudentController(final StudentService studentService, StudentPayloadValidator payloadValidator, StudentFilterSpecs studentFilterSpecs) {
+  StudentController(final StudentService studentService, StudentPayloadValidator payloadValidator, StudentSearchService studentSearchService) {
     this.service = studentService;
     this.payloadValidator = payloadValidator;
-    this.studentFilterSpecs = studentFilterSpecs;
+    this.studentSearchService = studentSearchService;
   }
 
   public Student readStudent(String studentID) {
@@ -133,113 +126,10 @@ public class StudentController implements StudentEndpoint {
   public CompletableFuture<Page<Student>> findAll(Integer pageNumber, Integer pageSize, String sortCriteriaJson, String searchCriteriaListJson) {
     final ObjectMapper objectMapper = new ObjectMapper();
     final List<Sort.Order> sorts = new ArrayList<>();
-    Specification<StudentEntity> studentSpecs = null;
-    try {
-      RequestUtil.getSortCriteria(sortCriteriaJson, objectMapper, sorts);
-      if (StringUtils.isNotBlank(searchCriteriaListJson)) {
-        List<Search> searches = objectMapper.readValue(searchCriteriaListJson, new TypeReference<>() {
-        });
-        int i = 0;
-        for (var search : searches) {
-          studentSpecs = getSpecifications(studentSpecs, i, search);
-          i++;
-        }
-      }
-    } catch (JsonProcessingException e) {
-      throw new StudentRuntimeException(e.getMessage());
-    }
+    Specification<StudentEntity> studentSpecs = studentSearchService.setSpecificationAndSortCriteria(sortCriteriaJson, searchCriteriaListJson, objectMapper, sorts);
     return getService().findAll(studentSpecs, pageNumber, pageSize, sorts).thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure));
   }
 
-  /**
-   * Gets specifications.
-   *
-   * @param studentSpecs the pen reg batch specs
-   * @param i            the
-   * @param search       the search
-   * @return the specifications
-   */
-  private Specification<StudentEntity> getSpecifications(Specification<StudentEntity> studentSpecs, int i, Search search) {
-    if (i == 0) {
-      studentSpecs = getStudentEntitySpecification(search.getSearchCriteriaList());
-    } else {
-      if (search.getCondition() == Condition.AND) {
-        studentSpecs = studentSpecs.and(getStudentEntitySpecification(search.getSearchCriteriaList()));
-      } else {
-        studentSpecs = studentSpecs.or(getStudentEntitySpecification(search.getSearchCriteriaList()));
-      }
-    }
-    return studentSpecs;
-  }
 
-  private Specification<StudentEntity> getStudentEntitySpecification(List<SearchCriteria> criteriaList) {
-    Specification<StudentEntity> studentSpecs = null;
-    if (!criteriaList.isEmpty()) {
-      int i = 0;
-      for (SearchCriteria criteria : criteriaList) {
-        if (criteria.getKey() != null && criteria.getOperation() != null && criteria.getValueType() != null) {
-          var criteriaValue = criteria.getValue();
-          if(criteriaValue != null && TransformUtil.isUppercaseField(StudentEntity.class, criteria.getKey())) {
-            criteriaValue = criteriaValue.toUpperCase();
-          }
-          Specification<StudentEntity> typeSpecification = getTypeSpecification(criteria.getKey(), criteria.getOperation(), criteriaValue, criteria.getValueType());
-          studentSpecs = getSpecificationPerGroup(studentSpecs, i, criteria, typeSpecification);
-          i++;
-        } else {
-          throw new InvalidParameterException("Search Criteria can not contain null values for key, value and operation type");
-        }
-      }
-    }
-    return studentSpecs;
-  }
-
-  /**
-   * Gets specification per group.
-   *
-   * @param studentEntitySpecification the pen request batch entity specification
-   * @param i                          the
-   * @param criteria                   the criteria
-   * @param typeSpecification          the type specification
-   * @return the specification per group
-   */
-  private Specification<StudentEntity> getSpecificationPerGroup(Specification<StudentEntity> studentEntitySpecification, int i, SearchCriteria criteria, Specification<StudentEntity> typeSpecification) {
-    if (i == 0) {
-      studentEntitySpecification = Specification.where(typeSpecification);
-    } else {
-      if (criteria.getCondition() == Condition.AND) {
-        studentEntitySpecification = studentEntitySpecification.and(typeSpecification);
-      } else {
-        studentEntitySpecification = studentEntitySpecification.or(typeSpecification);
-      }
-    }
-    return studentEntitySpecification;
-  }
-
-  private Specification<StudentEntity> getTypeSpecification(String key, FilterOperation filterOperation, String value, ValueType valueType) {
-    Specification<StudentEntity> studentEntitySpecification = null;
-    switch (valueType) {
-      case STRING:
-        studentEntitySpecification = studentFilterSpecs.getStringTypeSpecification(key, value, filterOperation);
-        break;
-      case DATE_TIME:
-        studentEntitySpecification = studentFilterSpecs.getDateTimeTypeSpecification(key, value, filterOperation);
-        break;
-      case LONG:
-        studentEntitySpecification = studentFilterSpecs.getLongTypeSpecification(key, value, filterOperation);
-        break;
-      case INTEGER:
-        studentEntitySpecification = studentFilterSpecs.getIntegerTypeSpecification(key, value, filterOperation);
-        break;
-      case DATE:
-        studentEntitySpecification = studentFilterSpecs.getDateTypeSpecification(key, value, filterOperation);
-        break;
-      case UUID:
-        studentEntitySpecification = studentFilterSpecs.getUUIDTypeSpecification(key, value, filterOperation);
-        break;
-      default:
-        break;
-    }
-    return studentEntitySpecification;
-  }
 
 }

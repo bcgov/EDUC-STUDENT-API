@@ -12,6 +12,7 @@ import ca.bc.gov.educ.api.student.struct.StudentUpdate;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * StudentService
@@ -39,7 +42,9 @@ import java.util.concurrent.CompletionException;
  */
 
 @Service
+@Slf4j
 public class StudentService {
+  private final Executor paginatedQueryExecutor = Executors.newFixedThreadPool(10);
   private static final String STUDENT_ID_ATTRIBUTE = "studentID";
 
   @Getter(AccessLevel.PRIVATE)
@@ -158,13 +163,16 @@ public class StudentService {
 
   @Transactional(propagation = Propagation.SUPPORTS)
   public CompletableFuture<Page<StudentEntity>> findAll(Specification<StudentEntity> studentSpecs, final Integer pageNumber, final Integer pageSize, final List<Sort.Order> sorts) {
-    Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sorts));
-    try {
-      val result = getRepository().findAll(studentSpecs, paging);
-      return CompletableFuture.completedFuture(result);
-    } catch (final Exception ex) {
-      throw new CompletionException(ex);
-    }
+    return CompletableFuture.supplyAsync(() -> {
+      Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sorts));
+      try {
+        log.info("executing query");
+        return getRepository().findAll(studentSpecs, paging);
+      } catch (final Exception ex) {
+        throw new CompletionException(ex);
+      }
+    }, paginatedQueryExecutor);
+
   }
 
   @Transactional(propagation = Propagation.MANDATORY)
@@ -183,7 +191,7 @@ public class StudentService {
         studentMergeEntity.setUpdateUser(studentEntity.getUpdateUser());
         studentMergeEntity.setStudentMergeDirectionCode(mergeStudent.getStudentMergeDirectionCode());
         studentMergeEntity.setStudentMergeSourceCode(mergeStudent.getStudentMergeSourceCode());
-        studentMergeEntity.setMergeStudent(getRepository().findById(UUID.fromString(mergeStudent.getMergeStudentID())).get());
+        studentMergeEntity.setMergeStudent(getRepository().findById(UUID.fromString(mergeStudent.getMergeStudentID())).orElseThrow());
         studentMergeEntity.setStudentID(studentEntity.getStudentID());
         studentMergeEntities.add(studentMergeEntity);
       }
