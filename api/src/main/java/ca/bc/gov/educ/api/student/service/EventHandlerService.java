@@ -370,6 +370,7 @@ public class EventHandlerService {
         .thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure))
         .thenApplyAsync(studentEntities -> {
           try {
+            log.info("found {} students", studentEntities.getContent().size());
             val resBytes =  objectMapper.writeValueAsBytes(studentEntities);
             log.info("response prepared, response length {}", resBytes.length);
             return resBytes;

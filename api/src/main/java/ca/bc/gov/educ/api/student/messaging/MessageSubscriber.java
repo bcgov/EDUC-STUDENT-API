@@ -12,13 +12,16 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import static ca.bc.gov.educ.api.student.constant.Topics.STUDENT_API_TOPIC;
 
 
 @Component
 @Slf4j
 public class MessageSubscriber extends MessagePubSub {
-
+  private final Executor messageProcessingThreads = Executors.newFixedThreadPool(10);
   private final EventHandlerDelegatorService eventHandlerDelegatorService;
 
   @Autowired
@@ -49,7 +52,7 @@ public class MessageSubscriber extends MessagePubSub {
         try {
           var eventString = new String(message.getData());
           var event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
-          eventHandlerDelegatorService.handleEvent(event, message);
+          messageProcessingThreads.execute(() -> eventHandlerDelegatorService.handleEvent(event, message));
         } catch (final Exception e) {
           log.error("Exception ", e);
         }
