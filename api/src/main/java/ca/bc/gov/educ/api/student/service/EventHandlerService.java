@@ -370,9 +370,9 @@ public class EventHandlerService {
         .thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure))
         .thenApplyAsync(studentEntities -> {
           try {
-            log.info("found {} students", studentEntities.getContent().size());
+            log.info("found {} students for {}", studentEntities.getContent().size(), event.getSagaId());
             val resBytes =  objectMapper.writeValueAsBytes(studentEntities);
-            log.info("response prepared, response length {}", resBytes.length);
+            log.info("response prepared for {}, response length {}", event.getSagaId(), resBytes.length);
             return resBytes;
           } catch (JsonProcessingException e) {
             log.error("Error during get paginated student :: {} {}", event, e);

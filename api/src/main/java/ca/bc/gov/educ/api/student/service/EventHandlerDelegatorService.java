@@ -45,7 +45,7 @@ public class EventHandlerDelegatorService {
     try {
       switch (event.getEventType()) {
         case GET_STUDENT:
-          log.info("received get student event :: ");
+          log.info("received GET_STUDENT event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleGetStudentEvent(event, isSynchronous);
           if (isSynchronous) { // sync, req/reply pattern of nats
@@ -80,7 +80,7 @@ public class EventHandlerDelegatorService {
           messagePublisher.dispatchMessage(event.getReplyTo(), response);
           break;
         case GET_PAGINATED_STUDENT_BY_CRITERIA:
-          log.info("received GET_PAGINATED_STUDENT_BY_CRITERIA event :: ");
+          log.info("received GET_PAGINATED_STUDENT_BY_CRITERIA event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           eventHandlerService
               .handleGetPaginatedStudent(event)
