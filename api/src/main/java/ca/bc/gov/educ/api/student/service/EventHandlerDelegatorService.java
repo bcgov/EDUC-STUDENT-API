@@ -1,7 +1,7 @@
 package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.struct.*;
+import ca.bc.gov.educ.api.student.struct.Event;
 import io.nats.client.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +14,11 @@ import static ca.bc.gov.educ.api.student.service.EventHandlerService.PAYLOAD_LOG
  */
 @Service
 @Slf4j
-@SuppressWarnings("java:S3864")
+@SuppressWarnings({"java:S3864", "java:S3776"})
 public class EventHandlerDelegatorService {
 
 
+  public static final String RESPONDING_BACK_TO_NATS_ON_CHANNEL = "responding back to NATS on {} channel ";
   private final MessagePublisher messagePublisher;
   private final EventHandlerService eventHandlerService;
 
@@ -48,10 +49,10 @@ public class EventHandlerDelegatorService {
           log.info("received GET_STUDENT event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleGetStudentEvent(event, isSynchronous);
+          log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           if (isSynchronous) { // sync, req/reply pattern of nats
             messagePublisher.dispatchMessage(message.getReplyTo(), response);
-          }
-          else  { // async, pub/sub
+          } else { // async, pub/sub
             messagePublisher.dispatchMessage(event.getReplyTo(), response);
           }
           break;
@@ -59,24 +60,28 @@ public class EventHandlerDelegatorService {
           log.info("received create student event :: ");
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleCreateStudentEvent(event);
+          log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           messagePublisher.dispatchMessage(event.getReplyTo(), response);
           break;
         case UPDATE_STUDENT:
           log.info("received update student event :: ");
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleUpdateStudentEvent(event);
+          log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           messagePublisher.dispatchMessage(event.getReplyTo(), response);
           break;
         case ADD_STUDENT_TWINS:
           log.info("received ADD_STUDENT_TWINS event :: ");
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleAddStudentTwins(event);
+          log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           messagePublisher.dispatchMessage(event.getReplyTo(), response);
           break;
         case DELETE_STUDENT_TWINS:
           log.info("received DELETE_STUDENT_TWINS event :: ");
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleDeleteStudentTwins(event);
+          log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           messagePublisher.dispatchMessage(event.getReplyTo(), response);
           break;
         case GET_PAGINATED_STUDENT_BY_CRITERIA:
@@ -85,10 +90,10 @@ public class EventHandlerDelegatorService {
           eventHandlerService
               .handleGetPaginatedStudent(event)
               .thenAcceptAsync(resBytes -> {
+                log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
                 if (isSynchronous) { // sync, req/reply pattern of nats
                   messagePublisher.dispatchMessage(message.getReplyTo(), resBytes);
-                }
-                else  { // async, pub/sub
+                } else { // async, pub/sub
                   messagePublisher.dispatchMessage(event.getReplyTo(), resBytes);
                 }
               });
