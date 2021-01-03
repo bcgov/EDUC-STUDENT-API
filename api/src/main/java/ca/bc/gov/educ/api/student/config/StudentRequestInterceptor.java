@@ -4,15 +4,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Component
-public class StudentRequestInterceptor extends HandlerInterceptorAdapter {
+public class StudentRequestInterceptor implements AsyncHandlerInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(StudentRequestInterceptor.class);
+  private static final Logger log = LoggerFactory.getLogger(StudentRequestInterceptor.class);
 
   /**
    * Pre handle boolean.
@@ -42,10 +42,17 @@ public class StudentRequestInterceptor extends HandlerInterceptorAdapter {
   @Override
   public void afterCompletion(@NonNull HttpServletRequest request, HttpServletResponse response, @NonNull Object handler, Exception ex) {
     int status = response.getStatus();
-    if(status >= 200 && status < 300) {
+    if (status >= 200 && status < 300) {
       log.info("RESPONSE STATUS: {}", status);
     } else {
       log.error("RESPONSE STATUS: {}", status);
     }
   }
+
+  @Override
+  public void afterConcurrentHandlingStarted(HttpServletRequest request, HttpServletResponse response,
+                                             Object handler) {
+    log.info("Concurrent handling of the request is started.");
+  }
+
 }

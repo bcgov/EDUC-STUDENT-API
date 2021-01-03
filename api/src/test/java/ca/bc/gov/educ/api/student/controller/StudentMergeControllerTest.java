@@ -12,14 +12,14 @@ import ca.bc.gov.educ.api.student.repository.StudentMergeRepository;
 import ca.bc.gov.educ.api.student.repository.StudentMergeSourceCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
 import ca.bc.gov.educ.api.student.struct.StudentMerge;
-import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -31,6 +31,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -39,7 +40,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest(classes = StudentApiApplication.class)
+@AutoConfigureMockMvc
 public class StudentMergeControllerTest {
+
+  @Autowired
   private MockMvc mockMvc;
   @Autowired
   StudentMergeController controller;
@@ -59,12 +63,10 @@ public class StudentMergeControllerTest {
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    mockMvc = MockMvcBuilders.standaloneSetup(controller)
-            .setControllerAdvice(new RestExceptionHandler()).build();
     mergeDirectionCodeRepo.save(createStudentMergeDirectionCodeData());
     mergeSourceCodeRepo.save(createStudentMergeSourceCodeData());
   }
-  
+
   /**
    * need to delete the records to make it working in unit tests assertion, else the records will keep growing and assertions will fail.
    */
@@ -77,7 +79,6 @@ public class StudentMergeControllerTest {
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testFindStudentMerges_GivenValidStudentID_ShouldReturnMergedStudentIDs() throws Exception {
     StudentEntity student = studentRepo.save(createStudent());
     StudentEntity mergedFromStudent = studentRepo.save(createStudent());
@@ -97,14 +98,14 @@ public class StudentMergeControllerTest {
     studentMergeTo.setStudentMergeSourceCode("MINISTRY");
     studentMergeRepo.save(studentMergeTo);
 
-    this.mockMvc.perform(get("/" + student.getStudentID() + "/merges")).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get("/" + student.getStudentID() + "/merges")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT")))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentMergeDirectionCode=='FROM')].mergeStudentID").value(mergedFromStudent.getStudentID().toString()))
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentMergeDirectionCode=='FROM')].mergeStudent.pen").value(mergedFromStudent.getPen()))
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentMergeDirectionCode=='TO')].mergeStudentID").value(mergedToStudent.getStudentID().toString()));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudentMerge_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
     StudentEntity student = studentRepo.save(createStudent());
     StudentEntity mergedFromStudent = studentRepo.save(createStudent());
@@ -118,15 +119,16 @@ public class StudentMergeControllerTest {
 
     StudentMerge studentMergeFromStruct = StudentMergeMapper.mapper.toStructure(studentMergeFrom);
 
-    this.mockMvc.perform(post("/" + student.getStudentID() + "/merges").contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
-      .content(asJsonString(studentMergeFromStruct))).andDo(print()).andExpect(status().isCreated())
-      .andExpect(MockMvcResultMatchers.jsonPath("$.mergeStudentID").value(mergedFromStudent.getStudentID().toString()))
-      .andExpect(MockMvcResultMatchers.jsonPath("$.mergeStudent.pen").value(mergedFromStudent.getPen()))
-      .andExpect(MockMvcResultMatchers.jsonPath("$.updateUser").value("Test User"));
+    this.mockMvc.perform(post("/" + student.getStudentID() + "/merges")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
+        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
+        .content(asJsonString(studentMergeFromStruct))).andDo(print()).andExpect(status().isCreated())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.mergeStudentID").value(mergedFromStudent.getStudentID().toString()))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.mergeStudent.pen").value(mergedFromStudent.getPen()))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.updateUser").value("Test User"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudentMerge_GivenInvalidStudentID_ShouldReturnStatusBadRequest() throws Exception {
     StudentEntity student = studentRepo.save(createStudent());
     StudentEntity mergedFromStudent = studentRepo.save(createStudent());
@@ -137,12 +139,13 @@ public class StudentMergeControllerTest {
     studentMergeFrom.setStudentMergeDirectionCode("FROM");
     studentMergeFrom.setStudentMergeSourceCode("MINISTRY");
 
-    this.mockMvc.perform(post("/" + mergedFromStudent.getStudentID() + "/merges").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMergeMapper.mapper.toStructure(studentMergeFrom)))).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post("/" + mergedFromStudent.getStudentID() + "/merges")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMergeMapper.mapper.toStructure(studentMergeFrom)))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudentMerge_GivenInvalidMergeSourceCode_ShouldReturnStatusBadRequest() throws Exception {
     StudentEntity student = studentRepo.save(createStudent());
     StudentEntity mergedFromStudent = studentRepo.save(createStudent());
@@ -153,27 +156,29 @@ public class StudentMergeControllerTest {
     studentMergeFrom.setStudentMergeDirectionCode("FROM");
     studentMergeFrom.setStudentMergeSourceCode("INVALID");
 
-    this.mockMvc.perform(post("/" + student.getStudentID() + "/merges").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMergeMapper.mapper.toStructure(studentMergeFrom)))).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post("/" + student.getStudentID() + "/merges")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMergeMapper.mapper.toStructure(studentMergeFrom)))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetStudentMergeSourceCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/student-merge-source-codes")).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get("/student-merge-source-codes")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_CODES")))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].mergeSourceCode").value("MINISTRY"));
   }
 
   private StudentMergeDirectionCodeEntity createStudentMergeDirectionCodeData() {
     return StudentMergeDirectionCodeEntity.builder().mergeDirectionCode("FROM").description("Merge From")
-            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 
   private StudentMergeSourceCodeEntity createStudentMergeSourceCodeData() {
     return StudentMergeSourceCodeEntity.builder().mergeSourceCode("MINISTRY").description("MINISTRY")
-            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 
   private StudentEntity createStudent() {

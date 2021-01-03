@@ -1,7 +1,6 @@
 package ca.bc.gov.educ.api.student.controller;
 
 import ca.bc.gov.educ.api.student.StudentApiApplication;
-import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.filter.FilterOperation;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.StudentEntity;
@@ -10,8 +9,10 @@ import ca.bc.gov.educ.api.student.model.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.StudentHistoryActivityCodeTableRepository;
 import ca.bc.gov.educ.api.student.repository.StudentHistoryRepository;
 import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.struct.*;
-import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
+import ca.bc.gov.educ.api.student.struct.Search;
+import ca.bc.gov.educ.api.student.struct.SearchCriteria;
+import ca.bc.gov.educ.api.student.struct.Student;
+import ca.bc.gov.educ.api.student.struct.ValueType;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,13 +24,13 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -40,6 +41,7 @@ import static ca.bc.gov.educ.api.student.struct.Condition.AND;
 import static ca.bc.gov.educ.api.student.struct.Condition.OR;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -49,9 +51,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest(classes = StudentApiApplication.class)
+@AutoConfigureMockMvc
 public class StudentHistoryControllerTest {
 
   private static final StudentMapper mapper = StudentMapper.mapper;
+
+  @Autowired
   private MockMvc mockMvc;
   @Autowired
   StudentHistoryController controller;
@@ -67,8 +72,6 @@ public class StudentHistoryControllerTest {
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    mockMvc = MockMvcBuilders.standaloneSetup(controller)
-        .setControllerAdvice(new RestExceptionHandler()).build();
     studentHistoryActivityCodeTableRepo.save(createStudentHistoryActivityCodeData());
   }
 
@@ -83,10 +86,9 @@ public class StudentHistoryControllerTest {
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_givenStudentID_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
-      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -94,7 +96,7 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-      List.of(createStudentHistoryEntity(student, "USEREDIT", 2), createStudentHistoryEntity(student, "USERNEW", 1)).stream()
+        List.of(createStudentHistoryEntity(student, "USEREDIT", 2), createStudentHistoryEntity(student, "USERNEW", 1)).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -103,18 +105,17 @@ public class StudentHistoryControllerTest {
     String sort = new ObjectMapper().writeValueAsString(sortMap);
 
     MvcResult result = mockMvc
-      .perform(get("/" + entitiesFromDB.get(0).getStudentID().toString() + "/student-history/paginated").param("sort", sort)
-        .contentType(APPLICATION_JSON))
-      .andReturn();
+        .perform(get("/" + entitiesFromDB.get(0).getStudentID().toString() + "/student-history/paginated").with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY"))).param("sort", sort)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)))
-      .andExpect(jsonPath("$.content[0].historyActivityCode").value("USERNEW"));
+        .andExpect(jsonPath("$.content[0].historyActivityCode").value("USERNEW"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_givenInvalidStudentID_ShouldReturnEmptyContent() throws Exception {
     var file = new File(
-      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -122,7 +123,7 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-      List.of(createStudentHistoryEntity(student, "USEREDIT", 2), createStudentHistoryEntity(student, "USERNEW", 1)).stream()
+        List.of(createStudentHistoryEntity(student, "USEREDIT", 2), createStudentHistoryEntity(student, "USERNEW", 1)).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -131,9 +132,11 @@ public class StudentHistoryControllerTest {
     String sort = new ObjectMapper().writeValueAsString(sortMap);
 
     MvcResult result = mockMvc
-      .perform(get("/" + UUID.randomUUID().toString() + "/student-history/paginated").param("sort", sort)
-        .contentType(APPLICATION_JSON))
-      .andReturn();
+        .perform(get("/" + UUID.randomUUID().toString() + "/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("sort", sort)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
   }
 
@@ -158,17 +161,15 @@ public class StudentHistoryControllerTest {
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetStudentHistoryActivityCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/student-history-activity-codes")).andDo(print()).andExpect(status().isOk())
-      .andExpect(MockMvcResultMatchers.jsonPath("$[0].historyActivityCode").value("USEREDIT"));
+    this.mockMvc.perform(get("/student-history-activity-codes").with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_CODES")))).andDo(print()).andExpect(status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$[0].historyActivityCode").value("USEREDIT"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_ShouldReturnStatusOkAndEmptyRecord() throws Exception {
     var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -176,7 +177,7 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntity(student, "USEREDIT", 2), createStudentHistoryEntity(student, "USERNEW", 1)).stream()
+        List.of(createStudentHistoryEntity(student, "USEREDIT", 2), createStudentHistoryEntity(student, "USERNEW", 1)).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -194,21 +195,21 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-            .perform(get("/student-history/paginated")
-                    .param("sort", sort)
-                    .param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("sort", sort)
+            .param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
 
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.content", hasSize(0)));
+        .andExpect(jsonPath("$.content", hasSize(0)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_legalFirstName_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -216,10 +217,10 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName() + "TEST2", student.getLegalLastName(), student.getLegalMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                    student.getLegalFirstName() + "TEST1", student.getLegalLastName(), student.getLegalMiddleNames())).stream()
+        List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+            student.getLegalFirstName() + "TEST2", student.getLegalLastName(), student.getLegalMiddleNames()),
+            createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                student.getLegalFirstName() + "TEST1", student.getLegalLastName(), student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -237,23 +238,23 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-            .perform(get("/student-history/paginated")
-                    .param("pageNumber", "0").param("pageSize", "5")
-                    .param("sort", sort)
-                    .param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("pageNumber", "0").param("pageSize", "5")
+            .param("sort", sort)
+            .param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
 
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.content", hasSize(1)))
-            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_legalLastName_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -261,10 +262,10 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                      student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                      student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+        List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+            student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+            createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -282,23 +283,23 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-            .perform(get("/student-history/paginated")
-                    .param("pageNumber", "0").param("pageSize", "5")
-                    .param("sort", sort)
-                    .param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("pageNumber", "0").param("pageSize", "5")
+            .param("sort", sort)
+            .param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
 
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.content", hasSize(1)))
-            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_legalLastNameStartWith_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -306,10 +307,10 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+        List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+            student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+            createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -327,23 +328,23 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-            .perform(get("/student-history/paginated")
-                    .param("pageNumber", "0").param("pageSize", "5")
-                    .param("sort", sort)
-                    .param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("pageNumber", "0").param("pageSize", "5")
+            .param("sort", sort)
+            .param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
 
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.content", hasSize(2)))
-            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+        .andExpect(jsonPath("$.content", hasSize(2)))
+        .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_legalLastNameEndWith_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -351,10 +352,10 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+        List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+            student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+            createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -372,22 +373,22 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-            .perform(get("/student-history/paginated")
-                    .param("pageNumber", "0").param("pageSize", "10")
-                    .param("sort", sort)
-                    .param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("pageNumber", "0").param("pageSize", "10")
+            .param("sort", sort)
+            .param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
 
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.content", hasSize(6)));
+        .andExpect(jsonPath("$.content", hasSize(6)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_legalFirstNameOrLegalLastNameAndDOB_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -395,10 +396,10 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+        List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+            student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+            createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -428,24 +429,24 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-            .perform(get("/student-history/paginated")
-                    .param("pageNumber", "0").param("pageSize", "5")
-                    .param("sort", sort)
-                    .param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("pageNumber", "0").param("pageSize", "5")
+            .param("sort", sort)
+            .param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
 
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.content", hasSize(2)))
-            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"))
-            .andExpect(jsonPath("$.content[1].historyActivityCode").value("USERNEW"));
+        .andExpect(jsonPath("$.content", hasSize(2)))
+        .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"))
+        .andExpect(jsonPath("$.content[1].historyActivityCode").value("USERNEW"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_givenSubmitDataBetween_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -453,10 +454,10 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+        List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+            student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+            createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -478,23 +479,23 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-            .perform(get("/student-history/paginated")
-                    .param("pageNumber", "0").param("pageSize", "5")
-                    .param("sort", sort)
-                    .param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("pageNumber", "0").param("pageSize", "5")
+            .param("sort", sort)
+            .param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
 
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.content", hasSize(1)))
-            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_legalLastNameOrlegalFirstNameOrGivenUUID_ShouldReturnStatusBadRequest() throws Exception {
     var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -502,10 +503,10 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+        List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+            student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+            createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -528,21 +529,21 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-            .perform(get("/student-history/paginated")
-                    .param("pageNumber", "0").param("pageSize", "5")
-                    .param("searchCriteriaList", criteriaJSON)
-                    .contentType(APPLICATION_JSON))
-            .andReturn();
+        .perform(get("/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("pageNumber", "0").param("pageSize", "5")
+            .param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
 
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
-            .andExpect(jsonPath("$.content", hasSize(2)));
+        .andExpect(jsonPath("$.content", hasSize(2)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_givenOperationTypeNull_ShouldReturnStatusBadRequest() throws Exception {
     var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -550,10 +551,10 @@ public class StudentHistoryControllerTest {
 
     val entitiesFromDB = repository.findAll();
     var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
-            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
-                    student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
-                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
-                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+        List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+            student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+            createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
     ).collect(Collectors.toList());
     studentHistoryRepo.saveAll(studentHistoryEntities);
 
@@ -566,16 +567,19 @@ public class StudentHistoryControllerTest {
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
 
-    this.mockMvc.perform(get("/student-history/paginated").param("searchCriteriaList", criteriaJSON)
-            .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(get("/student-history/paginated")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+        .param("searchCriteriaList", criteriaJSON)
+        .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_HISTORY")
   public void testReadStudentHistoryPaginated_givenInvalidSearchCriteria_ShouldReturnStatusBadRequest() throws Exception {
     this.mockMvc
-            .perform(get("/student-history/paginated").param("searchCriteriaList", "{test}")
-                    .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
+        .perform(get("/student-history/paginated")
+            .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+            .param("searchCriteriaList", "{test}")
+            .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   public static String asJsonString(final Object obj) {
@@ -588,7 +592,7 @@ public class StudentHistoryControllerTest {
 
   private StudentHistoryActivityCodeEntity createStudentHistoryActivityCodeData() {
     return StudentHistoryActivityCodeEntity.builder().historyActivityCode("USEREDIT").description("USEREDIT")
-      .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-      .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 }

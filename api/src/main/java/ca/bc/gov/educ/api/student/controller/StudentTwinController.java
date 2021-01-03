@@ -7,7 +7,8 @@ import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.mappers.StudentTwinMapper;
 import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
 import ca.bc.gov.educ.api.student.service.StudentTwinService;
-import ca.bc.gov.educ.api.student.struct.*;
+import ca.bc.gov.educ.api.student.struct.StudentTwin;
+import ca.bc.gov.educ.api.student.struct.StudentTwinReasonCode;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import ca.bc.gov.educ.api.student.validator.StudentTwinPayloadValidator;
 import lombok.AccessLevel;
@@ -16,14 +17,15 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -36,7 +38,6 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
  */
 
 @RestController
-@EnableResourceServer
 @Slf4j
 public class StudentTwinController implements StudentTwinEndpoint {
   @Getter(AccessLevel.PRIVATE)

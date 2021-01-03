@@ -15,14 +15,15 @@ import java.util.concurrent.CompletableFuture;
 
 @RequestMapping("/")
 public interface StudentHistoryEndpoint {
-  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
+
+  @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_CODES')")
   @GetMapping("student-history-activity-codes")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
   List<StudentHistoryActivityCode> getStudentHistoryActivityCodes();
 
   @GetMapping("/{studentID}/student-history/paginated")
   @Async
-  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_HISTORY')")
+  @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_HISTORY')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR.")})
   @Transactional(readOnly = true)
   @Tag(name = "Endpoint to support student history data table view in frontend, with sort, filter and pagination.", description = "This API endpoint exposes flexible way to query the entity by leveraging JPA specifications.")
@@ -33,7 +34,7 @@ public interface StudentHistoryEndpoint {
 
   @GetMapping("/student-history/paginated")
   @Async
-  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_HISTORY')")
+  @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_HISTORY')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR.")})
   @Transactional(readOnly = true)
   @Tag(name = "Endpoint to support history data table view in frontend, with sort, filter and pagination.", description = "This API endpoint exposes flexible way to query the audit history entity by leveraging JPA specifications.")
