@@ -55,7 +55,7 @@ public class StudentSearchService {
     if (!criteriaList.isEmpty()) {
       int i = 0;
       for (SearchCriteria criteria : criteriaList) {
-        if (criteria.getKey() != null && criteria.getOperation() != null && criteria.getValueType() != null) {
+        if (criteria.getKey() != null && criteria.getOperation() != null && criteria.getValueType() != null && StringUtils.isNotBlank(criteria.getValue())) {
           var criteriaValue = criteria.getValue();
           if(criteriaValue != null && TransformUtil.isUppercaseField(StudentEntity.class, criteria.getKey())) {
             criteriaValue = criteriaValue.toUpperCase();
