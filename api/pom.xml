@@ -21,7 +21,8 @@
       src/main/java/ca/bc/gov/educ/api/student/struct/**,
       src/main/java/ca/bc/gov/educ/api/student/schedulers/**,
       src/main/java/ca/bc/gov/educ/api/student/service/EventHandlerDelegatorService.java,
-      src/main/java/ca/bc/gov/educ/api/student/messaging/**
+      src/main/java/ca/bc/gov/educ/api/student/messaging/**,
+      src/main/java/ca/bc/gov/educ/api/student/StudentApiApplication.java
     </sonar.exclusions>
     <java.version>11</java.version>
 
