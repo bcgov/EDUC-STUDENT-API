@@ -57,28 +57,28 @@ public class EventHandlerDelegatorService {
           }
           break;
         case CREATE_STUDENT:
-          log.info("received create student event :: ");
+          log.info("received create student event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleCreateStudentEvent(event);
           log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           messagePublisher.dispatchMessage(event.getReplyTo(), response);
           break;
         case UPDATE_STUDENT:
-          log.info("received update student event :: ");
+          log.info("received update student event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleUpdateStudentEvent(event);
           log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           messagePublisher.dispatchMessage(event.getReplyTo(), response);
           break;
         case ADD_STUDENT_TWINS:
-          log.info("received ADD_STUDENT_TWINS event :: ");
+          log.info("received ADD_STUDENT_TWINS event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleAddStudentTwins(event);
           log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           messagePublisher.dispatchMessage(event.getReplyTo(), response);
           break;
         case DELETE_STUDENT_TWINS:
-          log.info("received DELETE_STUDENT_TWINS event :: ");
+          log.info("received DELETE_STUDENT_TWINS event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());
           response = eventHandlerService.handleDeleteStudentTwins(event);
           log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
