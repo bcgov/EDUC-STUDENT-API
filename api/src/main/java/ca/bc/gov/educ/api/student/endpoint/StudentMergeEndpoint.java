@@ -15,17 +15,17 @@ import java.util.List;
 @RequestMapping("/")
 public interface StudentMergeEndpoint {
   @GetMapping("/{studentID}/merges")
-  @PreAuthorize("#oauth2.hasScope('READ_STUDENT')")
+  @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "404", description = "NOT FOUND")})
   List<StudentMerge> findStudentMerges(@PathVariable String studentID, @Param("mergeDirection")  String mergeDirection);
 
   @PostMapping("/{studentID}/merges")
-  @PreAuthorize("#oauth2.hasAnyScope('WRITE_STUDENT')")
+  @PreAuthorize("hasAuthority('SCOPE_WRITE_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "CREATED"), @ApiResponse(responseCode = "400", description = "BAD REQUEST")})
   @ResponseStatus(CREATED)
   StudentMerge createStudentMerge(@PathVariable String studentID, @Validated @RequestBody StudentMerge studentMerge);
 
-  @PreAuthorize("#oauth2.hasScope('READ_STUDENT_CODES')")
+  @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_CODES')")
   @GetMapping("student-merge-source-codes")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
   List<StudentMergeSourceCode> getStudentMergeSourceCodes();

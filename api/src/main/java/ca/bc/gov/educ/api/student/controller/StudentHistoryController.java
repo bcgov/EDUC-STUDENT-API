@@ -22,10 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
  */
 
 @RestController
-@EnableResourceServer
 @Slf4j
 public class StudentHistoryController implements StudentHistoryEndpoint {
   @Getter(AccessLevel.PRIVATE)

@@ -166,7 +166,6 @@ public class StudentService {
     return CompletableFuture.supplyAsync(() -> {
       Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sorts));
       try {
-        log.info("executing query");
         return getRepository().findAll(studentSpecs, paging);
       } catch (final Exception ex) {
         throw new CompletionException(ex);

@@ -1,14 +1,12 @@
 package ca.bc.gov.educ.api.student.controller;
 
 import ca.bc.gov.educ.api.student.StudentApiApplication;
-import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.filter.FilterOperation;
 import ca.bc.gov.educ.api.student.mappers.StudentMapper;
 import ca.bc.gov.educ.api.student.model.*;
 import ca.bc.gov.educ.api.student.repository.*;
 import ca.bc.gov.educ.api.student.service.StudentService;
 import ca.bc.gov.educ.api.student.struct.*;
-import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -21,14 +19,15 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
@@ -42,6 +41,8 @@ import static ca.bc.gov.educ.api.student.struct.Condition.OR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -50,9 +51,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest(classes = StudentApiApplication.class)
+@AutoConfigureMockMvc
 public class StudentControllerTest {
 
   private static final StudentMapper mapper = StudentMapper.mapper;
+  @Autowired
   private MockMvc mockMvc;
   @Autowired
   StudentController controller;
@@ -101,8 +104,6 @@ public class StudentControllerTest {
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    mockMvc = MockMvcBuilders.standaloneSetup(controller)
-        .setControllerAdvice(new RestExceptionHandler()).build();
     genderRepo.save(createGenderCodeData());
     sexRepo.save(createSexCodeData());
     demogRepo.save(createDemogCodeData());
@@ -162,38 +163,44 @@ public class StudentControllerTest {
 
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testRetrieveStudent_GivenRandomID_ShouldThrowEntityNotFoundException() throws Exception {
-    this.mockMvc.perform(get("/" + UUID.randomUUID())).andDo(print()).andExpect(status().isNotFound());
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    this.mockMvc.perform(get("/" + UUID.randomUUID()).with(mockAuthority)).andDo(print()).andExpect(status().isNotFound());
   }
 
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testRetrieveStudent_GivenValidID_ShouldReturnStatusOK() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     StudentEntity entity = repository.save(createStudent());
-    this.mockMvc.perform(get("/" + entity.getStudentID())).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.studentID").value(entity.getStudentID().toString()));
+    this.mockMvc.perform(get("/" + entity.getStudentID()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.studentID").value(entity.getStudentID().toString()));
   }
 
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testRetrieveStudent_GivenPEN_ShouldReturnStatusOK() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     StudentEntity entity = repository.save(createStudent());
-    this.mockMvc.perform(get("/?pen=" + entity.getPen())).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
+    this.mockMvc.perform(get("/?pen=" + entity.getPen()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
     var student = getStudentCreate();
-    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isCreated())
+    this.mockMvc.perform(post("/")
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .content(asJsonString(student))
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))))
+        .andDo(print())
+        .andExpect(status().isCreated())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   @Transactional
   public void testCreateStudent_GivenValidPayloadWithTwinsAssociations_ShouldReturnStatusCreated() throws Exception {
     StudentEntity studentTwin = studentService.createStudent(getStudentCreate(Optional.of("120164444")));
@@ -207,13 +214,13 @@ public class StudentControllerTest {
     var studentCreate = getStudentCreate();
     studentCreate.setStudentTwinAssociations(studentTwinAssociations);
 
-    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(studentCreate.getLegalFirstName().toUpperCase()));
 
     var studentFromDB = studentService.retrieveStudentByPen(studentCreate.getPen());
     assertThat(studentFromDB).isPresent();
-    var twinRecords = studentTwinRepository.findByStudentIDOrTwinStudentID(studentFromDB.get().getStudentID(),studentFromDB.get().getStudentID());
+    var twinRecords = studentTwinRepository.findByStudentIDOrTwinStudentID(studentFromDB.get().getStudentID(), studentFromDB.get().getStudentID());
     assertThat(twinRecords).isNotEmpty().size().isEqualTo(1);
     var twinRecordsFromOtherSide = studentTwinRepository.findByStudentIDOrTwinStudentID(studentTwin.getStudentID(), studentTwin.getStudentID());
     assertThat(twinRecordsFromOtherSide).isNotEmpty().size().isEqualTo(1);
@@ -221,7 +228,6 @@ public class StudentControllerTest {
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   @Transactional
   public void testCreateStudent_GivenValidPayloadWithMergeAssociations_ShouldReturnStatusCreated() throws Exception {
     StudentEntity studentMerge = studentService.createStudent(getStudentCreate(Optional.of("120164444")));
@@ -236,7 +242,7 @@ public class StudentControllerTest {
     var studentCreate = getStudentCreate();
     studentCreate.setStudentMergeAssociations(studentMergeAssociations);
 
-    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(studentCreate.getLegalFirstName().toUpperCase()));
 
@@ -250,41 +256,36 @@ public class StudentControllerTest {
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
     var student = getStudentCreate();
     student.setSexCode("J");
-    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenMalformedPayload_ShouldReturnStatusBadRequest() throws Exception {
-    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content("{test}")).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenInvalidEmailVerifiedAttribute_ShouldReturnStatusBadRequest() throws Exception {
     var student = getStudentCreate();
     student.setEmailVerified("WRONG");
-    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudent_GivenInvalidHistoryActivityCodeAttribute_ShouldReturnStatusBadRequest() throws Exception {
     var student = getStudentCreate();
     student.setHistoryActivityCode("WRONG");
-    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-      .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   @Transactional
   public void testCreateStudent_GivenInvalidHistoryActivityCodeWithTwinsAssociations_ShouldReturnStatusBadRequest() throws Exception {
     StudentEntity studentTwin = studentService.createStudent(getStudentCreate(Optional.of("120164444")));
@@ -299,12 +300,11 @@ public class StudentControllerTest {
     studentCreate.setHistoryActivityCode("WRONG");
     studentCreate.setStudentTwinAssociations(studentTwinAssociations);
 
-    this.mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON)
-      .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testUpdateStudent_GivenValidPayload_ShouldReturnStatusOk() throws Exception {
     StudentEntity entity = createStudent();
     repository.save(entity);
@@ -313,13 +313,12 @@ public class StudentControllerTest {
     studentUpdate.setStudentID(entity.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("USEREDIT");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
-    this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(put("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testUpdateStudent_GivenInvalidHistoryActivityCode_ShouldReturnStatusBadRequest() throws Exception {
     StudentEntity entity = createStudent();
     repository.save(entity);
@@ -329,11 +328,10 @@ public class StudentControllerTest {
     studentUpdate.setHistoryActivityCode("WRONG");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
     this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
-      .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate))).andDo(print()).andExpect(status().isBadRequest());
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate)).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
   public void testDeleteStudent_GivenValidId_ShouldReturnStatus204() throws Exception {
     StudentEntity entity = createStudent();
     repository.save(entity);
@@ -354,19 +352,19 @@ public class StudentControllerTest {
 
 
     this.mockMvc.perform(delete("/" + entity.getStudentID().toString()).contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
+        .accept(MediaType.APPLICATION_JSON).with(jwt().jwt((jwt) -> jwt.claim("scope", "DELETE_STUDENT")))).andDo(print()).andExpect(status().isNoContent());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
   public void testDeleteStudent_GivenInvalidId_ShouldReturnStatus404() throws Exception {
     this.mockMvc.perform(delete("/" + UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNotFound());
+        .accept(MediaType.APPLICATION_JSON).with(jwt().jwt((jwt) -> jwt.claim("scope", "DELETE_STUDENT")))).andDo(print()).andExpect(status().isNotFound());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_Always_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -374,25 +372,27 @@ public class StudentControllerTest {
     });
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated?pageSize=2")
+        .perform(get("/paginated?pageSize=2").with(mockAuthority)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_whenNoDataInDB_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     MvcResult result = mockMvc
-        .perform(get("/paginated")
+        .perform(get("/paginated").with(mockAuthority)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginatedWithSorting_Always_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -404,15 +404,16 @@ public class StudentControllerTest {
     sortMap.put("legalFirstName", "DESC");
     String sort = new ObjectMapper().writeValueAsString(sortMap);
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("pageNumber", "1").param("pageSize", "5").param("sort", sort)
+        .perform(get("/paginated").with(mockAuthority).param("pageNumber", "1").param("pageSize", "5").param("sort", sort)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenFirstNameFilter_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -428,15 +429,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenLastNameFilter_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -452,15 +454,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenSubmitDateBetween_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -478,15 +481,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenFirstAndLast_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -508,15 +512,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(3)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenFirstAndLastOrDOB_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -544,15 +549,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(6)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_GivenFirstORLastANDDOB_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -580,14 +586,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(5)));
   }
+
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameFilterIgnoreCase_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -603,15 +611,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameStartWith_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -627,15 +636,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameStartWith2_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -651,15 +661,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameStartWithIgnoreCase2_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -676,17 +687,18 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     MvcResult result = mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameEndWith_ShouldReturnStatusOkAndRecord() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -700,17 +712,18 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-      .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
-        .contentType(APPLICATION_JSON))
-      .andReturn();
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_LegalLastNameEndWith_ShouldReturnStatusOkButNoRecord() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-      Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
     List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
@@ -724,15 +737,16 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-      .perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
-        .contentType(APPLICATION_JSON))
-      .andReturn();
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON))
+        .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testReadStudentPaginated_givenOperationTypeNull_ShouldReturnStatusBadRequest() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     var file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
@@ -748,50 +762,56 @@ public class StudentControllerTest {
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
-    this.mockMvc.perform(get("/paginated").param("searchCriteriaList", criteriaJSON)
+    this.mockMvc.perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
         .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
-  public void testReadStudentPaginated_givenInvalidSearchCriterial_ShouldReturnStatusBadRequest() throws Exception {
+  public void testReadStudentPaginated_givenInvalidSearchCriteria_ShouldReturnStatusBadRequest() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
     this.mockMvc
-        .perform(get("/paginated").param("searchCriteriaList", "{test}")
+        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", "{test}")
             .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetGenderCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/gender-codes")).andDo(print()).andExpect(status().isOk())
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    this.mockMvc.perform(get("/gender-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].genderCode").value("M"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetSexCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/sex-codes")).andDo(print()).andExpect(status().isOk())
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    this.mockMvc.perform(get("/sex-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].sexCode").value("M"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetDemogCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/demog-codes")).andDo(print()).andExpect(status().isOk())
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    this.mockMvc.perform(get("/demog-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].demogCode").value("A"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetGradeCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/grade-codes")).andDo(print()).andExpect(status().isOk())
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    this.mockMvc.perform(get("/grade-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].gradeCode").value("01"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetStatusCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/status-codes")).andDo(print()).andExpect(status().isOk())
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    this.mockMvc.perform(get("/status-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].statusCode").value("A"));
   }
 
@@ -817,9 +837,7 @@ public class StudentControllerTest {
     var studentCreate = new StudentCreate();
     BeanUtils.copyProperties(mapper.toStructure(studentEntity), studentCreate);
     studentCreate.setHistoryActivityCode("USEREDIT");
-    if(pen.isPresent()) {
-      studentCreate.setPen(pen.get());
-    }
+    pen.ifPresent(studentCreate::setPen);
     return studentCreate;
   }
 
@@ -834,11 +852,13 @@ public class StudentControllerTest {
       throw new RuntimeException(e);
     }
   }
+
   private StudentTwinReasonCodeEntity createStudentTwinReasonCodeData() {
     return StudentTwinReasonCodeEntity.builder().twinReasonCode("PENMATCH").description("PENMATCH")
         .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
         .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
+
   private StudentMergeDirectionCodeEntity createStudentMergeDirectionCodeData() {
     return StudentMergeDirectionCodeEntity.builder().mergeDirectionCode("FROM").description("Merge From")
         .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
@@ -853,7 +873,7 @@ public class StudentControllerTest {
 
   private StudentHistoryActivityCodeEntity createStudentHistoryActivityCodeData() {
     return StudentHistoryActivityCodeEntity.builder().historyActivityCode("USEREDIT").description("USEREDIT")
-      .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-      .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 }

@@ -6,7 +6,8 @@ import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import ca.bc.gov.educ.api.student.mappers.StudentMergeMapper;
 import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
 import ca.bc.gov.educ.api.student.service.StudentMergeService;
-import ca.bc.gov.educ.api.student.struct.*;
+import ca.bc.gov.educ.api.student.struct.StudentMerge;
+import ca.bc.gov.educ.api.student.struct.StudentMergeSourceCode;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import ca.bc.gov.educ.api.student.validator.StudentMergePayloadValidator;
 import lombok.AccessLevel;
@@ -14,11 +15,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -31,7 +32,6 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
  */
 
 @RestController
-@EnableResourceServer
 @Slf4j
 public class StudentMergeController implements StudentMergeEndpoint {
   @Getter(AccessLevel.PRIVATE)

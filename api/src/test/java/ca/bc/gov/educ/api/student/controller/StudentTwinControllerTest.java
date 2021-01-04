@@ -1,30 +1,32 @@
 package ca.bc.gov.educ.api.student.controller;
 
 import ca.bc.gov.educ.api.student.StudentApiApplication;
-import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.mappers.StudentTwinMapper;
-import ca.bc.gov.educ.api.student.model.*;
-import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.support.WithMockOAuth2Scope;
-
-import org.codehaus.jackson.map.ObjectMapper;
+import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
+import ca.bc.gov.educ.api.student.model.StudentTwinReasonCodeEntity;
+import ca.bc.gov.educ.api.student.repository.StudentRepository;
+import ca.bc.gov.educ.api.student.repository.StudentTwinReasonCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,8 +34,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest(classes = StudentApiApplication.class)
+@AutoConfigureMockMvc
 public class StudentTwinControllerTest {
+
+  @Autowired
   private MockMvc mockMvc;
+
   @Autowired
   StudentTwinController controller;
 
@@ -49,11 +55,9 @@ public class StudentTwinControllerTest {
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    mockMvc = MockMvcBuilders.standaloneSetup(controller)
-            .setControllerAdvice(new RestExceptionHandler()).build();
     twinReasonCodeRepo.save(createStudentTwinReasonCodeData());
   }
-  
+
   /**
    * need to delete the records to make it working in unit tests assertion, else the records will keep growing and assertions will fail.
    */
@@ -65,7 +69,6 @@ public class StudentTwinControllerTest {
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT")
   public void testFindStudentTwins_GivenValidStudentID_ShouldReturnTwinedStudentIDs() throws Exception {
     StudentEntity student = studentRepo.save(createStudent());
     StudentEntity penmatchTwinendStudent = studentRepo.save(createStudent());
@@ -87,14 +90,14 @@ public class StudentTwinControllerTest {
     pencreateTwin.setUpdateDate(LocalDateTime.now());
     studentTwinRepo.save(pencreateTwin);
 
-    this.mockMvc.perform(get("/" + student.getStudentID() + "/twins")).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get("/" + student.getStudentID() + "/twins")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT")))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentTwinReasonCode=='PENMATCH')].twinStudentID").value(penmatchTwinendStudent.getStudentID().toString()))
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentTwinReasonCode=='PENMATCH')].twinStudent.pen").value(penmatchTwinendStudent.getPen()))
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentTwinReasonCode=='PENCREATE')].twinStudentID").value(pencreateTwinedStudent.getStudentID().toString()));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudentTwin_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
     StudentEntity student = studentRepo.save(createStudent());
     StudentEntity penmatchTwinendStudent = studentRepo.save(createStudent());
@@ -105,15 +108,16 @@ public class StudentTwinControllerTest {
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     penmatchTwin.setUpdateUser("Test User");
 
-    this.mockMvc.perform(post("/" + student.getStudentID() + "/twins").contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
-      .content(asJsonString(StudentTwinMapper.mapper.toStructure(penmatchTwin)))).andDo(print()).andExpect(status().isCreated())
-      .andExpect(MockMvcResultMatchers.jsonPath("$.twinStudentID").value(penmatchTwinendStudent.getStudentID().toString()))
-      .andExpect(MockMvcResultMatchers.jsonPath("$.twinStudent.pen").value(penmatchTwinendStudent.getPen()))
-      .andExpect(MockMvcResultMatchers.jsonPath("$.updateUser").value("Test User"));
+    this.mockMvc.perform(post("/" + student.getStudentID() + "/twins")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
+        .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
+        .content(asJsonString(StudentTwinMapper.mapper.toStructure(penmatchTwin)))).andDo(print()).andExpect(status().isCreated())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.twinStudentID").value(penmatchTwinendStudent.getStudentID().toString()))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.twinStudent.pen").value(penmatchTwinendStudent.getPen()))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.updateUser").value("Test User"));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "DELETE_STUDENT")
   public void testDeleteStudent_GivenValidId_ShouldReturnStatus204() throws Exception {
     StudentEntity entity = createStudent();
     studentRepo.save(entity);
@@ -128,12 +132,13 @@ public class StudentTwinControllerTest {
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     studentTwinRepo.save(penmatchTwin);
 
-    this.mockMvc.perform(delete("/" + entity.getStudentID().toString() + "/twins/" + penmatchTwin.getStudentTwinID().toString()).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(delete("/" + entity.getStudentID().toString() + "/twins/" + penmatchTwin.getStudentTwinID().toString())
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "DELETE_STUDENT")))
+        .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudentTwin_GivenInvalidStudentID_ShouldReturnStatusBadRequest() throws Exception {
     StudentEntity student = studentRepo.save(createStudent());
     StudentEntity penmatchTwinendStudent = studentRepo.save(createStudent());
@@ -143,12 +148,13 @@ public class StudentTwinControllerTest {
     penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
 
-    this.mockMvc.perform(post("/" + penmatchTwinendStudent.getStudentID() + "/twins").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentTwinMapper.mapper.toStructure(penmatchTwin)))).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post("/" + penmatchTwinendStudent.getStudentID() + "/twins")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentTwinMapper.mapper.toStructure(penmatchTwin)))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "WRITE_STUDENT")
   public void testCreateStudentTwin_GivenInvalidReasonCode_ShouldReturnStatusBadRequest() throws Exception {
     StudentEntity student = studentRepo.save(createStudent());
     StudentEntity penmatchTwinendStudent = studentRepo.save(createStudent());
@@ -158,21 +164,23 @@ public class StudentTwinControllerTest {
     penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("INVALID");
 
-    this.mockMvc.perform(post("/" + student.getStudentID() + "/twins").contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentTwinMapper.mapper.toStructure(penmatchTwin)))).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post("/" + student.getStudentID() + "/twins")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentTwinMapper.mapper.toStructure(penmatchTwin)))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_STUDENT_CODES")
   public void testGetStudentTwinReasonCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/student-twin-reason-codes")).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get("/student-twin-reason-codes")
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_CODES")))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].twinReasonCode").value("PENMATCH"));
   }
 
   private StudentTwinReasonCodeEntity createStudentTwinReasonCodeData() {
     return StudentTwinReasonCodeEntity.builder().twinReasonCode("PENMATCH").description("PENMATCH")
-            .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
+        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
 
   private StudentEntity createStudent() {
