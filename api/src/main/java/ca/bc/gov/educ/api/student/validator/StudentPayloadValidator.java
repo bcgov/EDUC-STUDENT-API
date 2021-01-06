@@ -1,12 +1,12 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import ca.bc.gov.educ.api.student.model.*;
-import ca.bc.gov.educ.api.student.service.StudentMergeService;
-import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.service.StudentTwinService;
-import ca.bc.gov.educ.api.student.struct.BaseStudent;
-import ca.bc.gov.educ.api.student.struct.StudentCreate;
-import ca.bc.gov.educ.api.student.struct.StudentUpdate;
+import ca.bc.gov.educ.api.student.model.v1.*;
+import ca.bc.gov.educ.api.student.service.v1.StudentMergeService;
+import ca.bc.gov.educ.api.student.service.v1.StudentService;
+import ca.bc.gov.educ.api.student.service.v1.StudentTwinService;
+import ca.bc.gov.educ.api.student.struct.v1.BaseStudent;
+import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
+import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;

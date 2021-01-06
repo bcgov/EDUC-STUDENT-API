@@ -1,12 +1,14 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import ca.bc.gov.educ.api.student.model.*;
-import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.service.CodeTableService;
-import ca.bc.gov.educ.api.student.service.StudentHistoryService;
-import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.service.StudentTwinService;
-import ca.bc.gov.educ.api.student.struct.StudentTwin;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentTwinEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentTwinReasonCodeEntity;
+import ca.bc.gov.educ.api.student.repository.v1.*;
+import ca.bc.gov.educ.api.student.service.v1.CodeTableService;
+import ca.bc.gov.educ.api.student.service.v1.StudentHistoryService;
+import ca.bc.gov.educ.api.student.service.v1.StudentService;
+import ca.bc.gov.educ.api.student.service.v1.StudentTwinService;
+import ca.bc.gov.educ.api.student.struct.v1.StudentTwin;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

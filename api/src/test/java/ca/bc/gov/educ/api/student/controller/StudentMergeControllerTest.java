@@ -1,17 +1,17 @@
 package ca.bc.gov.educ.api.student.controller;
 
 import ca.bc.gov.educ.api.student.StudentApiApplication;
-import ca.bc.gov.educ.api.student.exception.RestExceptionHandler;
-import ca.bc.gov.educ.api.student.mappers.StudentMergeMapper;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.model.StudentMergeDirectionCodeEntity;
-import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
-import ca.bc.gov.educ.api.student.model.StudentMergeSourceCodeEntity;
-import ca.bc.gov.educ.api.student.repository.StudentMergeDirectionCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.StudentMergeRepository;
-import ca.bc.gov.educ.api.student.repository.StudentMergeSourceCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.struct.StudentMerge;
+import ca.bc.gov.educ.api.student.controller.v1.StudentMergeController;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentMergeMapper;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentMergeDirectionCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentMergeEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentMergeSourceCodeEntity;
+import ca.bc.gov.educ.api.student.repository.v1.StudentMergeDirectionCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentMergeRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentMergeSourceCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
+import ca.bc.gov.educ.api.student.struct.v1.StudentMerge;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
@@ -26,11 +26,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import static ca.bc.gov.educ.api.student.constant.v1.URL.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -98,7 +98,7 @@ public class StudentMergeControllerTest {
     studentMergeTo.setStudentMergeSourceCode("MINISTRY");
     studentMergeRepo.save(studentMergeTo);
 
-    this.mockMvc.perform(get("/" + student.getStudentID() + "/merges")
+    this.mockMvc.perform(get(STUDENT +"/"+ student.getStudentID() + MERGES)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT")))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentMergeDirectionCode=='FROM')].mergeStudentID").value(mergedFromStudent.getStudentID().toString()))
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentMergeDirectionCode=='FROM')].mergeStudent.pen").value(mergedFromStudent.getPen()))
@@ -119,7 +119,7 @@ public class StudentMergeControllerTest {
 
     StudentMerge studentMergeFromStruct = StudentMergeMapper.mapper.toStructure(studentMergeFrom);
 
-    this.mockMvc.perform(post("/" + student.getStudentID() + "/merges")
+    this.mockMvc.perform(post(STUDENT +"/"+ student.getStudentID() + MERGES)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
         .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
         .content(asJsonString(studentMergeFromStruct))).andDo(print()).andExpect(status().isCreated())
@@ -139,7 +139,7 @@ public class StudentMergeControllerTest {
     studentMergeFrom.setStudentMergeDirectionCode("FROM");
     studentMergeFrom.setStudentMergeSourceCode("MINISTRY");
 
-    this.mockMvc.perform(post("/" + mergedFromStudent.getStudentID() + "/merges")
+    this.mockMvc.perform(post(STUDENT +"/"+ mergedFromStudent.getStudentID() + MERGES)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMergeMapper.mapper.toStructure(studentMergeFrom)))).andDo(print()).andExpect(status().isBadRequest());
@@ -156,7 +156,7 @@ public class StudentMergeControllerTest {
     studentMergeFrom.setStudentMergeDirectionCode("FROM");
     studentMergeFrom.setStudentMergeSourceCode("INVALID");
 
-    this.mockMvc.perform(post("/" + student.getStudentID() + "/merges")
+    this.mockMvc.perform(post(STUDENT +"/"+ student.getStudentID() + MERGES)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentMergeMapper.mapper.toStructure(studentMergeFrom)))).andDo(print()).andExpect(status().isBadRequest());
@@ -164,7 +164,7 @@ public class StudentMergeControllerTest {
 
   @Test
   public void testGetStudentMergeSourceCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/student-merge-source-codes")
+    this.mockMvc.perform(get(STUDENT+MERGE_SOURCE_CODES)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_CODES")))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].mergeSourceCode").value("MINISTRY"));
   }

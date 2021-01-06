@@ -1,6 +1,6 @@
 package ca.bc.gov.educ.api.student.util;
 
-import ca.bc.gov.educ.api.student.struct.StudentMergeSourceCode;
+import ca.bc.gov.educ.api.student.struct.v1.StudentMergeSourceCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.json.JSONException;
 import org.junit.Test;

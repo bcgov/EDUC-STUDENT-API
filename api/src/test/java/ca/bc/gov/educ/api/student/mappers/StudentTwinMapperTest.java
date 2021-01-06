@@ -1,6 +1,7 @@
 package ca.bc.gov.educ.api.student.mappers;
 
-import ca.bc.gov.educ.api.student.struct.StudentTwinReasonCode;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentTwinMapper;
+import ca.bc.gov.educ.api.student.struct.v1.StudentTwinReasonCode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;

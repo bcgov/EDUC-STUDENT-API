@@ -1,18 +1,19 @@
 package ca.bc.gov.educ.api.student.controller;
 
 import ca.bc.gov.educ.api.student.StudentApiApplication;
+import ca.bc.gov.educ.api.student.controller.v1.StudentHistoryController;
 import ca.bc.gov.educ.api.student.filter.FilterOperation;
-import ca.bc.gov.educ.api.student.mappers.StudentMapper;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.model.StudentHistoryActivityCodeEntity;
-import ca.bc.gov.educ.api.student.model.StudentHistoryEntity;
-import ca.bc.gov.educ.api.student.repository.StudentHistoryActivityCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.StudentHistoryRepository;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.struct.Search;
-import ca.bc.gov.educ.api.student.struct.SearchCriteria;
-import ca.bc.gov.educ.api.student.struct.Student;
-import ca.bc.gov.educ.api.student.struct.ValueType;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentHistoryActivityCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
+import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryActivityCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
+import ca.bc.gov.educ.api.student.struct.v1.Search;
+import ca.bc.gov.educ.api.student.struct.v1.SearchCriteria;
+import ca.bc.gov.educ.api.student.struct.v1.Student;
+import ca.bc.gov.educ.api.student.struct.v1.ValueType;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,8 +38,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ca.bc.gov.educ.api.student.struct.Condition.AND;
-import static ca.bc.gov.educ.api.student.struct.Condition.OR;
+import static ca.bc.gov.educ.api.student.constant.v1.URL.*;
+import static ca.bc.gov.educ.api.student.struct.v1.Condition.AND;
+import static ca.bc.gov.educ.api.student.struct.v1.Condition.OR;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -105,7 +107,7 @@ public class StudentHistoryControllerTest {
     String sort = new ObjectMapper().writeValueAsString(sortMap);
 
     MvcResult result = mockMvc
-        .perform(get("/" + entitiesFromDB.get(0).getStudentID().toString() + "/student-history/paginated").with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY"))).param("sort", sort)
+        .perform(get(STUDENT +"/"+ entitiesFromDB.get(0).getStudentID().toString() + HISTORY+PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY"))).param("sort", sort)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)))
@@ -132,7 +134,7 @@ public class StudentHistoryControllerTest {
     String sort = new ObjectMapper().writeValueAsString(sortMap);
 
     MvcResult result = mockMvc
-        .perform(get("/" + UUID.randomUUID().toString() + "/student-history/paginated")
+        .perform(get(STUDENT +"/"+ UUID.randomUUID().toString() + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("sort", sort)
             .contentType(APPLICATION_JSON))
@@ -162,7 +164,7 @@ public class StudentHistoryControllerTest {
 
   @Test
   public void testGetStudentHistoryActivityCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/student-history-activity-codes").with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_CODES")))).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get(STUDENT+HISTORY_ACTIVITY_CODES).with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_CODES")))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].historyActivityCode").value("USEREDIT"));
   }
 
@@ -195,7 +197,7 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-        .perform(get("/student-history/paginated")
+        .perform(get(STUDENT + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("sort", sort)
             .param("searchCriteriaList", criteriaJSON)
@@ -238,7 +240,7 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-        .perform(get("/student-history/paginated")
+        .perform(get(STUDENT + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("pageNumber", "0").param("pageSize", "5")
             .param("sort", sort)
@@ -283,7 +285,7 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-        .perform(get("/student-history/paginated")
+        .perform(get(STUDENT + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("pageNumber", "0").param("pageSize", "5")
             .param("sort", sort)
@@ -328,7 +330,7 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-        .perform(get("/student-history/paginated")
+        .perform(get(STUDENT + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("pageNumber", "0").param("pageSize", "5")
             .param("sort", sort)
@@ -373,7 +375,7 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-        .perform(get("/student-history/paginated")
+        .perform(get(STUDENT + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("pageNumber", "0").param("pageSize", "10")
             .param("sort", sort)
@@ -429,7 +431,7 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-        .perform(get("/student-history/paginated")
+        .perform(get(STUDENT + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("pageNumber", "0").param("pageSize", "5")
             .param("sort", sort)
@@ -479,7 +481,7 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-        .perform(get("/student-history/paginated")
+        .perform(get(STUDENT + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("pageNumber", "0").param("pageSize", "5")
             .param("sort", sort)
@@ -529,7 +531,7 @@ public class StudentHistoryControllerTest {
     System.out.println(criteriaJSON);
 
     MvcResult result = mockMvc
-        .perform(get("/student-history/paginated")
+        .perform(get(STUDENT + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("pageNumber", "0").param("pageSize", "5")
             .param("searchCriteriaList", criteriaJSON)
@@ -567,7 +569,7 @@ public class StudentHistoryControllerTest {
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
 
-    this.mockMvc.perform(get("/student-history/paginated")
+    this.mockMvc.perform(get(STUDENT + HISTORY+PAGINATED)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
         .param("searchCriteriaList", criteriaJSON)
         .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
@@ -576,7 +578,7 @@ public class StudentHistoryControllerTest {
   @Test
   public void testReadStudentHistoryPaginated_givenInvalidSearchCriteria_ShouldReturnStatusBadRequest() throws Exception {
     this.mockMvc
-        .perform(get("/student-history/paginated")
+        .perform(get(STUDENT + HISTORY+PAGINATED)
             .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
             .param("searchCriteriaList", "{test}")
             .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());

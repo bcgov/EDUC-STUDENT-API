@@ -1,12 +1,13 @@
 package ca.bc.gov.educ.api.student.controller;
 
 import ca.bc.gov.educ.api.student.StudentApiApplication;
+import ca.bc.gov.educ.api.student.controller.v1.StudentController;
 import ca.bc.gov.educ.api.student.filter.FilterOperation;
-import ca.bc.gov.educ.api.student.mappers.StudentMapper;
-import ca.bc.gov.educ.api.student.model.*;
-import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.struct.*;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
+import ca.bc.gov.educ.api.student.model.v1.*;
+import ca.bc.gov.educ.api.student.repository.v1.*;
+import ca.bc.gov.educ.api.student.service.v1.StudentService;
+import ca.bc.gov.educ.api.student.struct.v1.*;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -36,8 +37,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ca.bc.gov.educ.api.student.struct.Condition.AND;
-import static ca.bc.gov.educ.api.student.struct.Condition.OR;
+import static ca.bc.gov.educ.api.student.constant.v1.URL.*;
+import static ca.bc.gov.educ.api.student.struct.v1.Condition.AND;
+import static ca.bc.gov.educ.api.student.struct.v1.Condition.OR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -166,7 +168,7 @@ public class StudentControllerTest {
   public void testRetrieveStudent_GivenRandomID_ShouldThrowEntityNotFoundException() throws Exception {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    this.mockMvc.perform(get("/" + UUID.randomUUID()).with(mockAuthority)).andDo(print()).andExpect(status().isNotFound());
+    this.mockMvc.perform(get(STUDENT + UUID.randomUUID()).with(mockAuthority)).andDo(print()).andExpect(status().isNotFound());
   }
 
 
@@ -175,7 +177,7 @@ public class StudentControllerTest {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
     StudentEntity entity = repository.save(createStudent());
-    this.mockMvc.perform(get("/" + entity.getStudentID()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.studentID").value(entity.getStudentID().toString()));
+    this.mockMvc.perform(get(STUDENT + "/"+entity.getStudentID()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.studentID").value(entity.getStudentID().toString()));
   }
 
 
@@ -184,13 +186,13 @@ public class StudentControllerTest {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
     StudentEntity entity = repository.save(createStudent());
-    this.mockMvc.perform(get("/?pen=" + entity.getPen()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
+    this.mockMvc.perform(get(STUDENT + "/?pen=" + entity.getPen()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
   }
 
   @Test
   public void testCreateStudent_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
     var student = getStudentCreate();
-    this.mockMvc.perform(post("/")
+    this.mockMvc.perform(post(STUDENT)
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .content(asJsonString(student))
@@ -214,7 +216,7 @@ public class StudentControllerTest {
     var studentCreate = getStudentCreate();
     studentCreate.setStudentTwinAssociations(studentTwinAssociations);
 
-    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(studentCreate.getLegalFirstName().toUpperCase()));
 
@@ -242,7 +244,7 @@ public class StudentControllerTest {
     var studentCreate = getStudentCreate();
     studentCreate.setStudentMergeAssociations(studentMergeAssociations);
 
-    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(studentCreate.getLegalFirstName().toUpperCase()));
 
@@ -259,13 +261,13 @@ public class StudentControllerTest {
   public void testCreateStudent_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
     var student = getStudentCreate();
     student.setSexCode("J");
-    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
   public void testCreateStudent_GivenMalformedPayload_ShouldReturnStatusBadRequest() throws Exception {
-    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content("{test}")).andDo(print()).andExpect(status().isBadRequest());
   }
 
@@ -273,7 +275,7 @@ public class StudentControllerTest {
   public void testCreateStudent_GivenInvalidEmailVerifiedAttribute_ShouldReturnStatusBadRequest() throws Exception {
     var student = getStudentCreate();
     student.setEmailVerified("WRONG");
-    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
   }
 
@@ -281,7 +283,7 @@ public class StudentControllerTest {
   public void testCreateStudent_GivenInvalidHistoryActivityCodeAttribute_ShouldReturnStatusBadRequest() throws Exception {
     var student = getStudentCreate();
     student.setHistoryActivityCode("WRONG");
-    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
   }
 
@@ -300,7 +302,7 @@ public class StudentControllerTest {
     studentCreate.setHistoryActivityCode("WRONG");
     studentCreate.setStudentTwinAssociations(studentTwinAssociations);
 
-    this.mockMvc.perform(post("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isBadRequest());
   }
 
@@ -313,7 +315,7 @@ public class StudentControllerTest {
     studentUpdate.setStudentID(entity.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("USEREDIT");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
-    this.mockMvc.perform(put("/").with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(put(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));
   }
@@ -327,7 +329,7 @@ public class StudentControllerTest {
     studentUpdate.setStudentID(entity.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("WRONG");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
-    this.mockMvc.perform(put("/").contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(put(STUDENT).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate)).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))).andDo(print()).andExpect(status().isBadRequest());
   }
 
@@ -351,13 +353,13 @@ public class StudentControllerTest {
     studentTwinRepository.save(penmatchTwin);
 
 
-    this.mockMvc.perform(delete("/" + entity.getStudentID().toString()).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(delete(STUDENT +"/"+ entity.getStudentID().toString()).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).with(jwt().jwt((jwt) -> jwt.claim("scope", "DELETE_STUDENT")))).andDo(print()).andExpect(status().isNoContent());
   }
 
   @Test
   public void testDeleteStudent_GivenInvalidId_ShouldReturnStatus404() throws Exception {
-    this.mockMvc.perform(delete("/" + UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(delete(STUDENT + UUID.randomUUID().toString()).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).with(jwt().jwt((jwt) -> jwt.claim("scope", "DELETE_STUDENT")))).andDo(print()).andExpect(status().isNotFound());
   }
 
@@ -372,7 +374,7 @@ public class StudentControllerTest {
     });
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated?pageSize=2").with(mockAuthority)
+        .perform(get(STUDENT+PAGINATED+"?pageSize=2").with(mockAuthority)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
@@ -383,7 +385,7 @@ public class StudentControllerTest {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
@@ -404,7 +406,7 @@ public class StudentControllerTest {
     sortMap.put("legalFirstName", "DESC");
     String sort = new ObjectMapper().writeValueAsString(sortMap);
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("pageNumber", "1").param("pageSize", "5").param("sort", sort)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("pageNumber", "1").param("pageSize", "5").param("sort", sort)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
@@ -429,7 +431,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
@@ -454,7 +456,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
@@ -481,7 +483,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
@@ -512,7 +514,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(3)));
@@ -549,7 +551,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(6)));
@@ -586,7 +588,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(5)));
@@ -611,7 +613,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
@@ -636,7 +638,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
@@ -661,7 +663,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
@@ -687,7 +689,7 @@ public class StudentControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1)));
@@ -712,7 +714,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(2)));
@@ -737,7 +739,7 @@ public class StudentControllerTest {
     System.out.println(criteriaJSON);
     repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     MvcResult result = mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
@@ -762,7 +764,7 @@ public class StudentControllerTest {
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
-    this.mockMvc.perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+    this.mockMvc.perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
         .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
@@ -771,7 +773,7 @@ public class StudentControllerTest {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
     this.mockMvc
-        .perform(get("/paginated").with(mockAuthority).param("searchCriteriaList", "{test}")
+        .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", "{test}")
             .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
@@ -779,7 +781,7 @@ public class StudentControllerTest {
   public void testGetGenderCodes_ShouldReturnCodes() throws Exception {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    this.mockMvc.perform(get("/gender-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get(STUDENT + GENDER_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].genderCode").value("M"));
   }
 
@@ -787,7 +789,7 @@ public class StudentControllerTest {
   public void testGetSexCodes_ShouldReturnCodes() throws Exception {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    this.mockMvc.perform(get("/sex-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get(STUDENT + SEX_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].sexCode").value("M"));
   }
 
@@ -795,7 +797,7 @@ public class StudentControllerTest {
   public void testGetDemogCodes_ShouldReturnCodes() throws Exception {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    this.mockMvc.perform(get("/demog-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get(STUDENT + DEMOG_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].demogCode").value("A"));
   }
 
@@ -803,7 +805,7 @@ public class StudentControllerTest {
   public void testGetGradeCodes_ShouldReturnCodes() throws Exception {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    this.mockMvc.perform(get("/grade-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get(STUDENT + GRADE_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].gradeCode").value("01"));
   }
 
@@ -811,7 +813,7 @@ public class StudentControllerTest {
   public void testGetStatusCodes_ShouldReturnCodes() throws Exception {
     GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
     var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    this.mockMvc.perform(get("/status-codes").with(mockAuthority)).andDo(print()).andExpect(status().isOk())
+    this.mockMvc.perform(get(STUDENT + STATUS_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].statusCode").value("A"));
   }
 

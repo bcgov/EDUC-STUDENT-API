@@ -1,11 +1,14 @@
 package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
-import ca.bc.gov.educ.api.student.mappers.StudentMapper;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.struct.StudentCreate;
-import ca.bc.gov.educ.api.student.struct.StudentUpdate;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.repository.v1.*;
+import ca.bc.gov.educ.api.student.service.v1.CodeTableService;
+import ca.bc.gov.educ.api.student.service.v1.StudentHistoryService;
+import ca.bc.gov.educ.api.student.service.v1.StudentService;
+import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
+import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

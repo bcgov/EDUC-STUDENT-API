@@ -1,13 +1,14 @@
 package ca.bc.gov.educ.api.student.controller;
 
 import ca.bc.gov.educ.api.student.StudentApiApplication;
-import ca.bc.gov.educ.api.student.mappers.StudentTwinMapper;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.model.StudentTwinEntity;
-import ca.bc.gov.educ.api.student.model.StudentTwinReasonCodeEntity;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.repository.StudentTwinReasonCodeTableRepository;
-import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
+import ca.bc.gov.educ.api.student.controller.v1.StudentTwinController;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentTwinMapper;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentTwinEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentTwinReasonCodeEntity;
+import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentTwinReasonCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentTwinRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
@@ -26,6 +27,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import static ca.bc.gov.educ.api.student.constant.v1.URL.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -90,7 +92,7 @@ public class StudentTwinControllerTest {
     pencreateTwin.setUpdateDate(LocalDateTime.now());
     studentTwinRepo.save(pencreateTwin);
 
-    this.mockMvc.perform(get("/" + student.getStudentID() + "/twins")
+    this.mockMvc.perform(get(STUDENT + "/" + student.getStudentID() + TWINS)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT")))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentTwinReasonCode=='PENMATCH')].twinStudentID").value(penmatchTwinendStudent.getStudentID().toString()))
         .andExpect(MockMvcResultMatchers.jsonPath("$[?(@.studentTwinReasonCode=='PENMATCH')].twinStudent.pen").value(penmatchTwinendStudent.getPen()))
@@ -108,7 +110,7 @@ public class StudentTwinControllerTest {
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     penmatchTwin.setUpdateUser("Test User");
 
-    this.mockMvc.perform(post("/" + student.getStudentID() + "/twins")
+    this.mockMvc.perform(post(STUDENT + "/" + student.getStudentID() + TWINS)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
         .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
         .content(asJsonString(StudentTwinMapper.mapper.toStructure(penmatchTwin)))).andDo(print()).andExpect(status().isCreated())
@@ -132,7 +134,7 @@ public class StudentTwinControllerTest {
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
     studentTwinRepo.save(penmatchTwin);
 
-    this.mockMvc.perform(delete("/" + entity.getStudentID().toString() + "/twins/" + penmatchTwin.getStudentTwinID().toString())
+    this.mockMvc.perform(delete(STUDENT + "/" + entity.getStudentID().toString() + "/twins/" + penmatchTwin.getStudentTwinID().toString())
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "DELETE_STUDENT")))
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().isNoContent());
@@ -148,7 +150,7 @@ public class StudentTwinControllerTest {
     penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("PENMATCH");
 
-    this.mockMvc.perform(post("/" + penmatchTwinendStudent.getStudentID() + "/twins")
+    this.mockMvc.perform(post(STUDENT + "/" + penmatchTwinendStudent.getStudentID() + TWINS)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentTwinMapper.mapper.toStructure(penmatchTwin)))).andDo(print()).andExpect(status().isBadRequest());
@@ -164,7 +166,7 @@ public class StudentTwinControllerTest {
     penmatchTwin.setTwinStudentID(penmatchTwinendStudent.getStudentID());
     penmatchTwin.setStudentTwinReasonCode("INVALID");
 
-    this.mockMvc.perform(post("/" + student.getStudentID() + "/twins")
+    this.mockMvc.perform(post(STUDENT + "/" + student.getStudentID() + TWINS)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(StudentTwinMapper.mapper.toStructure(penmatchTwin)))).andDo(print()).andExpect(status().isBadRequest());
@@ -172,7 +174,7 @@ public class StudentTwinControllerTest {
 
   @Test
   public void testGetStudentTwinReasonCodes_ShouldReturnCodes() throws Exception {
-    this.mockMvc.perform(get("/student-twin-reason-codes")
+    this.mockMvc.perform(get(STUDENT+TWIN_REASON_CODES)
         .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_CODES")))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].twinReasonCode").value("PENMATCH"));
   }

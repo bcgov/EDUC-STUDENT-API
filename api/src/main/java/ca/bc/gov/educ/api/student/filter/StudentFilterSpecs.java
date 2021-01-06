@@ -1,6 +1,6 @@
 package ca.bc.gov.educ.api.student.filter;
 
-import ca.bc.gov.educ.api.student.model.StudentEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

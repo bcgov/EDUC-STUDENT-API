@@ -1,7 +1,7 @@
 package ca.bc.gov.educ.api.student.util;
 
 import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
-import ca.bc.gov.educ.api.student.struct.BaseRequest;
+import ca.bc.gov.educ.api.student.struct.v1.BaseRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
