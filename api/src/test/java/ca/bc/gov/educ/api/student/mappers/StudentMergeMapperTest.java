@@ -1,6 +1,7 @@
 package ca.bc.gov.educ.api.student.mappers;
 
-import ca.bc.gov.educ.api.student.struct.StudentMergeSourceCode;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentMergeMapper;
+import ca.bc.gov.educ.api.student.struct.v1.StudentMergeSourceCode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;

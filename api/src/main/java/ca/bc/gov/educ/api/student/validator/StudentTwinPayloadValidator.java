@@ -1,10 +1,10 @@
 package ca.bc.gov.educ.api.student.validator;
 
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
-import ca.bc.gov.educ.api.student.model.StudentTwinReasonCodeEntity;
-import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.service.StudentTwinService;
-import ca.bc.gov.educ.api.student.struct.StudentTwin;
+import ca.bc.gov.educ.api.student.model.v1.StudentTwinReasonCodeEntity;
+import ca.bc.gov.educ.api.student.service.v1.StudentService;
+import ca.bc.gov.educ.api.student.service.v1.StudentTwinService;
+import ca.bc.gov.educ.api.student.struct.v1.StudentTwin;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;

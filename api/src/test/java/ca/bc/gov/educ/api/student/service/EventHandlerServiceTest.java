@@ -2,15 +2,16 @@ package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.constant.Topics;
 import ca.bc.gov.educ.api.student.filter.FilterOperation;
-import ca.bc.gov.educ.api.student.mappers.StudentMapper;
-import ca.bc.gov.educ.api.student.mappers.StudentTwinMapper;
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.model.StudentEvent;
-import ca.bc.gov.educ.api.student.repository.StudentEventRepository;
-import ca.bc.gov.educ.api.student.repository.StudentMergeRepository;
-import ca.bc.gov.educ.api.student.repository.StudentRepository;
-import ca.bc.gov.educ.api.student.repository.StudentTwinRepository;
-import ca.bc.gov.educ.api.student.struct.*;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentTwinMapper;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
+import ca.bc.gov.educ.api.student.repository.v1.StudentEventRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentMergeRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentTwinRepository;
+import ca.bc.gov.educ.api.student.service.v1.EventHandlerService;
+import ca.bc.gov.educ.api.student.struct.v1.*;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,6 +25,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.TransactionSystemException;
@@ -40,14 +42,15 @@ import java.util.stream.Collectors;
 import static ca.bc.gov.educ.api.student.constant.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
 import static ca.bc.gov.educ.api.student.constant.EventType.*;
-import static ca.bc.gov.educ.api.student.struct.Condition.AND;
-import static ca.bc.gov.educ.api.student.struct.Condition.OR;
+import static ca.bc.gov.educ.api.student.struct.v1.Condition.AND;
+import static ca.bc.gov.educ.api.student.struct.v1.Condition.OR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class EventHandlerServiceTest {
 
   /**

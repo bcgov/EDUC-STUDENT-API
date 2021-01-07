@@ -1,8 +1,8 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import ca.bc.gov.educ.api.student.model.StudentMergeDirectionCodeEntity;
-import ca.bc.gov.educ.api.student.model.StudentMergeSourceCodeEntity;
-import ca.bc.gov.educ.api.student.model.StudentTwinReasonCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentMergeDirectionCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentMergeSourceCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentTwinReasonCodeEntity;
 import org.springframework.validation.FieldError;
 
 import java.time.LocalDateTime;

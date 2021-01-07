@@ -1,15 +1,15 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.model.StudentMergeDirectionCodeEntity;
-import ca.bc.gov.educ.api.student.model.StudentMergeEntity;
-import ca.bc.gov.educ.api.student.model.StudentMergeSourceCodeEntity;
-import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.service.CodeTableService;
-import ca.bc.gov.educ.api.student.service.StudentHistoryService;
-import ca.bc.gov.educ.api.student.service.StudentMergeService;
-import ca.bc.gov.educ.api.student.service.StudentService;
-import ca.bc.gov.educ.api.student.struct.StudentMerge;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentMergeDirectionCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentMergeEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentMergeSourceCodeEntity;
+import ca.bc.gov.educ.api.student.repository.v1.*;
+import ca.bc.gov.educ.api.student.service.v1.CodeTableService;
+import ca.bc.gov.educ.api.student.service.v1.StudentHistoryService;
+import ca.bc.gov.educ.api.student.service.v1.StudentMergeService;
+import ca.bc.gov.educ.api.student.service.v1.StudentService;
+import ca.bc.gov.educ.api.student.struct.v1.StudentMerge;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

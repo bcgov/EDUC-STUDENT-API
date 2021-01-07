@@ -9,10 +9,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import ca.bc.gov.educ.api.student.model.GenderCodeEntity;
-import ca.bc.gov.educ.api.student.model.SexCodeEntity;
-import ca.bc.gov.educ.api.student.repository.*;
-import ca.bc.gov.educ.api.student.service.*;
+import ca.bc.gov.educ.api.student.model.v1.GenderCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.SexCodeEntity;
+import ca.bc.gov.educ.api.student.repository.v1.StudentMergeRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentTwinRepository;
+import ca.bc.gov.educ.api.student.service.v1.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,8 +23,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.validation.FieldError;
 
-import ca.bc.gov.educ.api.student.model.StudentEntity;
-import ca.bc.gov.educ.api.student.struct.Student;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.struct.v1.Student;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StudentPayloadValidatorTest {
