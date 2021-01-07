@@ -315,7 +315,7 @@ public class StudentControllerTest {
     studentUpdate.setStudentID(entity.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("USEREDIT");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
-    this.mockMvc.perform(put(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(put(STUDENT+"/{id}", entity.getStudentID().toString()).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate))).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(entity.getLegalFirstName().toUpperCase()));
   }
@@ -329,7 +329,7 @@ public class StudentControllerTest {
     studentUpdate.setStudentID(entity.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("WRONG");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
-    this.mockMvc.perform(put(STUDENT).contentType(MediaType.APPLICATION_JSON)
+    this.mockMvc.perform(put(STUDENT+"/{id}", entity.getStudentID().toString()).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentUpdate)).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT")))).andDo(print()).andExpect(status().isBadRequest());
   }
 

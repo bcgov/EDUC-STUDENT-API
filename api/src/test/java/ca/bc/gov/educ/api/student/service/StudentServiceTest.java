@@ -118,7 +118,7 @@ public class StudentServiceTest {
     studentUpdate.setHistoryActivityCode("USEREDIT");
     studentUpdate.setUpdateUser("Test Update");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(student), studentUpdate);
-    StudentEntity updateEntity = service.updateStudent(studentUpdate);
+    StudentEntity updateEntity = service.updateStudent(studentUpdate, UUID.fromString(studentUpdate.getStudentID()));
     assertNotNull(updateEntity);
     assertThat(updateEntity.getLegalFirstName()).isEqualTo("updatedFirstName".toUpperCase());
 
@@ -141,7 +141,7 @@ public class StudentServiceTest {
     studentUpdate.setStudentID(student.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("USEREDIT");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(student), studentUpdate);
-    service.updateStudent(studentUpdate);
+    service.updateStudent(studentUpdate, UUID.fromString(studentUpdate.getStudentID()));
   }
 
   @Test

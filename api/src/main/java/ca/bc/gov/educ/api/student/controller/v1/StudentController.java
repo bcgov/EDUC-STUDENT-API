@@ -77,10 +77,11 @@ public class StudentController implements StudentEndpoint {
     return mapper.toStructure(getService().createStudent(student));
   }
 
-  public Student updateStudent(StudentUpdate student) {
+  @Override
+  public Student updateStudent(UUID id, StudentUpdate student) {
     validatePayload(() -> getPayloadValidator().validateUpdatePayload(student));
     RequestUtil.setAuditColumnsForUpdate(student);
-    return mapper.toStructure(getService().updateStudent(student));
+    return mapper.toStructure(getService().updateStudent(student, id));
   }
 
   private void validatePayload(Supplier<List<FieldError>> validator) {

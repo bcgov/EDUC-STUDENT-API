@@ -45,11 +45,11 @@ public interface StudentEndpoint {
   @Transactional
   Student createStudent(@Validated @RequestBody StudentCreate student);
 
-  @PutMapping
+  @PutMapping("/{id}")
   @PreAuthorize("hasAuthority('SCOPE_WRITE_STUDENT')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "400", description = "BAD REQUEST"), @ApiResponse(responseCode = "404", description = "NOT FOUND")})
   @Transactional
-  Student updateStudent(@Validated @RequestBody StudentUpdate student);
+  Student updateStudent(@PathVariable UUID id, @Validated @RequestBody StudentUpdate student );
 
   @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_CODES')")
   @GetMapping(SEX_CODES)

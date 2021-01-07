@@ -206,7 +206,7 @@ public class EventHandlerService {
       var student = JsonUtil.getJsonObjectFromString(StudentUpdate.class, event.getEventPayload());
       RequestUtil.setAuditColumnsForCreate(student);
       try {
-        val studentDBEntity = getStudentService().updateStudent(student);
+        val studentDBEntity = getStudentService().updateStudent(student, UUID.fromString(student.getStudentID()));
         event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(studentDBEntity)));// need to convert to structure MANDATORY otherwise jackson will break.
         event.setEventOutcome(EventOutcome.STUDENT_UPDATED);
       } catch (EntityNotFoundException ex) {
@@ -371,7 +371,7 @@ public class EventHandlerService {
         .thenApplyAsync(studentEntities -> {
           try {
             log.info("found {} students for {}", studentEntities.getContent().size(), event.getSagaId());
-            val resBytes =  objectMapper.writeValueAsBytes(studentEntities);
+            val resBytes = objectMapper.writeValueAsBytes(studentEntities);
             log.info("response prepared for {}, response length {}", event.getSagaId(), resBytes.length);
             return resBytes;
           } catch (JsonProcessingException e) {

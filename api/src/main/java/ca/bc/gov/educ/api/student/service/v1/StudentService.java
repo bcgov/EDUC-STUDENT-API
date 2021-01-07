@@ -40,7 +40,6 @@ import java.util.concurrent.Executors;
  *
  * @author John Cox
  */
-
 @Service
 @Slf4j
 public class StudentService {
@@ -62,6 +61,15 @@ public class StudentService {
   @Getter(AccessLevel.PRIVATE)
   private final CodeTableService codeTableService;
 
+  /**
+   * Instantiates a new Student service.
+   *
+   * @param repository            the repository
+   * @param studentMergeRepo      the student merge repo
+   * @param studentTwinRepo       the student twin repo
+   * @param codeTableService      the code table service
+   * @param studentHistoryService the student history service
+   */
   @Autowired
   public StudentService(final StudentRepository repository, StudentMergeRepository studentMergeRepo, StudentTwinRepository studentTwinRepo,
                         CodeTableService codeTableService, StudentHistoryService studentHistoryService) {
@@ -118,12 +126,17 @@ public class StudentService {
    * Updates a StudentEntity
    *
    * @param studentUpdate the payload which will update the DB record for the given student.
+   * @param studentID     the student id
    * @return the updated entity.
    * @throws EntityNotFoundException if the entity does not exist in the DB.
    */
   @Transactional(propagation = Propagation.MANDATORY, noRollbackFor = {EntityNotFoundException.class})
-  public StudentEntity updateStudent(StudentUpdate studentUpdate) {
+  public StudentEntity updateStudent(StudentUpdate studentUpdate, UUID studentID) {
+
     var student = StudentMapper.mapper.toModel(studentUpdate);
+    if(studentID == null || !studentID.equals(student.getStudentID())){
+      throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, String.valueOf(studentID));
+    }
     Optional<StudentEntity> curStudentEntity = repository.findById(student.getStudentID());
 
     if (curStudentEntity.isPresent()) {
@@ -141,6 +154,11 @@ public class StudentService {
     }
   }
 
+  /**
+   * Delete by id.
+   *
+   * @param id the id
+   */
   @Transactional(propagation = Propagation.MANDATORY)
   public void deleteById(UUID id) {
     val entityOptional = getRepository().findById(id);
@@ -161,6 +179,15 @@ public class StudentService {
     getRepository().delete(entity);
   }
 
+  /**
+   * Find all completable future.
+   *
+   * @param studentSpecs the student specs
+   * @param pageNumber   the page number
+   * @param pageSize     the page size
+   * @param sorts        the sorts
+   * @return the completable future
+   */
   @Transactional(propagation = Propagation.SUPPORTS)
   public CompletableFuture<Page<StudentEntity>> findAll(Specification<StudentEntity> studentSpecs, final Integer pageNumber, final Integer pageSize, final List<Sort.Order> sorts) {
     return CompletableFuture.supplyAsync(() -> {
@@ -174,6 +201,12 @@ public class StudentService {
 
   }
 
+  /**
+   * Create student with associations student entity.
+   *
+   * @param student the student
+   * @return the student entity
+   */
   @Transactional(propagation = Propagation.MANDATORY)
   public StudentEntity createStudentWithAssociations(StudentCreate student) {
     StudentEntity studentEntity = StudentMapper.mapper.toModel(student);
@@ -215,34 +248,77 @@ public class StudentService {
     return studentEntity;
   }
 
+  /**
+   * Gets gender codes list.
+   *
+   * @return the gender codes list
+   */
   public List<GenderCodeEntity> getGenderCodesList() {
     return getCodeTableService().getGenderCodesList();
   }
 
+  /**
+   * Gets sex codes list.
+   *
+   * @return the sex codes list
+   */
   public List<SexCodeEntity> getSexCodesList() {
     return getCodeTableService().getSexCodesList();
   }
 
+  /**
+   * Gets demog codes list.
+   *
+   * @return the demog codes list
+   */
   public List<DemogCodeEntity> getDemogCodesList() {
     return getCodeTableService().getDemogCodesList();
   }
 
+  /**
+   * Gets grade codes list.
+   *
+   * @return the grade codes list
+   */
   public List<GradeCodeEntity> getGradeCodesList() {
     return getCodeTableService().getGradeCodesList();
   }
 
+  /**
+   * Gets status codes list.
+   *
+   * @return the status codes list
+   */
   public List<StatusCodeEntity> getStatusCodesList() {
     return getCodeTableService().getStatusCodesList();
   }
 
+  /**
+   * Find gender code optional.
+   *
+   * @param genderCode the gender code
+   * @return the optional
+   */
   public Optional<GenderCodeEntity> findGenderCode(String genderCode) {
     return getCodeTableService().findGenderCode(genderCode);
   }
 
+  /**
+   * Find sex code optional.
+   *
+   * @param sexCode the sex code
+   * @return the optional
+   */
   public Optional<SexCodeEntity> findSexCode(String sexCode) {
     return getCodeTableService().findSexCode(sexCode);
   }
 
+  /**
+   * Find student history activity code optional.
+   *
+   * @param historyActivityCode the history activity code
+   * @return the optional
+   */
   public Optional<StudentHistoryActivityCodeEntity> findStudentHistoryActivityCode(String historyActivityCode) {
     return getCodeTableService().findStudentHistoryActivityCode(historyActivityCode);
   }
