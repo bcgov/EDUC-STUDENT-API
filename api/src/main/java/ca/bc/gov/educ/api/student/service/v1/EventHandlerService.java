@@ -242,6 +242,7 @@ public class EventHandlerService {
       val optionalStudent = getStudentRepository().findStudentEntityByPen(student.getPen());
       if (optionalStudent.isPresent()) {
         event.setEventOutcome(EventOutcome.STUDENT_ALREADY_EXIST);
+        event.setEventPayload(optionalStudent.get().getStudentID().toString()); // return the student ID in response.
       } else {
         RequestUtil.setAuditColumnsForCreate(student);
         StudentEntity entity;
