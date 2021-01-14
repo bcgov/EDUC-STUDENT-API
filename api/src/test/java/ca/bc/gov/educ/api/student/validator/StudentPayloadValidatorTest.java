@@ -1,20 +1,13 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 import ca.bc.gov.educ.api.student.model.v1.GenderCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.SexCodeEntity;
-import ca.bc.gov.educ.api.student.repository.v1.StudentMergeRepository;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
-import ca.bc.gov.educ.api.student.repository.v1.StudentTwinRepository;
-import ca.bc.gov.educ.api.student.service.v1.*;
+import ca.bc.gov.educ.api.student.service.v1.CodeTableService;
+import ca.bc.gov.educ.api.student.service.v1.StudentHistoryService;
+import ca.bc.gov.educ.api.student.service.v1.StudentService;
+import ca.bc.gov.educ.api.student.struct.v1.Student;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,8 +16,14 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.validation.FieldError;
 
-import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
-import ca.bc.gov.educ.api.student.struct.v1.Student;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StudentPayloadValidatorTest {
@@ -34,16 +33,8 @@ public class StudentPayloadValidatorTest {
 
   @Mock
   StudentService studentService;
-  @Mock
-  StudentTwinService studentTwinService;
-  @Mock
-  StudentMergeService studentMergeService;
   @InjectMocks
   StudentPayloadValidator studentPayloadValidator;
-  @Mock
-  StudentMergeRepository studentMergeRepo;
-  @Mock
-  StudentTwinRepository studentTwinRepo;
   @Mock
   CodeTableService codeTableService;
   @Mock
@@ -51,8 +42,8 @@ public class StudentPayloadValidatorTest {
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
-    studentPayloadValidator = new StudentPayloadValidator(studentService, studentTwinService, studentMergeService);
+    studentService = new StudentService(repository, codeTableService, studentHistoryService);
+    studentPayloadValidator = new StudentPayloadValidator(studentService);
   }
 
   @Test

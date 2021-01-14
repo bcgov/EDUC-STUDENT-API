@@ -4,18 +4,18 @@ import ca.bc.gov.educ.api.student.constant.EventOutcome;
 import ca.bc.gov.educ.api.student.constant.EventType;
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
-import ca.bc.gov.educ.api.student.mappers.v1.StudentTwinMapper;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
-import ca.bc.gov.educ.api.student.model.v1.StudentTwinEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentEventRepository;
 import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
-import ca.bc.gov.educ.api.student.struct.v1.*;
+import ca.bc.gov.educ.api.student.struct.v1.Event;
+import ca.bc.gov.educ.api.student.struct.v1.Student;
+import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
+import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -25,7 +25,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
 import static lombok.AccessLevel.PRIVATE;
@@ -67,16 +65,11 @@ public class EventHandlerService {
   @Getter(PRIVATE)
   private final StudentRepository studentRepository;
   private static final StudentMapper mapper = StudentMapper.mapper;
-  private static final StudentTwinMapper twinMapper = StudentTwinMapper.mapper;
   @Getter(PRIVATE)
   private final StudentEventRepository studentEventRepository;
 
   @Getter(PRIVATE)
   private final StudentService studentService;
-
-
-  @Getter(PRIVATE)
-  private final StudentTwinService studentTwinService;
 
   @Getter(PRIVATE)
   private final StudentSearchService studentSearchService;
@@ -106,88 +99,16 @@ public class EventHandlerService {
    * @param studentRepository      the student repository
    * @param studentEventRepository the student event repository
    * @param studentService         the student service
-   * @param studentTwinService     the student twin service
    * @param studentSearchService   the student search service
    */
   @Autowired
-  public EventHandlerService(final StudentRepository studentRepository, final StudentEventRepository studentEventRepository, StudentService studentService, StudentTwinService studentTwinService, StudentSearchService studentSearchService) {
+  public EventHandlerService(final StudentRepository studentRepository, final StudentEventRepository studentEventRepository, StudentService studentService, StudentSearchService studentSearchService) {
     this.studentRepository = studentRepository;
     this.studentEventRepository = studentEventRepository;
     this.studentService = studentService;
-    this.studentTwinService = studentTwinService;
     this.studentSearchService = studentSearchService;
   }
 
-
-  /**
-   * This messaging handler expects clients to send array of twins.
-   * Also it is expected that the payload given contains valid data.
-   * <b> The clients responsibility is to provide valid payload in messaging flow.</b>
-   *
-   * @param event the event
-   * @return the byte [ ]
-   * @throws JsonProcessingException the json processing exception
-   */
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public byte[] handleAddStudentTwins(Event event) throws JsonProcessingException {
-    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
-    StudentEvent studentEvent;
-    if (studentEventOptional.isEmpty()) {
-      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      final ObjectMapper objectMapper = new ObjectMapper();
-      CollectionType javaType = objectMapper.getTypeFactory()
-          .constructCollectionType(List.class, StudentTwin.class);
-      List<StudentTwin> studentTwins = objectMapper.readValue(event.getEventPayload(), javaType);
-      List<StudentTwinEntity> studentTwinEntities = studentTwins.stream().peek(RequestUtil::setAuditColumnsForCreate).map(twinMapper::toModel).collect(Collectors.toList());
-      getStudentTwinService().addStudentTwins(studentTwinEntities);
-      event.setEventPayload(JsonUtil.getJsonStringFromObject(studentTwinEntities.stream().map(twinMapper::toStructure).collect(Collectors.toList())));// need to convert to structure MANDATORY otherwise jackson will break.
-      event.setEventOutcome(EventOutcome.STUDENT_TWINS_ADDED);
-      studentEvent = createStudentEventRecord(event);
-    } else {
-      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      studentEvent = studentEventOptional.get();
-      studentEvent.setUpdateDate(LocalDateTime.now());
-    }
-
-    getStudentEventRepository().save(studentEvent);
-    return createResponseEvent(studentEvent);
-  }
-
-  /**
-   * This messaging handler expects clients to send array of twin student ID.
-   * Also it is expected that the payload given contains valid data.
-   * <b> The clients responsibility is to provide valid payload in messaging flow.</b>
-   *
-   * @param event the event
-   * @return the byte [ ]
-   * @throws JsonProcessingException the json processing exception
-   */
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public byte[] handleDeleteStudentTwins(Event event) throws JsonProcessingException {
-    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
-    StudentEvent studentEvent;
-    if (studentEventOptional.isEmpty()) {
-      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      final ObjectMapper objectMapper = new ObjectMapper();
-      CollectionType javaType = objectMapper.getTypeFactory()
-          .constructCollectionType(List.class, UUID.class);
-      List<UUID> studentTwinIDs = objectMapper.readValue(event.getEventPayload(), javaType);
-      getStudentTwinService().deleteAllByIds(studentTwinIDs);
-      event.setEventOutcome(EventOutcome.STUDENT_TWINS_DELETED);
-      studentEvent = createStudentEventRecord(event);
-    } else {
-      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      studentEvent = studentEventOptional.get();
-      studentEvent.setUpdateDate(LocalDateTime.now());
-    }
-
-    getStudentEventRepository().save(studentEvent);
-    return createResponseEvent(studentEvent);
-  }
 
   /**
    * Handle update student event byte [ ].
@@ -245,13 +166,8 @@ public class EventHandlerService {
         event.setEventPayload(optionalStudent.get().getStudentID().toString()); // return the student ID in response.
       } else {
         RequestUtil.setAuditColumnsForCreate(student);
-        StudentEntity entity;
-        // It is expected that during messaging flow, the caller will provide a valid payload, so validation is not done.
-        if (!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())) {
-          entity = getStudentService().createStudentWithAssociations(student);
-        } else {
-          entity = getStudentService().createStudent(student);
-        }
+        StudentEntity entity = getStudentService().createStudent(student);
+
         event.setEventOutcome(EventOutcome.STUDENT_CREATED);
         event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.
       }

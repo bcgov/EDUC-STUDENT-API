@@ -4,9 +4,7 @@ import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.exception.InvalidParameterException;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
 import ca.bc.gov.educ.api.student.model.v1.*;
-import ca.bc.gov.educ.api.student.repository.v1.StudentMergeRepository;
 import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
-import ca.bc.gov.educ.api.student.repository.v1.StudentTwinRepository;
 import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
 import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
@@ -24,9 +22,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,11 +48,6 @@ public class StudentService {
   @Getter(AccessLevel.PRIVATE)
   private final StudentHistoryService studentHistoryService;
 
-  @Getter(AccessLevel.PRIVATE)
-  private final StudentMergeRepository studentMergeRepo;
-
-  @Getter(AccessLevel.PRIVATE)
-  private final StudentTwinRepository studentTwinRepo;
 
   @Getter(AccessLevel.PRIVATE)
   private final CodeTableService codeTableService;
@@ -65,17 +56,13 @@ public class StudentService {
    * Instantiates a new Student service.
    *
    * @param repository            the repository
-   * @param studentMergeRepo      the student merge repo
-   * @param studentTwinRepo       the student twin repo
    * @param codeTableService      the code table service
    * @param studentHistoryService the student history service
    */
   @Autowired
-  public StudentService(final StudentRepository repository, StudentMergeRepository studentMergeRepo, StudentTwinRepository studentTwinRepo,
+  public StudentService(final StudentRepository repository,
                         CodeTableService codeTableService, StudentHistoryService studentHistoryService) {
     this.repository = repository;
-    this.studentMergeRepo = studentMergeRepo;
-    this.studentTwinRepo = studentTwinRepo;
     this.codeTableService = codeTableService;
     this.studentHistoryService = studentHistoryService;
   }
@@ -134,7 +121,7 @@ public class StudentService {
   public StudentEntity updateStudent(StudentUpdate studentUpdate, UUID studentID) {
 
     var student = StudentMapper.mapper.toModel(studentUpdate);
-    if(studentID == null || !studentID.equals(student.getStudentID())){
+    if (studentID == null || !studentID.equals(student.getStudentID())) {
       throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, String.valueOf(studentID));
     }
     Optional<StudentEntity> curStudentEntity = repository.findById(student.getStudentID());
@@ -163,18 +150,6 @@ public class StudentService {
   public void deleteById(UUID id) {
     val entityOptional = getRepository().findById(id);
     val entity = entityOptional.orElseThrow(() -> new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, id.toString()));
-    var twins = getStudentTwinRepo().findByStudentIDOrTwinStudentID(entity.getStudentID(), entity.getStudentID());
-    if (!twins.isEmpty()) {
-      getStudentTwinRepo().deleteAll(twins);
-    }
-    var merges = getStudentMergeRepo().findStudentMergeEntityByStudentID(entity.getStudentID());
-    var merges2 = getStudentMergeRepo().findStudentMergeEntityByMergeStudent(entity);
-    if (!merges.isEmpty()) {
-      getStudentMergeRepo().deleteAll(merges);
-    }
-    if (!merges2.isEmpty()) {
-      getStudentMergeRepo().deleteAll(merges2);
-    }
     getStudentHistoryService().deleteByStudentID(id);
     getRepository().delete(entity);
   }
@@ -199,53 +174,6 @@ public class StudentService {
       }
     }, paginatedQueryExecutor);
 
-  }
-
-  /**
-   * Create student with associations student entity.
-   *
-   * @param student the student
-   * @return the student entity
-   */
-  @Transactional(propagation = Propagation.MANDATORY)
-  public StudentEntity createStudentWithAssociations(StudentCreate student) {
-    StudentEntity studentEntity = StudentMapper.mapper.toModel(student);
-    TransformUtil.uppercaseFields(studentEntity);
-    getRepository().save(studentEntity);
-    studentHistoryService.createStudentHistory(studentEntity, student.getHistoryActivityCode(), student.getCreateUser());
-    if (!CollectionUtils.isEmpty(student.getStudentMergeAssociations())) {
-      List<StudentMergeEntity> studentMergeEntities = new ArrayList<>();
-      for (var mergeStudent : student.getStudentMergeAssociations()) {
-        var studentMergeEntity = new StudentMergeEntity();
-        studentMergeEntity.setCreateDate(studentEntity.getCreateDate());
-        studentMergeEntity.setUpdateDate(studentEntity.getUpdateDate());
-        studentMergeEntity.setCreateUser(studentEntity.getCreateUser());
-        studentMergeEntity.setUpdateUser(studentEntity.getUpdateUser());
-        studentMergeEntity.setStudentMergeDirectionCode(mergeStudent.getStudentMergeDirectionCode());
-        studentMergeEntity.setStudentMergeSourceCode(mergeStudent.getStudentMergeSourceCode());
-        studentMergeEntity.setMergeStudent(getRepository().findById(UUID.fromString(mergeStudent.getMergeStudentID())).orElseThrow());
-        studentMergeEntity.setStudentID(studentEntity.getStudentID());
-        studentMergeEntities.add(studentMergeEntity);
-      }
-      getStudentMergeRepo().saveAll(studentMergeEntities);
-    }
-    if (!CollectionUtils.isEmpty(student.getStudentTwinAssociations())) {
-      List<StudentTwinEntity> studentTwinEntities = new ArrayList<>();
-      for (var twinStudent : student.getStudentTwinAssociations()) {
-        var studentTwinEntity = new StudentTwinEntity();
-        studentTwinEntity.setCreateDate(studentEntity.getCreateDate());
-        studentTwinEntity.setUpdateDate(studentEntity.getUpdateDate());
-        studentTwinEntity.setCreateUser(studentEntity.getCreateUser());
-        studentTwinEntity.setUpdateUser(studentEntity.getUpdateUser());
-        studentTwinEntity.setStudentTwinReasonCode(twinStudent.getStudentTwinReasonCode());
-        studentTwinEntity.setTwinStudentID(UUID.fromString(twinStudent.getTwinStudentID()));
-        studentTwinEntity.setStudentID(studentEntity.getStudentID());
-        studentTwinEntities.add(studentTwinEntity);
-      }
-      getStudentTwinRepo().saveAll(studentTwinEntities);
-    }
-
-    return studentEntity;
   }
 
   /**
