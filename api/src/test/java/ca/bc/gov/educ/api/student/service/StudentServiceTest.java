@@ -57,10 +57,6 @@ public class StudentServiceTest {
   @Autowired
   GradeCodeTableRepository gradeRepo;
   @Autowired
-  StudentMergeRepository studentMergeRepo;
-  @Autowired
-  StudentTwinRepository studentTwinRepo;
-  @Autowired
   StudentHistoryRepository studentHistoryRepository;
   StudentHistoryService studentHistoryService;
   @Mock
@@ -69,7 +65,7 @@ public class StudentServiceTest {
   @Before
   public void before() {
     studentHistoryService = new StudentHistoryService(studentHistoryRepository, codeTableService);
-    service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
+    service = new StudentService(repository, codeTableService, studentHistoryService);
   }
 
   @Test
@@ -154,7 +150,7 @@ public class StudentServiceTest {
   public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() throws ExecutionException, InterruptedException {
     var repository = mock(StudentRepository.class);
     when(repository.findAll(isNull(), any(Pageable.class))).thenThrow(EntityNotFoundException.class);
-    var service = new StudentService(repository, studentMergeRepo, studentTwinRepo, codeTableService, studentHistoryService);
+    var service = new StudentService(repository, codeTableService, studentHistoryService);
     service.findAll(null, 0, 5, new ArrayList<>()).get();
   }
 

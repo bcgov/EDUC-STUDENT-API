@@ -70,20 +70,6 @@ public class EventHandlerDelegatorService {
           log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           messagePublisher.dispatchMessage(event.getReplyTo(), response);
           break;
-        case ADD_STUDENT_TWINS:
-          log.info("received ADD_STUDENT_TWINS event :: {}", event.getSagaId());
-          log.trace(PAYLOAD_LOG, event.getEventPayload());
-          response = eventHandlerService.handleAddStudentTwins(event);
-          log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
-          messagePublisher.dispatchMessage(event.getReplyTo(), response);
-          break;
-        case DELETE_STUDENT_TWINS:
-          log.info("received DELETE_STUDENT_TWINS event :: {}", event.getSagaId());
-          log.trace(PAYLOAD_LOG, event.getEventPayload());
-          response = eventHandlerService.handleDeleteStudentTwins(event);
-          log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
-          messagePublisher.dispatchMessage(event.getReplyTo(), response);
-          break;
         case GET_PAGINATED_STUDENT_BY_CRITERIA:
           log.info("received GET_PAGINATED_STUDENT_BY_CRITERIA event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());

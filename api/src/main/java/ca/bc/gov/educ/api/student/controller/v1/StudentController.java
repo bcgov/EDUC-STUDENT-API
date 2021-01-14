@@ -22,7 +22,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -71,9 +70,6 @@ public class StudentController implements StudentEndpoint {
   public Student createStudent(StudentCreate student) {
     validatePayload(() -> getPayloadValidator().validateCreatePayload(student));
     RequestUtil.setAuditColumnsForCreate(student);
-    if(!CollectionUtils.isEmpty(student.getStudentMergeAssociations()) || !CollectionUtils.isEmpty(student.getStudentTwinAssociations())){
-      return mapper.toStructure(getService().createStudentWithAssociations(student));
-    }
     return mapper.toStructure(getService().createStudent(student));
   }
 

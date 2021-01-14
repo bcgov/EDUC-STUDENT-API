@@ -23,7 +23,4 @@ public class StudentCreate extends BaseStudent implements Serializable {
 
   @NotNull(message = "historyActivityCode can not be null.")
   String historyActivityCode;
-
-  List<StudentTwinAssociation> studentTwinAssociations;
-  List<StudentMergeAssociation> studentMergeAssociations;
 }

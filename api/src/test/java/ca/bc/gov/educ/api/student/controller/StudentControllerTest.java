@@ -29,7 +29,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -40,7 +39,6 @@ import java.util.stream.Collectors;
 import static ca.bc.gov.educ.api.student.constant.v1.URL.*;
 import static ca.bc.gov.educ.api.student.struct.v1.Condition.AND;
 import static ca.bc.gov.educ.api.student.struct.v1.Condition.OR;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -81,23 +79,10 @@ public class StudentControllerTest {
   GradeCodeTableRepository gradeRepo;
 
   @Autowired
-  StudentMergeRepository studentMergeRepository;
-
-  @Autowired
-  StudentTwinRepository studentTwinRepository;
-
-  @Autowired
   StudentPayloadValidator validator;
 
   @Autowired
   StudentService studentService;
-  @Autowired
-  StudentMergeDirectionCodeTableRepository mergeDirectionCodeRepo;
-
-  @Autowired
-  StudentMergeSourceCodeTableRepository mergeSourceCodeRepo;
-  @Autowired
-  StudentTwinReasonCodeTableRepository twinReasonCodeRepo;
   @Autowired
   StudentHistoryActivityCodeTableRepository studentHistoryActivityCodeTableRepo;
   @Autowired
@@ -111,9 +96,6 @@ public class StudentControllerTest {
     demogRepo.save(createDemogCodeData());
     statusRepo.save(createStatusCodeData());
     gradeRepo.save(createGradeCodeData());
-    mergeDirectionCodeRepo.save(createStudentMergeDirectionCodeData());
-    mergeSourceCodeRepo.save(createStudentMergeSourceCodeData());
-    twinReasonCodeRepo.save(createStudentTwinReasonCodeData());
     studentHistoryActivityCodeTableRepo.save(createStudentHistoryActivityCodeData());
   }
 
@@ -127,8 +109,6 @@ public class StudentControllerTest {
     demogRepo.deleteAll();
     statusRepo.deleteAll();
     gradeRepo.deleteAll();
-    studentMergeRepository.deleteAll();
-    studentTwinRepository.deleteAll();
     studentHistoryRepo.deleteAll();
     repository.deleteAll();
   }
@@ -202,60 +182,6 @@ public class StudentControllerTest {
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
   }
 
-  @Test
-  @Transactional
-  public void testCreateStudent_GivenValidPayloadWithTwinsAssociations_ShouldReturnStatusCreated() throws Exception {
-    StudentEntity studentTwin = studentService.createStudent(getStudentCreate(Optional.of("120164444")));
-
-    List<StudentTwinAssociation> studentTwinAssociations = new ArrayList<>();
-    StudentTwinAssociation studentTwinAssociation = new StudentTwinAssociation();
-    studentTwinAssociation.setStudentTwinReasonCode("PENMATCH");
-    studentTwinAssociation.setTwinStudentID(studentTwin.getStudentID().toString());
-    studentTwinAssociations.add(studentTwinAssociation);
-
-    var studentCreate = getStudentCreate();
-    studentCreate.setStudentTwinAssociations(studentTwinAssociations);
-
-    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(studentCreate.getLegalFirstName().toUpperCase()));
-
-    var studentFromDB = studentService.retrieveStudentByPen(studentCreate.getPen());
-    assertThat(studentFromDB).isPresent();
-    var twinRecords = studentTwinRepository.findByStudentIDOrTwinStudentID(studentFromDB.get().getStudentID(), studentFromDB.get().getStudentID());
-    assertThat(twinRecords).isNotEmpty().size().isEqualTo(1);
-    var twinRecordsFromOtherSide = studentTwinRepository.findByStudentIDOrTwinStudentID(studentTwin.getStudentID(), studentTwin.getStudentID());
-    assertThat(twinRecordsFromOtherSide).isNotEmpty().size().isEqualTo(1);
-
-  }
-
-  @Test
-  @Transactional
-  public void testCreateStudent_GivenValidPayloadWithMergeAssociations_ShouldReturnStatusCreated() throws Exception {
-    StudentEntity studentMerge = studentService.createStudent(getStudentCreate(Optional.of("120164444")));
-
-    List<StudentMergeAssociation> studentMergeAssociations = new ArrayList<>();
-    StudentMergeAssociation studentMergeAssociation = new StudentMergeAssociation();
-    studentMergeAssociation.setStudentMergeDirectionCode("FROM");
-    studentMergeAssociation.setStudentMergeSourceCode("MINISTRY");
-    studentMergeAssociation.setMergeStudentID(studentMerge.getStudentID().toString());
-    studentMergeAssociations.add(studentMergeAssociation);
-
-    var studentCreate = getStudentCreate();
-    studentCreate.setStudentMergeAssociations(studentMergeAssociations);
-
-    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isCreated())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(studentCreate.getLegalFirstName().toUpperCase()));
-
-    var studentFromDB = studentService.retrieveStudentByPen(studentCreate.getPen());
-    assertThat(studentFromDB).isPresent();
-    var mergeRecords = studentMergeRepository.findStudentMergeEntityByStudentID(studentFromDB.get().getStudentID());
-    assertThat(mergeRecords).isNotEmpty().size().isEqualTo(1);
-    var twinRecordsFromOtherSide = studentMergeRepository.findStudentMergeEntityByMergeStudent(studentMerge);
-    assertThat(twinRecordsFromOtherSide).isNotEmpty().size().isEqualTo(1);
-
-  }
 
   @Test
   public void testCreateStudent_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
@@ -285,25 +211,6 @@ public class StudentControllerTest {
     student.setHistoryActivityCode("WRONG");
     this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
-  }
-
-  @Test
-  @Transactional
-  public void testCreateStudent_GivenInvalidHistoryActivityCodeWithTwinsAssociations_ShouldReturnStatusBadRequest() throws Exception {
-    StudentEntity studentTwin = studentService.createStudent(getStudentCreate(Optional.of("120164444")));
-
-    List<StudentTwinAssociation> studentTwinAssociations = new ArrayList<>();
-    StudentTwinAssociation studentTwinAssociation = new StudentTwinAssociation();
-    studentTwinAssociation.setStudentTwinReasonCode("PENMATCH");
-    studentTwinAssociation.setTwinStudentID(studentTwin.getStudentID().toString());
-    studentTwinAssociations.add(studentTwinAssociation);
-
-    var studentCreate = getStudentCreate();
-    studentCreate.setHistoryActivityCode("WRONG");
-    studentCreate.setStudentTwinAssociations(studentTwinAssociations);
-
-    this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON).content(asJsonString(studentCreate))).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
@@ -337,22 +244,6 @@ public class StudentControllerTest {
   public void testDeleteStudent_GivenValidId_ShouldReturnStatus204() throws Exception {
     StudentEntity entity = createStudent();
     repository.save(entity);
-    StudentEntity mergedFromStudent = repository.save(createStudent());
-
-    StudentMergeEntity studentMergeFrom = new StudentMergeEntity();
-    studentMergeFrom.setStudentID(entity.getStudentID());
-    studentMergeFrom.setMergeStudent(mergedFromStudent);
-    studentMergeFrom.setStudentMergeDirectionCode("FROM");
-    studentMergeFrom.setStudentMergeSourceCode("MINISTRY");
-    studentMergeFrom.setUpdateUser("Test User");
-    studentMergeRepository.save(studentMergeFrom);
-    StudentTwinEntity penmatchTwin = new StudentTwinEntity();
-    penmatchTwin.setStudentID(entity.getStudentID());
-    penmatchTwin.setTwinStudentID(mergedFromStudent.getStudentID());
-    penmatchTwin.setStudentTwinReasonCode("PENMATCH");
-    studentTwinRepository.save(penmatchTwin);
-
-
     this.mockMvc.perform(delete(STUDENT +"/"+ entity.getStudentID().toString()).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).with(jwt().jwt((jwt) -> jwt.claim("scope", "DELETE_STUDENT")))).andDo(print()).andExpect(status().isNoContent());
   }
@@ -855,23 +746,7 @@ public class StudentControllerTest {
     }
   }
 
-  private StudentTwinReasonCodeEntity createStudentTwinReasonCodeData() {
-    return StudentTwinReasonCodeEntity.builder().twinReasonCode("PENMATCH").description("PENMATCH")
-        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
-  }
 
-  private StudentMergeDirectionCodeEntity createStudentMergeDirectionCodeData() {
-    return StudentMergeDirectionCodeEntity.builder().mergeDirectionCode("FROM").description("Merge From")
-        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
-  }
-
-  private StudentMergeSourceCodeEntity createStudentMergeSourceCodeData() {
-    return StudentMergeSourceCodeEntity.builder().mergeSourceCode("MINISTRY").description("MINISTRY")
-        .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
-        .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
-  }
 
   private StudentHistoryActivityCodeEntity createStudentHistoryActivityCodeData() {
     return StudentHistoryActivityCodeEntity.builder().historyActivityCode("USEREDIT").description("USEREDIT")

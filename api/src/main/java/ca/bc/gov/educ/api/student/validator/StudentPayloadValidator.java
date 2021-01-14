@@ -1,9 +1,10 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import ca.bc.gov.educ.api.student.model.v1.*;
-import ca.bc.gov.educ.api.student.service.v1.StudentMergeService;
+import ca.bc.gov.educ.api.student.model.v1.GenderCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.SexCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.model.v1.StudentHistoryActivityCodeEntity;
 import ca.bc.gov.educ.api.student.service.v1.StudentService;
-import ca.bc.gov.educ.api.student.service.v1.StudentTwinService;
 import ca.bc.gov.educ.api.student.struct.v1.BaseStudent;
 import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
 import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
@@ -19,10 +20,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static ca.bc.gov.educ.api.student.validator.StudentTwinPayloadValidator.TWIN_STUDENT_ID;
 
 @Component
-public class StudentPayloadValidator extends BasePayloadValidator {
+public class StudentPayloadValidator {
 
   public static final String GENDER_CODE = "genderCode";
   public static final String SEX_CODE = "sexCode";
@@ -30,16 +30,10 @@ public class StudentPayloadValidator extends BasePayloadValidator {
   public static final String HISTORY_ACTIVITY_CODE = "historyActivityCode";
   @Getter(AccessLevel.PRIVATE)
   private final StudentService studentService;
-  @Getter(AccessLevel.PRIVATE)
-  private final StudentTwinService studentTwinService;
-  @Getter(AccessLevel.PRIVATE)
-  private final StudentMergeService studentMergeService;
 
   @Autowired
-  public StudentPayloadValidator(final StudentService studentService, StudentTwinService studentTwinService, StudentMergeService studentMergeService) {
+  public StudentPayloadValidator(final StudentService studentService) {
     this.studentService = studentService;
-    this.studentTwinService = studentTwinService;
-    this.studentMergeService = studentMergeService;
   }
 
   public List<FieldError> validatePayload(BaseStudent student, boolean isCreateOperation) {
@@ -56,8 +50,6 @@ public class StudentPayloadValidator extends BasePayloadValidator {
   public List<FieldError> validateCreatePayload(StudentCreate student) {
     var apiValidationErrors = validatePayload(student, true);
     validateStudentHistoryActivityCode(student.getHistoryActivityCode(), apiValidationErrors);
-    validateMergesIfPresent(student, apiValidationErrors);
-    validateTwinsIfPresent(student, apiValidationErrors);
     return apiValidationErrors;
   }
 
@@ -65,36 +57,6 @@ public class StudentPayloadValidator extends BasePayloadValidator {
     var apiValidationErrors = validatePayload(student, false);
     validateStudentHistoryActivityCode(student.getHistoryActivityCode(), apiValidationErrors);
     return apiValidationErrors;
-  }
-
-  private void validateTwinsIfPresent(StudentCreate student, List<FieldError> apiValidationErrors) {
-    if (student.getStudentTwinAssociations() != null && !student.getStudentTwinAssociations().isEmpty()) {
-      for (var studentTwin : student.getStudentTwinAssociations()) {
-        Optional<StudentTwinReasonCodeEntity> twinReasonCodeEntity = studentTwinService.findStudentTwinReasonCode(studentTwin.getStudentTwinReasonCode());
-        validateTwinReasonCodeAgainstDB(studentTwin.getStudentTwinReasonCode(), apiValidationErrors, twinReasonCodeEntity);
-        try {
-          getStudentService().retrieveStudent(UUID.fromString(studentTwin.getTwinStudentID()));
-        } catch (final Exception ex) {
-          apiValidationErrors.add(createFieldError("studentTwin", TWIN_STUDENT_ID, studentTwin.getTwinStudentID(), "Twin Student ID does not exist."));
-        }
-      }
-    }
-  }
-
-  private void validateMergesIfPresent(StudentCreate student, List<FieldError> apiValidationErrors) {
-    if (student.getStudentMergeAssociations() != null && !student.getStudentMergeAssociations().isEmpty()) {
-      for (var studentMerge : student.getStudentMergeAssociations()) {
-        Optional<StudentMergeDirectionCodeEntity> mergeDirectionCodeEntity = studentMergeService.findStudentMergeDirectionCode(studentMerge.getStudentMergeDirectionCode());
-        Optional<StudentMergeSourceCodeEntity> mergeSourceCodeEntity = studentMergeService.findStudentMergeSourceCode(studentMerge.getStudentMergeSourceCode());
-        validateMergeSourceCodeAgainstDB(studentMerge.getStudentMergeSourceCode(), apiValidationErrors, mergeSourceCodeEntity);
-        validateMergeDirectionCodeAgainstDB(studentMerge.getStudentMergeDirectionCode(), apiValidationErrors, mergeDirectionCodeEntity);
-        try{
-          getStudentService().retrieveStudent(UUID.fromString(studentMerge.getMergeStudentID()));
-        }catch (final Exception ex) {
-          apiValidationErrors.add(createFieldError("studentMerge", STUDENT_MERGE, studentMerge.getMergeStudentID(), "Twin Student ID does not exist."));
-        }
-      }
-    }
   }
 
   protected void validateGenderCode(BaseStudent student, List<FieldError> apiValidationErrors) {
@@ -146,7 +108,6 @@ public class StudentPayloadValidator extends BasePayloadValidator {
   }
 
   private FieldError createFieldError(String fieldName, Object rejectedValue, String message) {
-    return super.createFieldError("student", fieldName, rejectedValue, message);
+    return new FieldError("student", fieldName, rejectedValue, false, null, null, message);
   }
-
 }
