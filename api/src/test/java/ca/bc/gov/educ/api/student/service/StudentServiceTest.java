@@ -92,6 +92,7 @@ public class StudentServiceTest {
     var entity = service.createStudent(student);
     assertNotNull(entity);
     assertNotNull(entity.getStudentID());
+    assertNotNull(entity.getTrueStudentID());
   }
 
   @Test
@@ -173,6 +174,7 @@ public class StudentServiceTest {
     student.setUsualLastName("Wayne");
     student.setEmail("theduke@someplace.com");
     student.setEmailVerified("Y");
+    student.setTrueStudentID(UUID.randomUUID());
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
     student.setCreateUser("Test");
     student.setUpdateUser("Test Update");

@@ -86,6 +86,8 @@ public class StudentEntity {
   @Column(name = "DEMOG_CODE")
   @UpperCase
   String demogCode;
+  @Column(name = "TRUE_STUDENT_ID", columnDefinition = "BINARY(16)")
+  UUID trueStudentID;
   @Column(name = "STATUS_CODE")
   @UpperCase
   String statusCode;

@@ -63,4 +63,5 @@ public abstract class BaseStudent extends BaseRequest {
   String statusCode;
   @Size(max = 4000)
   String memo;
+  String trueStudentID;
 }
