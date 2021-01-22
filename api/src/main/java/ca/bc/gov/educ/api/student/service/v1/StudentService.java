@@ -38,8 +38,10 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
 import static ca.bc.gov.educ.api.student.constant.EventOutcome.STUDENT_CREATED;
+import static ca.bc.gov.educ.api.student.constant.EventOutcome.STUDENT_UPDATED;
 import static ca.bc.gov.educ.api.student.constant.EventStatus.DB_COMMITTED;
 import static ca.bc.gov.educ.api.student.constant.EventType.CREATE_STUDENT;
+import static ca.bc.gov.educ.api.student.constant.EventType.UPDATE_STUDENT;
 import static lombok.AccessLevel.PRIVATE;
 
 /**
@@ -157,11 +159,7 @@ public class StudentService {
 
     if (curStudentEntity.isPresent()) {
       final StudentEntity newStudentEntity = curStudentEntity.get();
-      val createUser = newStudentEntity.getCreateUser();
-      val createDate = newStudentEntity.getCreateDate();
       BeanUtils.copyProperties(student, newStudentEntity);
-      newStudentEntity.setCreateUser(createUser);
-      newStudentEntity.setCreateDate(createDate);
       TransformUtil.uppercaseFields(newStudentEntity);
       studentHistoryService.createStudentHistory(newStudentEntity, studentUpdate.getHistoryActivityCode(), newStudentEntity.getUpdateUser());
       final StudentEvent studentEvent =
@@ -171,9 +169,9 @@ public class StudentService {
               .createUser(studentUpdate.getCreateUser()) //need to discuss what to put here.
               .updateUser(studentUpdate.getUpdateUser())
               .eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate))
-              .eventType(CREATE_STUDENT.toString())
+              .eventType(UPDATE_STUDENT.toString())
               .eventStatus(DB_COMMITTED.toString())
-              .eventOutcome(STUDENT_CREATED.toString())
+              .eventOutcome(STUDENT_UPDATED.toString())
               .build();
       repository.save(newStudentEntity);
       getStudentEventRepository().save(studentEvent);
