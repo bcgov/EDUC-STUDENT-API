@@ -63,6 +63,13 @@ public class STANEventHandlerServiceTest {
   }
 
   @Test
+  public void testUpdateEventStatus_givenChoreographedEventNull_shouldDONothing() {
+    stanEventHandlerService.updateEventStatus(null);
+    var results = studentEventRepository.findByEventStatus(MESSAGE_PUBLISHED.toString());
+    assertThat(results).isEmpty();
+  }
+
+  @Test
   public void testUpdateEventStatus_givenDataInDB_shouldUpdateStatus() throws JsonProcessingException {
     var studentEvent = studentEventRepository.save(createStudentEvent());
     ChoreographedEvent choreographedEvent = new ChoreographedEvent();
