@@ -1,7 +1,6 @@
 package ca.bc.gov.educ.api.student.properties;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Component;
  * @author Marco Villeneuve
  */
 @Component
-@Setter
 @Getter
 public class ApplicationProperties {
 
@@ -21,8 +19,8 @@ public class ApplicationProperties {
   public static final String STUDENT_API = "STUDENT-API";
 
   @Value("${stan.url}")
-  private String stanUrl;
+  String stanUrl;
 
   @Value("${stan.cluster}")
-  private String stanCluster;
+  String stanCluster;
 }
