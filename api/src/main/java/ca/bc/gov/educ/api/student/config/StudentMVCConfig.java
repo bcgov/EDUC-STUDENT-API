@@ -7,19 +7,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * The type Student mvc config.
+ */
 @Configuration
 public class StudentMVCConfig implements WebMvcConfigurer {
 
-    @Getter(AccessLevel.PRIVATE)
-    private final StudentRequestInterceptor studentRequestInterceptor;
+  @Getter(AccessLevel.PRIVATE)
+  private final StudentRequestInterceptor studentRequestInterceptor;
 
-    @Autowired
-    public StudentMVCConfig(final StudentRequestInterceptor studentRequestInterceptor){
-        this.studentRequestInterceptor = studentRequestInterceptor;
-    }
+  /**
+   * Instantiates a new Student mvc config.
+   *
+   * @param studentRequestInterceptor the student request interceptor
+   */
+  @Autowired
+  public StudentMVCConfig(final StudentRequestInterceptor studentRequestInterceptor) {
+    this.studentRequestInterceptor = studentRequestInterceptor;
+  }
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(studentRequestInterceptor).addPathPatterns("/**");
-    }
+  @Override
+  public void addInterceptors(InterceptorRegistry registry) {
+    registry.addInterceptor(studentRequestInterceptor).addPathPatterns("/**");
+  }
 }

@@ -9,8 +9,10 @@ import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.List;
 
+/**
+ * The type Student create.
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
@@ -21,6 +23,9 @@ import java.util.List;
 public class StudentCreate extends BaseStudent implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  /**
+   * The History activity code.
+   */
   @NotNull(message = "historyActivityCode can not be null.")
   String historyActivityCode;
 }

@@ -21,10 +21,18 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * The type Student search service.
+ */
 @Service
 public class StudentSearchService {
   private final StudentFilterSpecs studentFilterSpecs;
 
+  /**
+   * Instantiates a new Student search service.
+   *
+   * @param studentFilterSpecs the student filter specs
+   */
   public StudentSearchService(StudentFilterSpecs studentFilterSpecs) {
     this.studentFilterSpecs = studentFilterSpecs;
   }
@@ -120,6 +128,15 @@ public class StudentSearchService {
     return studentEntitySpecification;
   }
 
+  /**
+   * Sets specification and sort criteria.
+   *
+   * @param sortCriteriaJson       the sort criteria json
+   * @param searchCriteriaListJson the search criteria list json
+   * @param objectMapper           the object mapper
+   * @param sorts                  the sorts
+   * @return the specification and sort criteria
+   */
   public Specification<StudentEntity> setSpecificationAndSortCriteria(String sortCriteriaJson, String searchCriteriaListJson, ObjectMapper objectMapper, List<Sort.Order> sorts) {
     Specification<StudentEntity> studentSpecs = null;
     try {

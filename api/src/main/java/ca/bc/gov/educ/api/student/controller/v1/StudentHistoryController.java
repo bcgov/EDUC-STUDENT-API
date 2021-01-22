@@ -32,9 +32,7 @@ import java.util.stream.Collectors;
 
 /**
  * Student History Controller
- *
  */
-
 @RestController
 @Slf4j
 public class StudentHistoryController implements StudentHistoryEndpoint {
@@ -44,6 +42,12 @@ public class StudentHistoryController implements StudentHistoryEndpoint {
   private static final StudentHistoryMapper mapper = StudentHistoryMapper.mapper;
   private final StudentHistoryFilterSpecs studentHistoryFilterSpecs;
 
+  /**
+   * Instantiates a new Student history controller.
+   *
+   * @param studentHistoryService     the student history service
+   * @param studentHistoryFilterSpecs the student history filter specs
+   */
   @Autowired
   StudentHistoryController(final StudentHistoryService studentHistoryService, StudentHistoryFilterSpecs studentHistoryFilterSpecs) {
     this.service = studentHistoryService;

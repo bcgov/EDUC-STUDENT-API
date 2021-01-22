@@ -10,6 +10,10 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+
+/**
+ * The type Event.
+ */
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor

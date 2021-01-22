@@ -12,6 +12,9 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * The type Code table service.
+ */
 @Service
 public class CodeTableService {
 
@@ -27,6 +30,16 @@ public class CodeTableService {
 
   private final StudentHistoryActivityCodeTableRepository historyActivityCodeTableRepo;
 
+  /**
+   * Instantiates a new Code table service.
+   *
+   * @param genderCodeTableRepo          the gender code table repo
+   * @param sexCodeTableRepo             the sex code table repo
+   * @param demogCodeTableRepo           the demog code table repo
+   * @param statusCodeTableRepo          the status code table repo
+   * @param gradeCodeTableRepo           the grade code table repo
+   * @param historyActivityCodeTableRepo the history activity code table repo
+   */
   @Autowired
   public CodeTableService(GenderCodeTableRepository genderCodeTableRepo, SexCodeTableRepository sexCodeTableRepo, DemogCodeTableRepository demogCodeTableRepo,
                           StatusCodeTableRepository statusCodeTableRepo, GradeCodeTableRepository gradeCodeTableRepo, StudentHistoryActivityCodeTableRepository historyActivityCodeTableRepo) {
@@ -88,14 +101,32 @@ public class CodeTableService {
     return genderCodeTableRepo.findAll();
   }
 
+  /**
+   * Find sex code optional.
+   *
+   * @param sexCode the sex code
+   * @return the optional
+   */
   public Optional<SexCodeEntity> findSexCode(String sexCode) {
     return Optional.ofNullable(loadAllSexCodes().get(sexCode));
   }
 
+  /**
+   * Find gender code optional.
+   *
+   * @param genderCode the gender code
+   * @return the optional
+   */
   public Optional<GenderCodeEntity> findGenderCode(String genderCode) {
     return Optional.ofNullable(loadGenderCodes().get(genderCode));
   }
 
+  /**
+   * Find student history activity code optional.
+   *
+   * @param historyActivityCode the history activity code
+   * @return the optional
+   */
   public Optional<StudentHistoryActivityCodeEntity> findStudentHistoryActivityCode(String historyActivityCode) {
     return Optional.ofNullable(loadStudentHistoryActivityCodes().get(historyActivityCode));
   }

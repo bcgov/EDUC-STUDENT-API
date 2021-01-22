@@ -7,10 +7,32 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * The interface Student event repository.
+ */
 public interface StudentEventRepository extends CrudRepository<StudentEvent, UUID> {
+  /**
+   * Find by saga id optional.
+   *
+   * @param sagaId the saga id
+   * @return the optional
+   */
   Optional<StudentEvent> findBySagaId(UUID sagaId);
 
+  /**
+   * Find by saga id and event type optional.
+   *
+   * @param sagaId    the saga id
+   * @param eventType the event type
+   * @return the optional
+   */
   Optional<StudentEvent> findBySagaIdAndEventType(UUID sagaId, String eventType);
 
+  /**
+   * Find by event status list.
+   *
+   * @param eventStatus the event status
+   * @return the list
+   */
   List<StudentEvent> findByEventStatus(String eventStatus);
 }

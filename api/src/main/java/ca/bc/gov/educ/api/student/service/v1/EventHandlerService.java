@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -118,17 +119,19 @@ public class EventHandlerService {
    * @throws JsonProcessingException the json processing exception
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public byte[] handleUpdateStudentEvent(Event event) throws JsonProcessingException {
+  public Pair<byte[], StudentEvent> handleUpdateStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
+    StudentEvent choreographyEvent = null;
     if (studentEventOptional.isEmpty()) {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       var student = JsonUtil.getJsonObjectFromString(StudentUpdate.class, event.getEventPayload());
       RequestUtil.setAuditColumnsForCreate(student);
       try {
-        val studentDBEntity = getStudentService().updateStudent(student, UUID.fromString(student.getStudentID()));
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(studentDBEntity)));// need to convert to structure MANDATORY otherwise jackson will break.
+        val pair = getStudentService().updateStudent(student, UUID.fromString(student.getStudentID()));
+        choreographyEvent = pair.getRight();
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(pair.getLeft())));// need to convert to structure MANDATORY otherwise jackson will break.
         event.setEventOutcome(EventOutcome.STUDENT_UPDATED);
       } catch (EntityNotFoundException ex) {
         event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
@@ -142,7 +145,7 @@ public class EventHandlerService {
     }
 
     getStudentEventRepository().save(studentEvent);
-    return createResponseEvent(studentEvent);
+    return Pair.of(createResponseEvent(studentEvent), choreographyEvent);
   }
 
   /**
@@ -153,9 +156,10 @@ public class EventHandlerService {
    * @throws JsonProcessingException the json processing exception
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public byte[] handleCreateStudentEvent(Event event) throws JsonProcessingException {
+  public Pair<byte[], StudentEvent> handleCreateStudentEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
+    StudentEvent choreographyEvent = null;
     if (studentEventOptional.isEmpty()) {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
@@ -166,8 +170,9 @@ public class EventHandlerService {
         event.setEventPayload(optionalStudent.get().getStudentID().toString()); // return the student ID in response.
       } else {
         RequestUtil.setAuditColumnsForCreate(student);
-        StudentEntity entity = getStudentService().createStudent(student);
-
+        var studentPair = getStudentService().createStudent(student);
+        StudentEntity entity = studentPair.getLeft();
+        choreographyEvent = studentPair.getRight();
         event.setEventOutcome(EventOutcome.STUDENT_CREATED);
         event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.
       }
@@ -180,7 +185,7 @@ public class EventHandlerService {
     }
 
     getStudentEventRepository().save(studentEvent);
-    return createResponseEvent(studentEvent);
+    return Pair.of(createResponseEvent(studentEvent), choreographyEvent);
   }
 
 

@@ -15,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * The type Student event.
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -26,7 +29,7 @@ public class StudentEvent {
   @Id
   @GeneratedValue(generator = "UUID")
   @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator", parameters = {
-          @Parameter(name = "uuid_gen_strategy_class", value = "org.hibernate.id.uuid.CustomVersionOneStrategy")})
+      @Parameter(name = "uuid_gen_strategy_class", value = "org.hibernate.id.uuid.CustomVersionOneStrategy")})
   @Column(name = "EVENT_ID", unique = true, updatable = false, columnDefinition = "BINARY(16)")
   private UUID eventId;
 
@@ -41,13 +44,25 @@ public class StudentEvent {
   @NotNull(message = "eventType cannot be null")
   @Column(name = "EVENT_TYPE")
   private String eventType;
+  /**
+   * The Create user.
+   */
   @Column(name = "CREATE_USER", updatable = false)
   String createUser;
+  /**
+   * The Create date.
+   */
   @Column(name = "CREATE_DATE", updatable = false)
   @PastOrPresent
   LocalDateTime createDate;
+  /**
+   * The Update user.
+   */
   @Column(name = "UPDATE_USER")
   String updateUser;
+  /**
+   * The Update date.
+   */
   @Column(name = "UPDATE_DATE")
   @PastOrPresent
   LocalDateTime updateDate;
@@ -59,17 +74,39 @@ public class StudentEvent {
   @Column(name = "REPLY_CHANNEL")
   private String replyChannel;
 
+  /**
+   * Gets event payload.
+   *
+   * @return the event payload
+   */
   public String getEventPayload() {
     return new String(getEventPayloadBytes(), StandardCharsets.UTF_8);
   }
 
+  /**
+   * Sets event payload.
+   *
+   * @param eventPayload the event payload
+   */
   public void setEventPayload(String eventPayload) {
     setEventPayloadBytes(eventPayload.getBytes(StandardCharsets.UTF_8));
   }
 
+  /**
+   * The type Student event builder.
+   */
   public static class StudentEventBuilder {
+    /**
+     * The Event payload bytes.
+     */
     byte[] eventPayloadBytes;
 
+    /**
+     * Event payload student event . student event builder.
+     *
+     * @param eventPayload the event payload
+     * @return the student event . student event builder
+     */
     public StudentEvent.StudentEventBuilder eventPayload(String eventPayload) {
       this.eventPayloadBytes = eventPayload.getBytes(StandardCharsets.UTF_8);
       return this;

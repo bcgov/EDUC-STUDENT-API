@@ -19,6 +19,9 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.PlatformTransactionManager;
 
+/**
+ * The type Student api application.
+ */
 @SpringBootApplication
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableCaching
@@ -27,6 +30,11 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableRetry
 public class StudentApiApplication {
 
+  /**
+   * The entry point of application.
+   *
+   * @param args the input arguments
+   */
   public static void main(String[] args) {
     SpringApplication.run(StudentApiApplication.class, args);
   }
@@ -47,12 +55,14 @@ public class StudentApiApplication {
       super();
       SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
     }
+
     @Override
     public void configure(WebSecurity web) {
       web.ignoring().antMatchers("/v3/api-docs/**",
-              "/actuator/health","/actuator/prometheus",
-              "/swagger-ui/**", "/health");
+          "/actuator/health","/actuator/prometheus",
+          "/swagger-ui/**", "/health");
     }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
       http
@@ -62,6 +72,13 @@ public class StudentApiApplication {
     }
   }
 
+  /**
+   * Lock provider lock provider.
+   *
+   * @param jdbcTemplate       the jdbc template
+   * @param transactionManager the transaction manager
+   * @return the lock provider
+   */
   @Bean
   public LockProvider lockProvider(@Autowired JdbcTemplate jdbcTemplate, @Autowired PlatformTransactionManager transactionManager) {
     return new JdbcTemplateLockProvider(jdbcTemplate, transactionManager, "STUDENT_SHEDLOCK");

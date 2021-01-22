@@ -10,7 +10,6 @@ import java.util.List;
  * Gender Code Table Repository
  *
  * @author Marco Villeneuve
- * 
  */
 @Repository
 public interface StudentHistoryActivityCodeTableRepository extends CrudRepository<StudentHistoryActivityCodeEntity, Long> {
