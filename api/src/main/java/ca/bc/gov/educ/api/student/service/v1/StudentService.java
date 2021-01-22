@@ -10,11 +10,13 @@ import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jboss.threads.EnhancedQueueExecutor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +36,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import static ca.bc.gov.educ.api.student.constant.EventOutcome.STUDENT_CREATED;
 import static ca.bc.gov.educ.api.student.constant.EventStatus.DB_COMMITTED;
@@ -48,7 +50,9 @@ import static lombok.AccessLevel.PRIVATE;
 @Service
 @Slf4j
 public class StudentService {
-  private final Executor paginatedQueryExecutor = Executors.newFixedThreadPool(10);
+  private final Executor paginatedQueryExecutor = new EnhancedQueueExecutor.Builder()
+      .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-pagination-query-executor-%d").build())
+      .setCorePoolSize(2).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build();
   private static final String STUDENT_ID_ATTRIBUTE = "studentID";
   @Getter(PRIVATE)
   private final StudentEventRepository studentEventRepository;

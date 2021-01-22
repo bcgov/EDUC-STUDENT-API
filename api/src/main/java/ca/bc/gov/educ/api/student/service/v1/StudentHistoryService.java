@@ -4,8 +4,10 @@ import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryActivityCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepository;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.jboss.threads.EnhancedQueueExecutor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,17 +19,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 
 /**
  * Student History Service
  */
 @Service
 public class StudentHistoryService {
+  private final Executor paginatedQueryExecutor = new EnhancedQueueExecutor.Builder()
+      .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-history-pagination-query-executor-%d").build())
+      .setCorePoolSize(2).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build();
   @Getter(AccessLevel.PRIVATE)
   private final StudentHistoryRepository studentHistoryRepository;
 
@@ -65,7 +72,7 @@ public class StudentHistoryService {
       } catch (final Exception ex) {
         throw new CompletionException(ex);
       }
-    });
+    }, paginatedQueryExecutor);
   }
 
   /**
@@ -87,7 +94,7 @@ public class StudentHistoryService {
       } catch (final Exception ex) {
         throw new CompletionException(ex);
       }
-    });
+    }, paginatedQueryExecutor);
   }
 
   /**
@@ -122,10 +129,9 @@ public class StudentHistoryService {
    * Delete by student id long.
    *
    * @param studentID the student id
-   * @return the long
    */
   @Transactional(propagation = Propagation.MANDATORY)
-  public Long deleteByStudentID(final UUID studentID) {
-    return studentHistoryRepository.deleteByStudentID(studentID);
+  public void deleteByStudentID(final UUID studentID) {
+    studentHistoryRepository.deleteByStudentID(studentID);
   }
 }

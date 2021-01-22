@@ -33,49 +33,28 @@ public class NatsConnection implements Closeable {
    */
   @Autowired
   public NatsConnection(final ApplicationProperties applicationProperties) throws IOException, InterruptedException {
+    this.natsCon = connectToNats(applicationProperties.getStanUrl());
+  }
+
+  private Connection connectToNats(String stanUrl) throws IOException, InterruptedException {
     io.nats.client.Options natsOptions = new io.nats.client.Options.Builder()
         .connectionListener(this::connectionListener)
-        .maxPingsOut(30)
+        .maxPingsOut(5)
         .pingInterval(Duration.ofSeconds(2))
         .connectionName("STUDENT-API")
-        .connectionTimeout(Duration.ofSeconds(20))
+        .connectionTimeout(Duration.ofSeconds(5))
         .executor(new EnhancedQueueExecutor.Builder()
             .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("core-nats-%d").build())
             .setCorePoolSize(2).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build())
         .maxReconnects(-1)
         .reconnectWait(Duration.ofSeconds(2))
-        .servers(new String[]{applicationProperties.getStanUrl()})
+        .servers(new String[]{stanUrl})
         .build();
-    natsCon = Nats.connect(natsOptions);
-
+    return Nats.connect(natsOptions);
   }
 
   private void connectionListener(Connection connection, ConnectionListener.Events events) {
-    switch (events) {
-      case DISCOVERED_SERVERS:
-        log.info("NATS -> Discovered servers");
-        break;
-      case RESUBSCRIBED:
-        log.info("NATS -> Resubscribed");
-        break;
-      case DISCONNECTED:
-        log.info("NATS -> Disconnected");
-        break;
-      case RECONNECTED:
-        log.info("NATS -> Reconnected");
-        break;
-      case CLOSED:
-        log.info("NATS -> Closed");
-        break;
-      case CONNECTED:
-        log.info("NATS -> Connected");
-        break;
-      case LAME_DUCK:
-        log.info("NATS -> Lame Duck");
-        break;
-      default:
-        break;
-    }
+    log.info("NATS -> {}", events.toString());
   }
 
 
