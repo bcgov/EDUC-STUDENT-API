@@ -52,6 +52,17 @@ public class STANEventHandlerServiceTest {
   }
 
   @Test
+  public void testUpdateEventStatus_givenEventIdNull_shouldDONothing() throws JsonProcessingException {
+    ChoreographedEvent choreographedEvent = new ChoreographedEvent();
+    choreographedEvent.setEventOutcome(STUDENT_CREATED);
+    choreographedEvent.setEventType(CREATE_STUDENT);
+    choreographedEvent.setEventPayload(JsonUtil.getJsonStringFromObject(new StudentCreate()));
+    stanEventHandlerService.updateEventStatus(choreographedEvent);
+    var results = studentEventRepository.findByEventStatus(MESSAGE_PUBLISHED.toString());
+    assertThat(results).isEmpty();
+  }
+
+  @Test
   public void testUpdateEventStatus_givenDataInDB_shouldUpdateStatus() throws JsonProcessingException {
     var studentEvent = studentEventRepository.save(createStudentEvent());
     ChoreographedEvent choreographedEvent = new ChoreographedEvent();
