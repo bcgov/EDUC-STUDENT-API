@@ -1,8 +1,10 @@
 package ca.bc.gov.educ.api.student.messaging;
 
+import ca.bc.gov.educ.api.student.messaging.stan.Subscriber;
 import ca.bc.gov.educ.api.student.service.v1.EventHandlerDelegatorService;
 import ca.bc.gov.educ.api.student.struct.v1.Event;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.nats.client.Connection;
 import io.nats.client.Message;
 import io.nats.client.MessageHandler;
@@ -17,18 +19,28 @@ import java.util.concurrent.Executor;
 
 import static ca.bc.gov.educ.api.student.constant.Topics.STUDENT_API_TOPIC;
 
-
+/**
+ * This is for subscribing directly to NATS. for subscribing to STAN please
+ * follow {@link Subscriber}
+ */
 @Component
 @Slf4j
-public class MessageSubscriber extends MessagePubSub {
+public class MessageSubscriber {
   private final Executor messageProcessingThreads;
   private final EventHandlerDelegatorService eventHandlerDelegatorServiceV1;
+  private final Connection connection;
 
+  /**
+   * Instantiates a new Message subscriber.
+   *
+   * @param natsConnection                 the nats connection
+   * @param eventHandlerDelegatorServiceV1 the event handler delegator service v 1
+   */
   @Autowired
-  public MessageSubscriber(final Connection con, EventHandlerDelegatorService eventHandlerDelegatorServiceV1) {
+  public MessageSubscriber(final NatsConnection natsConnection, EventHandlerDelegatorService eventHandlerDelegatorServiceV1) {
     this.eventHandlerDelegatorServiceV1 = eventHandlerDelegatorServiceV1;
-    super.connection = con;
-    messageProcessingThreads = new EnhancedQueueExecutor.Builder().setCorePoolSize(10).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build();
+    this.connection = natsConnection.getNatsCon();
+    messageProcessingThreads = new EnhancedQueueExecutor.Builder().setThreadFactory(new ThreadFactoryBuilder().setNameFormat("nats-message-subscriber-%d").build()).setCorePoolSize(10).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build();
   }
 
   /**

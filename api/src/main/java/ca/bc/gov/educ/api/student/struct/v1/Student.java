@@ -8,6 +8,9 @@ import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 
+/**
+ * The type Student.
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder

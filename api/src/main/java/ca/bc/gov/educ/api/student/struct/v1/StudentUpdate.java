@@ -10,6 +10,9 @@ import lombok.experimental.SuperBuilder;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
+/**
+ * The type Student update.
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
@@ -19,6 +22,9 @@ import java.io.Serializable;
 @SuppressWarnings("java:S1948")
 public class StudentUpdate extends BaseStudent implements Serializable {
   private static final long serialVersionUID = 1L;
+  /**
+   * The History activity code.
+   */
   @NotNull(message = "historyActivityCode can not be null.")
   String historyActivityCode;
 }

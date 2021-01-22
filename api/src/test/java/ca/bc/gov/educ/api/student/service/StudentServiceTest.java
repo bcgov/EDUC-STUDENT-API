@@ -9,6 +9,7 @@ import ca.bc.gov.educ.api.student.service.v1.StudentHistoryService;
 import ca.bc.gov.educ.api.student.service.v1.StudentService;
 import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
 import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +41,8 @@ public class StudentServiceTest {
 
   @Autowired
   StudentRepository repository;
+  @Autowired
+  StudentEventRepository studentEventRepository;
   StudentService service;
 
   @Autowired
@@ -65,12 +68,12 @@ public class StudentServiceTest {
   @Before
   public void before() {
     studentHistoryService = new StudentHistoryService(studentHistoryRepository, codeTableService);
-    service = new StudentService(repository, codeTableService, studentHistoryService);
+    service = new StudentService(studentEventRepository, repository, codeTableService, studentHistoryService);
   }
 
   @Test
-  public void testCreateStudent_WhenPayloadIsValid_ShouldReturnSavedObject() {
-    StudentEntity student = service.createStudent(getStudentCreate());
+  public void testCreateStudent_WhenPayloadIsValid_ShouldReturnSavedObject() throws JsonProcessingException {
+    StudentEntity student = service.createStudent(getStudentCreate()).getLeft();
     assertNotNull(student);
     assertNotNull(student.getStudentID());
 
@@ -82,18 +85,18 @@ public class StudentServiceTest {
   }
 
   @Test
-  public void testCreateStudentNoGiven_WhenPayloadIsValid_ShouldReturnSavedObject() {
+  public void testCreateStudentNoGiven_WhenPayloadIsValid_ShouldReturnSavedObject() throws JsonProcessingException {
     var student = getStudentCreate();
     student.setLegalFirstName(null);
-    var entity = service.createStudent(student);
+    var entity = service.createStudent(student).getLeft();
     assertNotNull(entity);
     assertNotNull(entity.getStudentID());
     assertNotNull(entity.getTrueStudentID());
   }
 
   @Test
-  public void testRetrieveStudent_WhenStudentExistInDB_ShouldReturnStudent() {
-    StudentEntity student = service.createStudent(getStudentCreate());
+  public void testRetrieveStudent_WhenStudentExistInDB_ShouldReturnStudent() throws JsonProcessingException {
+    StudentEntity student = service.createStudent(getStudentCreate()).getLeft();
     assertNotNull(student);
     assertNotNull(service.retrieveStudent(student.getStudentID()));
   }
@@ -105,9 +108,9 @@ public class StudentServiceTest {
   }
 
   @Test
-  public void testUpdateStudent_WhenPayloadIsValid_ShouldReturnTheUpdatedObject() {
+  public void testUpdateStudent_WhenPayloadIsValid_ShouldReturnTheUpdatedObject() throws JsonProcessingException {
 
-    StudentEntity student = service.createStudent(getStudentCreate());
+    StudentEntity student = service.createStudent(getStudentCreate()).getLeft();
     student.setLegalFirstName("updatedFirstName");
 
     var studentUpdate = new StudentUpdate();
@@ -115,7 +118,7 @@ public class StudentServiceTest {
     studentUpdate.setHistoryActivityCode("USEREDIT");
     studentUpdate.setUpdateUser("Test Update");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(student), studentUpdate);
-    StudentEntity updateEntity = service.updateStudent(studentUpdate, UUID.fromString(studentUpdate.getStudentID()));
+    StudentEntity updateEntity = service.updateStudent(studentUpdate, UUID.fromString(studentUpdate.getStudentID())).getLeft();
     assertNotNull(updateEntity);
     assertThat(updateEntity.getLegalFirstName()).isEqualTo("updatedFirstName".toUpperCase());
 
@@ -128,7 +131,7 @@ public class StudentServiceTest {
   }
 
   @Test(expected = EntityNotFoundException.class)
-  public void testUpdateStudent_WhenStudentNotExist_ShouldThrowException() {
+  public void testUpdateStudent_WhenStudentNotExist_ShouldThrowException() throws JsonProcessingException {
 
     StudentEntity student = getStudentEntity();
     student.setStudentID(UUID.randomUUID());
@@ -150,7 +153,7 @@ public class StudentServiceTest {
   public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() throws ExecutionException, InterruptedException {
     var repository = mock(StudentRepository.class);
     when(repository.findAll(isNull(), any(Pageable.class))).thenThrow(EntityNotFoundException.class);
-    var service = new StudentService(repository, codeTableService, studentHistoryService);
+    var service = new StudentService(studentEventRepository, repository, codeTableService, studentHistoryService);
     service.findAll(null, 0, 5, new ArrayList<>()).get();
   }
 

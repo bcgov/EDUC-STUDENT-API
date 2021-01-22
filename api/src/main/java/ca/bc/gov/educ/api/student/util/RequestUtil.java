@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The type Request util.
+ */
 public class RequestUtil {
   private RequestUtil() {
   }
@@ -46,9 +49,9 @@ public class RequestUtil {
    * Get the Sort.Order list from JSON string
    *
    * @param sortCriteriaJson The sort criterio JSON
-   * @param objectMapper The object mapper
-   * @param sorts The Sort.Order list
-   * @throws JsonProcessingException
+   * @param objectMapper     The object mapper
+   * @param sorts            The Sort.Order list
+   * @throws JsonProcessingException the json processing exception
    */
   public static void getSortCriteria(String sortCriteriaJson, ObjectMapper objectMapper, List<Sort.Order> sorts) throws JsonProcessingException {
     if (StringUtils.isNotBlank(sortCriteriaJson)) {

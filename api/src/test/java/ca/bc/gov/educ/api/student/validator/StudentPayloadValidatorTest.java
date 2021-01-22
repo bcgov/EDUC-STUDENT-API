@@ -3,6 +3,7 @@ package ca.bc.gov.educ.api.student.validator;
 import ca.bc.gov.educ.api.student.model.v1.GenderCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.SexCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import ca.bc.gov.educ.api.student.repository.v1.StudentEventRepository;
 import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
 import ca.bc.gov.educ.api.student.service.v1.CodeTableService;
 import ca.bc.gov.educ.api.student.service.v1.StudentHistoryService;
@@ -30,7 +31,8 @@ public class StudentPayloadValidatorTest {
   private boolean isCreateOperation = false;
   @Mock
   StudentRepository repository;
-
+  @Mock
+  StudentEventRepository studentEventRepository;
   @Mock
   StudentService studentService;
   @InjectMocks
@@ -42,7 +44,7 @@ public class StudentPayloadValidatorTest {
 
   @Before
   public void before() {
-    studentService = new StudentService(repository, codeTableService, studentHistoryService);
+    studentService = new StudentService(studentEventRepository, repository, codeTableService, studentHistoryService);
     studentPayloadValidator = new StudentPayloadValidator(studentService);
   }
 

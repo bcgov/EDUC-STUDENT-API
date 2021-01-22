@@ -9,6 +9,9 @@ import org.springframework.web.servlet.AsyncHandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * The type Student request interceptor.
+ */
 @Component
 public class StudentRequestInterceptor implements AsyncHandlerInterceptor {
 

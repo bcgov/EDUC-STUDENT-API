@@ -1,6 +1,6 @@
 package ca.bc.gov.educ.api.student.model.v1;
 
-import java.time.LocalDateTime;
+import lombok.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -8,13 +8,11 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PastOrPresent;
+import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+/**
+ * The type Sex code entity.
+ */
 @Getter
 @Setter
 @Builder
@@ -24,41 +22,71 @@ import lombok.Setter;
 @Table(name = "STUDENT_SEX_CODE")
 public class SexCodeEntity {
 
-    @Id
-    @Column(name = "SEX_CODE", unique = true, updatable = false)
-    String sexCode;
-    
-    @NotNull(message="label cannot be null")
-    @Column(name = "LABEL")
-    String label;
-    
-    @NotNull(message="description cannot be null")
-    @Column(name = "DESCRIPTION")
-    String description;
+  /**
+   * The Sex code.
+   */
+  @Id
+  @Column(name = "SEX_CODE", unique = true, updatable = false)
+  String sexCode;
 
-    @NotNull(message="displayOrder cannot be null")
-    @Column(name = "DISPLAY_ORDER")
-    Integer displayOrder;
+  /**
+   * The Label.
+   */
+  @NotNull(message = "label cannot be null")
+  @Column(name = "LABEL")
+  String label;
 
-    @NotNull(message="effectiveDate cannot be null")
-    @Column(name = "EFFECTIVE_DATE")
-    LocalDateTime effectiveDate;
-    
-    @NotNull(message="expiryDate cannot be null")
-    @Column(name = "EXPIRY_DATE")
-    LocalDateTime expiryDate;
+  /**
+   * The Description.
+   */
+  @NotNull(message = "description cannot be null")
+  @Column(name = "DESCRIPTION")
+  String description;
 
-    @Column(name = "CREATE_USER", updatable = false)
-    String createUser;
+  /**
+   * The Display order.
+   */
+  @NotNull(message = "displayOrder cannot be null")
+  @Column(name = "DISPLAY_ORDER")
+  Integer displayOrder;
 
-    @PastOrPresent
-    @Column(name = "CREATE_DATE", updatable = false)
-    LocalDateTime createDate;
+  /**
+   * The Effective date.
+   */
+  @NotNull(message = "effectiveDate cannot be null")
+  @Column(name = "EFFECTIVE_DATE")
+  LocalDateTime effectiveDate;
 
-    @Column(name = "UPDATE_USER", updatable = false)
-    String updateUser;
+  /**
+   * The Expiry date.
+   */
+  @NotNull(message = "expiryDate cannot be null")
+  @Column(name = "EXPIRY_DATE")
+  LocalDateTime expiryDate;
 
-    @PastOrPresent
-    @Column(name = "UPDATE_DATE", updatable = false)
-    LocalDateTime updateDate;
+  /**
+   * The Create user.
+   */
+  @Column(name = "CREATE_USER", updatable = false)
+  String createUser;
+
+  /**
+   * The Create date.
+   */
+  @PastOrPresent
+  @Column(name = "CREATE_DATE", updatable = false)
+  LocalDateTime createDate;
+
+  /**
+   * The Update user.
+   */
+  @Column(name = "UPDATE_USER", updatable = false)
+  String updateUser;
+
+  /**
+   * The Update date.
+   */
+  @PastOrPresent
+  @Column(name = "UPDATE_DATE", updatable = false)
+  LocalDateTime updateDate;
 }

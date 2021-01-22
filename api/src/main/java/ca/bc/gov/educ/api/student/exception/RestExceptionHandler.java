@@ -1,8 +1,6 @@
 package ca.bc.gov.educ.api.student.exception;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-
+import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -17,8 +15,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import ca.bc.gov.educ.api.student.exception.errors.ApiError;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
+/**
+ * The type Rest exception handler.
+ */
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
@@ -53,7 +55,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
    */
   @ExceptionHandler(EntityNotFoundException.class)
   protected ResponseEntity<Object> handleEntityNotFound(
-          EntityNotFoundException ex) {
+      EntityNotFoundException ex) {
     ApiError apiError = new ApiError(NOT_FOUND);
     apiError.setMessage(ex.getMessage());
     log.error("{} ", apiError.getMessage(), ex);
@@ -99,10 +101,10 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
    */
   @Override
   protected ResponseEntity<Object> handleMethodArgumentNotValid(
-          MethodArgumentNotValidException ex,
-          HttpHeaders headers,
-          HttpStatus status,
-          WebRequest request) {
+      MethodArgumentNotValidException ex,
+      HttpHeaders headers,
+      HttpStatus status,
+      WebRequest request) {
     ApiError apiError = new ApiError(BAD_REQUEST);
     apiError.setMessage("Validation error");
     apiError.addValidationErrors(ex.getBindingResult().getFieldErrors());
@@ -119,7 +121,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
    */
   @ExceptionHandler(InvalidPayloadException.class)
   protected ResponseEntity<Object> handleInvalidPayload(
-          InvalidPayloadException ex) {
+      InvalidPayloadException ex) {
     log.error("", ex);
     return buildResponseEntity(ex.getError());
   }

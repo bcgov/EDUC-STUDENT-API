@@ -6,16 +6,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * The type Message publisher.
+ * This publisher will publish messages to NATS, for publishing directly to STAN,
+ * please follow {@link ca.bc.gov.educ.api.student.messaging.stan.Publisher}.
  */
 @Component
 @Slf4j
-public class MessagePublisher extends MessagePubSub {
+public class MessagePublisher {
 
 
+  private final Connection connection;
+
+  /**
+   * Instantiates a new Message publisher.
+   *
+   * @param natsConnection the nats connection
+   */
   @Autowired
-  public MessagePublisher(final Connection con) {
-    super.connection = con;
+  public MessagePublisher(final NatsConnection natsConnection) {
+    this.connection = natsConnection.getNatsCon();
   }
 
   /**
@@ -25,6 +33,6 @@ public class MessagePublisher extends MessagePubSub {
    * @param message the message
    */
   public void dispatchMessage(String subject, byte[] message) {
-      connection.publish(subject, message);
+    connection.publish(subject, message);
   }
 }

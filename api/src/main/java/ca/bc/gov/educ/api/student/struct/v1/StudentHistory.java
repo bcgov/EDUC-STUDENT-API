@@ -8,6 +8,9 @@ import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 
+/**
+ * The type Student history.
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
@@ -17,6 +20,12 @@ import java.io.Serializable;
 public class StudentHistory extends BaseStudent implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  /**
+   * The Student history id.
+   */
   String studentHistoryID;
+  /**
+   * The History activity code.
+   */
   String historyActivityCode;
 }

@@ -19,14 +19,31 @@ import java.util.concurrent.CompletableFuture;
 
 import static ca.bc.gov.educ.api.student.constant.v1.URL.*;
 
+/**
+ * The interface Student history endpoint.
+ */
 @RequestMapping(STUDENT)
 public interface StudentHistoryEndpoint {
 
+  /**
+   * Gets student history activity codes.
+   *
+   * @return the student history activity codes
+   */
   @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_CODES')")
   @GetMapping(HISTORY_ACTIVITY_CODES)
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
   List<StudentHistoryActivityCode> getStudentHistoryActivityCodes();
 
+  /**
+   * Find student history by student id completable future.
+   *
+   * @param studentID        the student id
+   * @param pageNumber       the page number
+   * @param pageSize         the page size
+   * @param sortCriteriaJson the sort criteria json
+   * @return the completable future
+   */
   @GetMapping("/{studentID}" + HISTORY + PAGINATED)
   @Async
   @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_HISTORY')")
@@ -38,6 +55,15 @@ public interface StudentHistoryEndpoint {
                                                                         @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                                                         @RequestParam(name = "sort", defaultValue = "") String sortCriteriaJson);
 
+  /**
+   * Find all completable future.
+   *
+   * @param pageNumber             the page number
+   * @param pageSize               the page size
+   * @param sortCriteriaJson       the sort criteria json
+   * @param searchCriteriaListJson the search criteria list json
+   * @return the completable future
+   */
   @GetMapping(HISTORY + PAGINATED)
   @Async
   @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_HISTORY')")

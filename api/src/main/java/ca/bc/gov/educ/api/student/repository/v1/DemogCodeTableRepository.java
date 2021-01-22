@@ -10,7 +10,6 @@ import java.util.List;
  * Gender Code Table Repository
  *
  * @author Marco Villeneuve
- * 
  */
 @Repository
 public interface DemogCodeTableRepository extends CrudRepository<DemogCodeEntity, Long> {

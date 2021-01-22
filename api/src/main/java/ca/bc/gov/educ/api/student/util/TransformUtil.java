@@ -8,12 +8,23 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import static org.springframework.util.StringUtils.capitalize;
 
+/**
+ * The type Transform util.
+ */
 public class TransformUtil {
   private TransformUtil() {
   }
 
+  /**
+   * Uppercase fields t.
+   *
+   * @param <T>    the type parameter
+   * @param record the record
+   * @return the t
+   */
   public static <T> T uppercaseFields(T record) {
     var clazz = record.getClass();
     List<Field> fields = new ArrayList<>();
@@ -26,6 +37,13 @@ public class TransformUtil {
     return record;
   }
 
+  /**
+   * Is uppercase field boolean.
+   *
+   * @param clazz     the clazz
+   * @param fieldName the field name
+   * @return the boolean
+   */
   public static boolean isUppercaseField(Class<?> clazz, String fieldName) {
     var superClazz = clazz;
     while (!superClazz.equals(Object.class)) {

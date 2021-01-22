@@ -21,21 +21,48 @@ import java.util.Optional;
 import java.util.UUID;
 
 
+/**
+ * The type Student payload validator.
+ */
 @Component
 public class StudentPayloadValidator {
 
+  /**
+   * The constant GENDER_CODE.
+   */
   public static final String GENDER_CODE = "genderCode";
+  /**
+   * The constant SEX_CODE.
+   */
   public static final String SEX_CODE = "sexCode";
+  /**
+   * The constant PEN.
+   */
   public static final String PEN = "pen";
+  /**
+   * The constant HISTORY_ACTIVITY_CODE.
+   */
   public static final String HISTORY_ACTIVITY_CODE = "historyActivityCode";
   @Getter(AccessLevel.PRIVATE)
   private final StudentService studentService;
 
+  /**
+   * Instantiates a new Student payload validator.
+   *
+   * @param studentService the student service
+   */
   @Autowired
   public StudentPayloadValidator(final StudentService studentService) {
     this.studentService = studentService;
   }
 
+  /**
+   * Validate payload list.
+   *
+   * @param student           the student
+   * @param isCreateOperation the is create operation
+   * @return the list
+   */
   public List<FieldError> validatePayload(BaseStudent student, boolean isCreateOperation) {
     final List<FieldError> apiValidationErrors = new ArrayList<>();
     if (isCreateOperation && student.getStudentID() != null) {
@@ -47,18 +74,36 @@ public class StudentPayloadValidator {
     return apiValidationErrors;
   }
 
+  /**
+   * Validate create payload list.
+   *
+   * @param student the student
+   * @return the list
+   */
   public List<FieldError> validateCreatePayload(StudentCreate student) {
     var apiValidationErrors = validatePayload(student, true);
     validateStudentHistoryActivityCode(student.getHistoryActivityCode(), apiValidationErrors);
     return apiValidationErrors;
   }
 
+  /**
+   * Validate update payload list.
+   *
+   * @param student the student
+   * @return the list
+   */
   public List<FieldError> validateUpdatePayload(StudentUpdate student) {
     var apiValidationErrors = validatePayload(student, false);
     validateStudentHistoryActivityCode(student.getHistoryActivityCode(), apiValidationErrors);
     return apiValidationErrors;
   }
 
+  /**
+   * Validate gender code.
+   *
+   * @param student             the student
+   * @param apiValidationErrors the api validation errors
+   */
   protected void validateGenderCode(BaseStudent student, List<FieldError> apiValidationErrors) {
     if (student.getGenderCode() != null) {
       Optional<GenderCodeEntity> genderCodeEntity = studentService.findGenderCode(student.getGenderCode());
@@ -72,6 +117,12 @@ public class StudentPayloadValidator {
     }
   }
 
+  /**
+   * Validate sex code.
+   *
+   * @param student             the student
+   * @param apiValidationErrors the api validation errors
+   */
   protected void validateSexCode(BaseStudent student, List<FieldError> apiValidationErrors) {
     if (student.getSexCode() != null) {
       Optional<SexCodeEntity> sexCodeEntity = studentService.findSexCode(student.getSexCode());
@@ -85,6 +136,13 @@ public class StudentPayloadValidator {
     }
   }
 
+  /**
+   * Validate pen.
+   *
+   * @param student             the student
+   * @param isCreateOperation   the is create operation
+   * @param apiValidationErrors the api validation errors
+   */
   protected void validatePEN(BaseStudent student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {
     Optional<StudentEntity> studentEntity = getStudentService().retrieveStudentByPen(student.getPen());
     if (isCreateOperation && studentEntity.isPresent()) {
@@ -94,6 +152,12 @@ public class StudentPayloadValidator {
     }
   }
 
+  /**
+   * Validate student history activity code.
+   *
+   * @param historyActivityCode the history activity code
+   * @param apiValidationErrors the api validation errors
+   */
   protected void validateStudentHistoryActivityCode(String historyActivityCode, List<FieldError> apiValidationErrors) {
     if (historyActivityCode != null) {
       Optional<StudentHistoryActivityCodeEntity> historyActivityCodeEntity = studentService.findStudentHistoryActivityCode(historyActivityCode);

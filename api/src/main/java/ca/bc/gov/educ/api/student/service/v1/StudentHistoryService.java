@@ -26,7 +26,6 @@ import java.util.concurrent.CompletionException;
 /**
  * Student History Service
  */
-
 @Service
 public class StudentHistoryService {
   @Getter(AccessLevel.PRIVATE)
@@ -35,12 +34,27 @@ public class StudentHistoryService {
   @Getter(AccessLevel.PRIVATE)
   private final CodeTableService codeTableService;
 
+  /**
+   * Instantiates a new Student history service.
+   *
+   * @param studentHistoryRepository the student history repository
+   * @param codeTableService         the code table service
+   */
   @Autowired
   public StudentHistoryService(StudentHistoryRepository studentHistoryRepository, CodeTableService codeTableService) {
     this.studentHistoryRepository = studentHistoryRepository;
     this.codeTableService = codeTableService;
   }
 
+  /**
+   * Find student history by student id completable future.
+   *
+   * @param pageNumber the page number
+   * @param pageSize   the page size
+   * @param sorts      the sorts
+   * @param studentID  the student id
+   * @return the completable future
+   */
   @Transactional(propagation = Propagation.SUPPORTS)
   public CompletableFuture<Page<StudentHistoryEntity>> findStudentHistoryByStudentID(final Integer pageNumber, final Integer pageSize,
                                                                                      final List<Sort.Order> sorts, final String studentID) {
@@ -54,6 +68,15 @@ public class StudentHistoryService {
     });
   }
 
+  /**
+   * Find all completable future.
+   *
+   * @param studentHistorySpecs the student history specs
+   * @param pageNumber          the page number
+   * @param pageSize            the page size
+   * @param sorts               the sorts
+   * @return the completable future
+   */
   @Transactional(propagation = Propagation.SUPPORTS)
   public CompletableFuture<Page<StudentHistoryEntity>> findAll(Specification<StudentHistoryEntity> studentHistorySpecs, final Integer pageNumber,
                                                                final Integer pageSize, final List<Sort.Order> sorts) {
@@ -67,6 +90,13 @@ public class StudentHistoryService {
     });
   }
 
+  /**
+   * Create student history.
+   *
+   * @param curStudentEntity    the cur student entity
+   * @param historyActivityCode the history activity code
+   * @param manipulateUser      the manipulate user
+   */
   @Transactional(propagation = Propagation.MANDATORY)
   public void createStudentHistory(StudentEntity curStudentEntity, String historyActivityCode, String manipulateUser) {
     final StudentHistoryEntity studentHistoryEntity = new StudentHistoryEntity();
@@ -79,10 +109,21 @@ public class StudentHistoryService {
     studentHistoryRepository.save(studentHistoryEntity);
   }
 
+  /**
+   * Gets student history activity codes list.
+   *
+   * @return the student history activity codes list
+   */
   public List<StudentHistoryActivityCodeEntity> getStudentHistoryActivityCodesList() {
     return getCodeTableService().getStudentHistoryActivityCodesList();
   }
 
+  /**
+   * Delete by student id long.
+   *
+   * @param studentID the student id
+   * @return the long
+   */
   @Transactional(propagation = Propagation.MANDATORY)
   public Long deleteByStudentID(final UUID studentID) {
     return studentHistoryRepository.deleteByStudentID(studentID);

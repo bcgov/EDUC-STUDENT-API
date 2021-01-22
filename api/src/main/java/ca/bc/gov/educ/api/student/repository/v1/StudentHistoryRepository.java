@@ -8,7 +8,24 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.UUID;
 
+/**
+ * The interface Student history repository.
+ */
 public interface StudentHistoryRepository extends JpaRepository<StudentHistoryEntity, UUID>, JpaSpecificationExecutor<StudentHistoryEntity> {
+  /**
+   * Find by student id page.
+   *
+   * @param studentID the student id
+   * @param pageable  the pageable
+   * @return the page
+   */
   Page<StudentHistoryEntity> findByStudentID(UUID studentID, Pageable pageable);
+
+  /**
+   * Delete by student id long.
+   *
+   * @param studentID the student id
+   * @return the long
+   */
   Long deleteByStudentID(UUID studentID);
 }
