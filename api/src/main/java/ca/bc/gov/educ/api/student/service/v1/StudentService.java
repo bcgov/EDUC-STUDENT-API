@@ -1,5 +1,7 @@
 package ca.bc.gov.educ.api.student.service.v1;
 
+import ca.bc.gov.educ.api.student.constant.EventOutcome;
+import ca.bc.gov.educ.api.student.constant.EventType;
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
 import ca.bc.gov.educ.api.student.model.v1.*;
@@ -126,18 +128,22 @@ public class StudentService {
     repository.save(student);
     studentHistoryService.createStudentHistory(student, studentCreate.getHistoryActivityCode(), student.getCreateUser());
     final StudentEvent studentEvent =
-        StudentEvent.builder()
-            .createDate(LocalDateTime.now())
-            .updateDate(LocalDateTime.now())
-            .createUser(studentCreate.getCreateUser()) //need to discuss what to put here.
-            .updateUser(studentCreate.getUpdateUser())
-            .eventPayload(JsonUtil.getJsonStringFromObject(StudentMapper.mapper.toStructure(student)))
-            .eventType(CREATE_STUDENT.toString())
-            .eventStatus(DB_COMMITTED.toString())
-            .eventOutcome(STUDENT_CREATED.toString())
-            .build();
+        createStudentEvent(studentCreate.getCreateUser(), studentCreate.getUpdateUser(), JsonUtil.getJsonStringFromObject(StudentMapper.mapper.toStructure(student)), CREATE_STUDENT, STUDENT_CREATED);
     getStudentEventRepository().save(studentEvent);
     return Pair.of(student, studentEvent);
+  }
+
+  private StudentEvent createStudentEvent(String createUser, String updateUser, String jsonString, EventType eventType, EventOutcome eventOutcome) {
+    return StudentEvent.builder()
+        .createDate(LocalDateTime.now())
+        .updateDate(LocalDateTime.now())
+        .createUser(createUser)
+        .updateUser(updateUser)
+        .eventPayload(jsonString)
+        .eventType(eventType.toString())
+        .eventStatus(DB_COMMITTED.toString())
+        .eventOutcome(eventOutcome.toString())
+        .build();
   }
 
   /**
@@ -163,16 +169,7 @@ public class StudentService {
       TransformUtil.uppercaseFields(newStudentEntity);
       studentHistoryService.createStudentHistory(newStudentEntity, studentUpdate.getHistoryActivityCode(), newStudentEntity.getUpdateUser());
       final StudentEvent studentEvent =
-          StudentEvent.builder()
-              .createDate(LocalDateTime.now())
-              .updateDate(LocalDateTime.now())
-              .createUser(studentUpdate.getCreateUser()) //need to discuss what to put here.
-              .updateUser(studentUpdate.getUpdateUser())
-              .eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate))
-              .eventType(UPDATE_STUDENT.toString())
-              .eventStatus(DB_COMMITTED.toString())
-              .eventOutcome(STUDENT_UPDATED.toString())
-              .build();
+          createStudentEvent(studentUpdate.getCreateUser(), studentUpdate.getUpdateUser(), JsonUtil.getJsonStringFromObject(studentUpdate), UPDATE_STUDENT, STUDENT_UPDATED);
       repository.save(newStudentEntity);
       getStudentEventRepository().save(studentEvent);
       return Pair.of(newStudentEntity, studentEvent);
