@@ -18,9 +18,15 @@ public class ApplicationProperties {
    */
   public static final String STUDENT_API = "STUDENT-API";
 
+  /**
+   * The Stan url.
+   */
   @Value("${stan.url}")
   String stanUrl;
 
+  /**
+   * The Stan cluster.
+   */
   @Value("${stan.cluster}")
   String stanCluster;
 }

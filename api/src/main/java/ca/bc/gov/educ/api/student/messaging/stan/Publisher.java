@@ -1,7 +1,12 @@
 package ca.bc.gov.educ.api.student.messaging.stan;
 
+import ca.bc.gov.educ.api.student.constant.EventOutcome;
+import ca.bc.gov.educ.api.student.constant.EventType;
 import ca.bc.gov.educ.api.student.messaging.NatsConnection;
+import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
 import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
+import ca.bc.gov.educ.api.student.struct.v1.ChoreographedEvent;
+import ca.bc.gov.educ.api.student.util.JsonUtil;
 import io.nats.streaming.Options;
 import io.nats.streaming.StreamingConnection;
 import io.nats.streaming.StreamingConnectionFactory;
@@ -15,6 +20,8 @@ import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static ca.bc.gov.educ.api.student.constant.Topics.STUDENT_EVENTS_TOPIC;
 
 /**
  * The type Publisher.
@@ -47,18 +54,27 @@ public class Publisher implements Closeable {
     connection = connectionFactory.createConnection();
   }
 
+
   /**
-   * Dispatch message.
+   * Dispatch choreography event.
    *
-   * @param topic   the topic
-   * @param message the message
+   * @param event the event
    */
-  public void dispatchMessage(String topic, byte[] message) {
-    try {
-      connection.publish(topic, message);
-    } catch (IOException | InterruptedException | TimeoutException e) {
-      Thread.currentThread().interrupt();
-      log.error("exception while broadcasting message to STAN", e);
+  public void dispatchChoreographyEvent(StudentEvent event) {
+    if (event != null && event.getEventId() != null) {
+      ChoreographedEvent choreographedEvent = new ChoreographedEvent();
+      choreographedEvent.setEventType(EventType.valueOf(event.getEventType()));
+      choreographedEvent.setEventOutcome(EventOutcome.valueOf(event.getEventOutcome()));
+      choreographedEvent.setEventPayload(event.getEventPayload());
+      choreographedEvent.setEventID(event.getEventId().toString());
+      try {
+        connection.publish(STUDENT_EVENTS_TOPIC.toString(), JsonUtil.getJsonBytesFromObject(choreographedEvent));
+      } catch (IOException | TimeoutException e) {
+        log.error("exception while broadcasting message to STAN", e);
+      } catch (InterruptedException e) {
+        log.error("exception while broadcasting message to STAN", e);
+        Thread.currentThread().interrupt();
+      }
     }
   }
 

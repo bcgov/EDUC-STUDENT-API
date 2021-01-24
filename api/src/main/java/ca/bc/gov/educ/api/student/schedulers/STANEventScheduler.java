@@ -1,13 +1,7 @@
 package ca.bc.gov.educ.api.student.schedulers;
 
-import ca.bc.gov.educ.api.student.constant.EventOutcome;
-import ca.bc.gov.educ.api.student.constant.EventType;
 import ca.bc.gov.educ.api.student.messaging.stan.Publisher;
-import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
 import ca.bc.gov.educ.api.student.repository.v1.StudentEventRepository;
-import ca.bc.gov.educ.api.student.struct.v1.ChoreographedEvent;
-import ca.bc.gov.educ.api.student.util.JsonUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockAssert;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -17,7 +11,6 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 import static ca.bc.gov.educ.api.student.constant.EventStatus.DB_COMMITTED;
-import static ca.bc.gov.educ.api.student.constant.Topics.STUDENT_EVENTS_TOPIC;
 
 /**
  * This class is responsible to check the STUDENT_EVENT table periodically and publish messages to STAN, if some them are not yet published
@@ -53,7 +46,7 @@ public class STANEventScheduler {
       results.forEach(el -> {
         if (el.getUpdateDate().isBefore(LocalDateTime.now().minusMinutes(5))) {
           try {
-            publisher.dispatchMessage(STUDENT_EVENTS_TOPIC.toString(), createChoreographyEvent(el));
+            publisher.dispatchChoreographyEvent(el);
           } catch (final Exception ex) {
             log.error("Exception while trying to publish message", ex);
           }
@@ -61,14 +54,5 @@ public class STANEventScheduler {
       });
     }
 
-  }
-
-  private byte[] createChoreographyEvent(StudentEvent event) throws JsonProcessingException {
-    ChoreographedEvent choreographedEvent = new ChoreographedEvent();
-    choreographedEvent.setEventType(EventType.valueOf(event.getEventType()));
-    choreographedEvent.setEventOutcome(EventOutcome.valueOf(event.getEventOutcome()));
-    choreographedEvent.setEventPayload(event.getEventPayload());
-    choreographedEvent.setEventID(event.getEventId().toString());
-    return JsonUtil.getJsonBytesFromObject(choreographedEvent);
   }
 }

@@ -1,19 +1,15 @@
 package ca.bc.gov.educ.api.student.controller.v1;
 
-import ca.bc.gov.educ.api.student.constant.EventOutcome;
-import ca.bc.gov.educ.api.student.constant.EventType;
 import ca.bc.gov.educ.api.student.endpoint.v1.StudentEndpoint;
 import ca.bc.gov.educ.api.student.exception.InvalidPayloadException;
 import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
 import ca.bc.gov.educ.api.student.messaging.stan.Publisher;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
-import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
 import ca.bc.gov.educ.api.student.service.v1.StudentEventService;
 import ca.bc.gov.educ.api.student.service.v1.StudentSearchService;
 import ca.bc.gov.educ.api.student.service.v1.StudentService;
 import ca.bc.gov.educ.api.student.struct.v1.*;
-import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,7 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static ca.bc.gov.educ.api.student.constant.Topics.STUDENT_EVENTS_TOPIC;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 
@@ -95,8 +90,7 @@ public class StudentController implements StudentEndpoint {
     validatePayload(() -> getPayloadValidator().validateCreatePayload(student));
     RequestUtil.setAuditColumnsForCreate(student);
     var studentEventPair = getStudentEventService().createStudent(student);
-    var eventToPublish = createEventToPublish(studentEventPair.getRight());
-    publisher.dispatchMessage(STUDENT_EVENTS_TOPIC.toString(), eventToPublish);
+    publisher.dispatchChoreographyEvent(studentEventPair.getRight());
     return mapper.toStructure(studentEventPair.getLeft());
   }
 
@@ -105,8 +99,7 @@ public class StudentController implements StudentEndpoint {
     validatePayload(() -> getPayloadValidator().validateUpdatePayload(student));
     RequestUtil.setAuditColumnsForUpdate(student);
     var pair = getStudentEventService().updateStudent(student, id);
-    var eventToPublish = createEventToPublish(pair.getRight());
-    publisher.dispatchMessage(STUDENT_EVENTS_TOPIC.toString(), eventToPublish);
+    publisher.dispatchChoreographyEvent(pair.getRight());
     return mapper.toStructure(pair.getLeft());
   }
 
@@ -153,15 +146,6 @@ public class StudentController implements StudentEndpoint {
     final List<Sort.Order> sorts = new ArrayList<>();
     Specification<StudentEntity> studentSpecs = studentSearchService.setSpecificationAndSortCriteria(sortCriteriaJson, searchCriteriaListJson, objectMapper, sorts);
     return getService().findAll(studentSpecs, pageNumber, pageSize, sorts).thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure));
-  }
-
-  private byte[] createEventToPublish(StudentEvent event) throws JsonProcessingException {
-    ChoreographedEvent choreographedEvent = new ChoreographedEvent();
-    choreographedEvent.setEventType(EventType.valueOf(event.getEventType()));
-    choreographedEvent.setEventOutcome(EventOutcome.valueOf(event.getEventOutcome()));
-    choreographedEvent.setEventPayload(event.getEventPayload());
-    choreographedEvent.setEventID(event.getEventId().toString());
-    return JsonUtil.getJsonBytesFromObject(choreographedEvent);
   }
 
 }
