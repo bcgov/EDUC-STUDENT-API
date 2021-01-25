@@ -26,9 +26,7 @@ public class StudentAPICustomHealthCheck implements HealthIndicator {
   }
 
   private Health healthCheck() {
-    if (this.natsConnection == null) {
-      return Health.down().withDetail("NATS", " Connection object is missing.").build();
-    } else if (this.natsConnection.getNatsCon() == null) {
+    if (this.natsConnection.getNatsCon() == null) {
       return Health.down().withDetail("NATS", " Connection is null.").build();
     } else if (this.natsConnection.getNatsCon().getStatus() == Connection.Status.CLOSED) {
       return Health.down().withDetail("NATS", " Connection is Closed.").build();
