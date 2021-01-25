@@ -25,5 +25,6 @@ public class ApplicationPropertiesTest {
     assertThat(applicationProperties.getStanCluster()).isNotNull();
     assertThat(applicationProperties.getStanUrl()).isEqualTo("test");
     assertThat(applicationProperties.getStanCluster()).isEqualTo("test");
+    assertThat(applicationProperties.getNatsMaxReconnect()).isEqualTo(60);
   }
 }
