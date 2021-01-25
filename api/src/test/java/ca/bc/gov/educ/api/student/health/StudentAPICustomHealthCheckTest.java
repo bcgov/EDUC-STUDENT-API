@@ -30,26 +30,46 @@ public class StudentAPICustomHealthCheckTest {
   private StudentAPICustomHealthCheck studentAPICustomHealthCheck;
 
   @Test
-  public void testHealth_givenNoNatsConnection_shouldReturnStatusDown() {
+  public void testGetHealth_givenNoNatsConnection_shouldReturnStatusDown() {
     when(natsConnection.getNatsCon()).thenReturn(null);
     assertThat(studentAPICustomHealthCheck.getHealth(true)).isNotNull();
     assertThat(studentAPICustomHealthCheck.getHealth(true).getStatus()).isEqualTo(Status.DOWN);
   }
 
   @Test
-  public void testHealth_givenClosedNatsConnection_shouldReturnStatusDown() {
+  public void testGetHealth_givenClosedNatsConnection_shouldReturnStatusDown() {
     when(natsConnection.getNatsCon()).thenReturn(getMockConnection(Connection.Status.CLOSED));
     assertThat(studentAPICustomHealthCheck.getHealth(true)).isNotNull();
     assertThat(studentAPICustomHealthCheck.getHealth(true).getStatus()).isEqualTo(Status.DOWN);
   }
 
   @Test
-  public void testHealth_givenOpenNatsConnection_shouldReturnStatusUp() {
+  public void testGetHealth_givenOpenNatsConnection_shouldReturnStatusUp() {
     when(natsConnection.getNatsCon()).thenReturn(getMockConnection(Connection.Status.CONNECTED));
     assertThat(studentAPICustomHealthCheck.getHealth(true)).isNotNull();
     assertThat(studentAPICustomHealthCheck.getHealth(true).getStatus()).isEqualTo(Status.UP);
   }
 
+  @Test
+  public void testHealth_givenNoNatsConnection_shouldReturnStatusDown() {
+    when(natsConnection.getNatsCon()).thenReturn(null);
+    assertThat(studentAPICustomHealthCheck.health()).isNotNull();
+    assertThat(studentAPICustomHealthCheck.health().getStatus()).isEqualTo(Status.DOWN);
+  }
+
+  @Test
+  public void testHealth_givenClosedNatsConnection_shouldReturnStatusDown() {
+    when(natsConnection.getNatsCon()).thenReturn(getMockConnection(Connection.Status.CLOSED));
+    assertThat(studentAPICustomHealthCheck.health()).isNotNull();
+    assertThat(studentAPICustomHealthCheck.health().getStatus()).isEqualTo(Status.DOWN);
+  }
+
+  @Test
+  public void testHealth_givenOpenNatsConnection_shouldReturnStatusUp() {
+    when(natsConnection.getNatsCon()).thenReturn(getMockConnection(Connection.Status.CONNECTED));
+    assertThat(studentAPICustomHealthCheck.health()).isNotNull();
+    assertThat(studentAPICustomHealthCheck.health().getStatus()).isEqualTo(Status.UP);
+  }
 
   private Connection getMockConnection(Connection.Status status) {
     return new Connection() {
