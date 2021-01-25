@@ -33,10 +33,10 @@ public class NatsConnection implements Closeable {
    */
   @Autowired
   public NatsConnection(final ApplicationProperties applicationProperties) throws IOException, InterruptedException {
-    this.natsCon = connectToNats(applicationProperties.getStanUrl());
+    this.natsCon = connectToNats(applicationProperties.getStanUrl(), applicationProperties.getNatsMaxReconnect());
   }
 
-  private Connection connectToNats(String stanUrl) throws IOException, InterruptedException {
+  private Connection connectToNats(String stanUrl, int maxReconnects) throws IOException, InterruptedException {
     io.nats.client.Options natsOptions = new io.nats.client.Options.Builder()
         .connectionListener(this::connectionListener)
         .maxPingsOut(5)
@@ -45,8 +45,8 @@ public class NatsConnection implements Closeable {
         .connectionTimeout(Duration.ofSeconds(5))
         .executor(new EnhancedQueueExecutor.Builder()
             .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("core-nats-%d").build())
-            .setCorePoolSize(2).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build())
-        .maxReconnects(-1)
+            .setCorePoolSize(10).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build())
+        .maxReconnects(maxReconnects)
         .reconnectWait(Duration.ofSeconds(2))
         .servers(new String[]{stanUrl})
         .build();

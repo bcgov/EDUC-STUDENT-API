@@ -29,4 +29,7 @@ public class ApplicationProperties {
    */
   @Value("${stan.cluster}")
   String stanCluster;
+
+  @Value("${nats.maxReconnect}")
+  Integer natsMaxReconnect;
 }
