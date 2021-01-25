@@ -31,6 +31,7 @@ public class StudentAPICustomHealthCheckTest {
 
   @Test
   public void testHealth_givenNoNatsConnection_shouldReturnStatusDown() {
+    when(natsConnection.getNatsCon()).thenReturn(null);
     assertThat(studentAPICustomHealthCheck.getHealth(true)).isNotNull();
     assertThat(studentAPICustomHealthCheck.getHealth(true).getStatus()).isEqualTo(Status.DOWN);
   }
