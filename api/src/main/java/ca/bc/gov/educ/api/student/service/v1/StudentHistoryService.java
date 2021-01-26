@@ -4,6 +4,7 @@ import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryActivityCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepository;
+import ca.bc.gov.educ.api.student.struct.v1.StudentHistory;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -102,18 +103,30 @@ public class StudentHistoryService {
    *
    * @param curStudentEntity    the cur student entity
    * @param historyActivityCode the history activity code
-   * @param manipulateUser      the manipulate user
+   * @param updateUser      the manipulate user
    */
   @Transactional(propagation = Propagation.MANDATORY)
-  public void createStudentHistory(StudentEntity curStudentEntity, String historyActivityCode, String manipulateUser) {
+  public StudentHistoryEntity createStudentHistory(StudentEntity curStudentEntity, String historyActivityCode, String updateUser) {
     final StudentHistoryEntity studentHistoryEntity = new StudentHistoryEntity();
     BeanUtils.copyProperties(curStudentEntity, studentHistoryEntity);
     studentHistoryEntity.setHistoryActivityCode(historyActivityCode);
-    studentHistoryEntity.setCreateUser(manipulateUser);
+    studentHistoryEntity.setCreateUser(updateUser);
     studentHistoryEntity.setCreateDate(LocalDateTime.now());
-    studentHistoryEntity.setUpdateUser(manipulateUser);
+    studentHistoryEntity.setUpdateUser(updateUser);
     studentHistoryEntity.setUpdateDate(LocalDateTime.now());
-    studentHistoryRepository.save(studentHistoryEntity);
+    return studentHistoryRepository.save(studentHistoryEntity);
+  }
+
+  /**
+   * Create student history.
+   *
+   * @param studentHistory    the cur student history entity
+   */
+  @Transactional(propagation = Propagation.MANDATORY)
+  public StudentHistoryEntity createStudentHistory(StudentHistory studentHistory) {
+    StudentEntity studentEntity = new StudentEntity();
+    BeanUtils.copyProperties(studentHistory, studentEntity);
+    return createStudentHistory(studentEntity, studentHistory.getHistoryActivityCode(), studentHistory.getUpdateUser());
   }
 
   /**

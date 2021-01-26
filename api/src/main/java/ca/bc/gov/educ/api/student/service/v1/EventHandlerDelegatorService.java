@@ -78,6 +78,20 @@ public class EventHandlerDelegatorService {
           publishToNATS(event, message, isSynchronous, pair.getLeft());
           publishToSTAN(pair.getRight());
           break;
+        case GET_STUDENT_HISTORY:
+          log.info("received GET_STUDENT_AUDIT event :: {}", event.getSagaId());
+          log.trace(PAYLOAD_LOG, event.getEventPayload());
+          response = eventHandlerService.handleGetStudentHistoryEvent(event, isSynchronous);
+          log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
+          publishToNATS(event, message, isSynchronous, response);
+          break;
+        case CREATE_STUDENT_HISTORY:
+          log.info("received CREATE_STUDENT_AUDIT event :: {}", event.getSagaId());
+          log.trace(PAYLOAD_LOG, event.getEventPayload());
+          response = eventHandlerService.handleCreateStudentHistoryEvent(event);
+          log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
+          publishToNATS(event, message, isSynchronous, response);
+          break;
         case GET_PAGINATED_STUDENT_BY_CRITERIA:
           log.info("received GET_PAGINATED_STUDENT_BY_CRITERIA event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());

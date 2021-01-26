@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -20,6 +21,14 @@ public interface StudentHistoryRepository extends JpaRepository<StudentHistoryEn
    * @return the page
    */
   Page<StudentHistoryEntity> findByStudentID(UUID studentID, Pageable pageable);
+
+  /**
+   * Find by student id.
+   *
+   * @param studentID the student id
+   * @return the page
+   */
+  List<StudentHistoryEntity> findByStudentID(UUID studentID);
 
   /**
    * Delete by student id long.
