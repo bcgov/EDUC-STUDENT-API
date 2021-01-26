@@ -120,7 +120,7 @@ public class EventHandlerServiceTest {
   @Test
   public void testHandleEvent_givenEventTypeGET_STUDENT_HISTORY__whenStudentExist_shouldHaveEventOutcomeSTUDENT_HISTORY_FOUND() throws JsonProcessingException {
     StudentEntity student = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
-    StudentHistory history = getStudentHistoryEntityFromJsonString(student.getStudentID().toString(), null);
+    StudentHistory history = getStudentHistoryEntityFromJsonString(student.getStudentID().toString(), Optional.empty());
 
     StudentHistoryEntity entity = studentHistoryRepository.save(studentHistoryMapper.toModel(history));
     var sagaId = UUID.randomUUID();
@@ -276,7 +276,7 @@ public class EventHandlerServiceTest {
   @Test
   public void testHandleEvent_givenEventTypeCREATE_STUDENT_HISTORY_whenStudentDoNotExist_shouldHaveEventOutcomeSTUDENT_HISTORY_CREATED() throws JsonProcessingException {
     StudentEntity student = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
-    String history = placeHolderStudentHistoryJSON(student.getStudentID().toString(), null);
+    String history = placeHolderStudentHistoryJSON(student.getStudentID().toString(), Optional.empty());
 
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(CREATE_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(history).build();
@@ -290,7 +290,7 @@ public class EventHandlerServiceTest {
   @Test
   public void testHandleEvent_givenEventTypeCREATE_STUDENT_HISTORY_whenStudentDoNotExist_shouldHaveEventOutcomeSTUDENT_HISTORY_ALREADY_EXISTS() throws JsonProcessingException {
     StudentEntity student = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
-    String history = placeHolderStudentHistoryJSON(student.getStudentID().toString(), UUID.randomUUID().toString());
+    String history = placeHolderStudentHistoryJSON(student.getStudentID().toString(), Optional.ofNullable(UUID.randomUUID().toString()));
 
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(CREATE_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(history).build();
@@ -298,7 +298,7 @@ public class EventHandlerServiceTest {
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, CREATE_STUDENT_HISTORY.toString());
     assertThat(studentEventUpdated).isPresent();
     assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
-    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_HISTORY_CREATED.toString());
+    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_HISTORY_ALREADY_EXIST.toString());
   }
 
   @Test
@@ -366,7 +366,7 @@ public class EventHandlerServiceTest {
     }
   }
 
-  private StudentHistory getStudentHistoryEntityFromJsonString(String studentID, String studentHistoryID) {
+  private StudentHistory getStudentHistoryEntityFromJsonString(String studentID, Optional<String> studentHistoryID) {
     try {
       return new ObjectMapper().readValue(placeHolderStudentHistoryJSON(studentID, studentHistoryID), StudentHistory.class);
     } catch (Exception e) {
@@ -374,8 +374,8 @@ public class EventHandlerServiceTest {
     }
   }
 
-  protected String placeHolderStudentHistoryJSON(String studentID, String studentHistoryID) {
-    return placeHolderStudentHistoryJSON(studentID, Optional.empty(), Optional.of("USERNEW"));
+  protected String placeHolderStudentHistoryJSON(String studentID, Optional<String> studentHistoryID) {
+    return placeHolderStudentHistoryJSON(studentID, studentHistoryID, Optional.of("USERNEW"));
   }
 
   protected String placeHolderStudentJSON() {
@@ -394,10 +394,10 @@ public class EventHandlerServiceTest {
     return placeHolderStudentJSON(twinStudentID, mergeStudentID, pen, Optional.of("USERNEW"));
   }
 
-  protected String placeHolderStudentHistoryJSON(String studentID,Optional<String> studentHistoryID, Optional<String> historyActivityCode) {
+  protected String placeHolderStudentHistoryJSON(String studentID, Optional<String> studentHistoryID, Optional<String> historyActivityCode) {
     return "{\"studentID\":\"" + studentID + "\",\"legalFirstName\":\"Chester\",\"legalMiddleNames\":\"Grestie\",\"legalLastName\":\"Baulk\",\"dob\":\"1952-10-31\",\"genderCode\":\"M\",\"sexCode\":\"M\"," +
             "\"statusCode\":\"A\",\"demogCode\":\"A\",\"email\":\"cbaulk0@bluehost.com\",\"emailVerified\":\"N\",\"currentSchool\":\"Xanthoparmelia wyomingica (Gyel.) Hale\"," +
-            "\"pen\":\"127054021\"," + (studentHistoryID.isPresent() ? "\"studentHistoryID\":\"" + studentHistoryID.get() + "\"" : "") +
+            "\"pen\":\"127054021\"," + (studentHistoryID.isPresent() ? "\"studentHistoryID\":\"" + studentHistoryID.get() + "\"," : "") +
             (historyActivityCode.isPresent() ? "\"historyActivityCode\":\"" + historyActivityCode.get() + "\"}" : "") ;
   }
 
