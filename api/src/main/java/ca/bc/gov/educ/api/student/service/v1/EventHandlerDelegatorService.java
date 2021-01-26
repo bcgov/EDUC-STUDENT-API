@@ -81,7 +81,7 @@ public class EventHandlerDelegatorService {
         case GET_STUDENT_HISTORY:
           log.info("received GET_STUDENT_HISTORY event :: {}", event.getSagaId());
           log.trace(PAYLOAD_LOG, event.getEventPayload());
-          response = eventHandlerService.handleGetStudentHistoryEvent(event, isSynchronous);
+          response = eventHandlerService.handleGetStudentHistoryEvent(event);
           log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           publishToNATS(event, message, isSynchronous, response);
           break;

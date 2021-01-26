@@ -98,7 +98,7 @@ public class EventHandlerServiceTest {
   public void testHandleEvent_givenEventTypeGET_STUDENT_HISTORY__whenNoStudentExist_shouldHaveEventOutcomeSTUDENT_HISTORY_NOT_FOUND() throws JsonProcessingException {
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(UUID.randomUUID().toString()).build();
-    eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event, isSynchronous);
+    eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT_HISTORY.toString());
     assertThat(studentEventUpdated).isPresent();
     assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
@@ -125,7 +125,7 @@ public class EventHandlerServiceTest {
     StudentHistoryEntity entity = studentHistoryRepository.save(studentHistoryMapper.toModel(history));
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(entity.getStudentID().toString()).build();
-    eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event, isSynchronous);
+    eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT_HISTORY.toString());
     assertThat(studentEventUpdated).isPresent();
     assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());

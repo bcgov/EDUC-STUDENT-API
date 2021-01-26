@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
 import static lombok.AccessLevel.PRIVATE;
@@ -284,26 +285,11 @@ public class EventHandlerService {
    * this method expects that the event payload contains a pen number.
    *
    * @param event         containing the student PEN.
-   * @param isSynchronous the is synchronous
    * @return the byte [ ]
    * @throws JsonProcessingException the json processing exception
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public byte[] handleGetStudentHistoryEvent(Event event, boolean isSynchronous) throws JsonProcessingException {
-    if (isSynchronous) {
-      val studentHistoryEntityList = getStudentHistoryRepository().findByStudentID(UUID.fromString(event.getEventPayload()));
-      if (!studentHistoryEntityList.isEmpty()) {
-        var studentHistoryList = new ArrayList<StudentHistory>();
-
-        for(StudentHistoryEntity studEntity: studentHistoryEntityList){
-          studentHistoryList.add(studentHistoryMapper.toStructure(studEntity));
-        }
-
-        return JsonUtil.getJsonBytesFromObject(studentHistoryList);
-      } else {
-        return new byte[0];
-      }
-    }
+  public byte[] handleGetStudentHistoryEvent(Event event) throws JsonProcessingException {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (studentEventOptional.isEmpty()) {
@@ -311,11 +297,8 @@ public class EventHandlerService {
       log.trace(EVENT_PAYLOAD, event);
       val studentHistoryEntityList = getStudentHistoryRepository().findByStudentID(UUID.fromString(event.getEventPayload()));
       if (!studentHistoryEntityList.isEmpty()) {
-        var studentHistoryList = new ArrayList<StudentHistory>();
+        var studentHistoryList = studentHistoryEntityList.stream().map(studentHistoryMapper::toStructure).collect(Collectors.toList());
 
-        for(StudentHistoryEntity studEntity: studentHistoryEntityList){
-          studentHistoryList.add(studentHistoryMapper.toStructure(studEntity));
-        }
         event.setEventPayload(JsonUtil.getJsonStringFromObject(studentHistoryList));
         event.setEventOutcome(EventOutcome.STUDENT_HISTORY_FOUND);
       } else {
