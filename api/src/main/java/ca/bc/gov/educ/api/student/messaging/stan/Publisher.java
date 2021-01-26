@@ -67,6 +67,8 @@ public class Publisher implements Closeable {
       choreographedEvent.setEventOutcome(EventOutcome.valueOf(event.getEventOutcome()));
       choreographedEvent.setEventPayload(event.getEventPayload());
       choreographedEvent.setEventID(event.getEventId().toString());
+      choreographedEvent.setCreateUser(event.getCreateUser());
+      choreographedEvent.setUpdateUser(event.getUpdateUser());
       try {
         connection.publish(STUDENT_EVENTS_TOPIC.toString(), JsonUtil.getJsonBytesFromObject(choreographedEvent));
       } catch (IOException | TimeoutException e) {
