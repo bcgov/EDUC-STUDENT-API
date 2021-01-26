@@ -3,15 +3,15 @@ package ca.bc.gov.educ.api.student.service.v1;
 import ca.bc.gov.educ.api.student.constant.EventOutcome;
 import ca.bc.gov.educ.api.student.constant.EventType;
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentHistoryMapper;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
+import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentEventRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepository;
 import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
-import ca.bc.gov.educ.api.student.struct.v1.Event;
-import ca.bc.gov.educ.api.student.struct.v1.Student;
-import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
-import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
+import ca.bc.gov.educ.api.student.struct.v1.*;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
 import static lombok.AccessLevel.PRIVATE;
@@ -65,12 +67,18 @@ public class EventHandlerService {
   public static final String EVENT_PAYLOAD = "event is :: {}";
   @Getter(PRIVATE)
   private final StudentRepository studentRepository;
-  private static final StudentMapper mapper = StudentMapper.mapper;
+  @Getter(PRIVATE)
+  private final StudentHistoryRepository studentHistoryRepository;
+  private static final StudentMapper studentMapper = StudentMapper.mapper;
+  private static final StudentHistoryMapper studentHistoryMapper = StudentHistoryMapper.mapper;
   @Getter(PRIVATE)
   private final StudentEventRepository studentEventRepository;
 
   @Getter(PRIVATE)
   private final StudentService studentService;
+
+  @Getter(PRIVATE)
+  private final StudentHistoryService studentHistoryService;
 
   @Getter(PRIVATE)
   private final StudentSearchService studentSearchService;
@@ -103,11 +111,13 @@ public class EventHandlerService {
    * @param studentSearchService   the student search service
    */
   @Autowired
-  public EventHandlerService(final StudentRepository studentRepository, final StudentEventRepository studentEventRepository, StudentService studentService, StudentSearchService studentSearchService) {
+  public EventHandlerService(final StudentRepository studentRepository, final StudentEventRepository studentEventRepository, final StudentHistoryRepository studentHistoryRepository,final StudentHistoryService studentHistoryService, StudentService studentService, StudentSearchService studentSearchService) {
     this.studentRepository = studentRepository;
     this.studentEventRepository = studentEventRepository;
     this.studentService = studentService;
     this.studentSearchService = studentSearchService;
+    this.studentHistoryRepository = studentHistoryRepository;
+    this.studentHistoryService = studentHistoryService;
   }
 
 
@@ -131,7 +141,7 @@ public class EventHandlerService {
       try {
         val pair = getStudentService().updateStudent(student, UUID.fromString(student.getStudentID()));
         choreographyEvent = pair.getRight();
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(pair.getLeft())));// need to convert to structure MANDATORY otherwise jackson will break.
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(pair.getLeft())));// need to convert to structure MANDATORY otherwise jackson will break.
         event.setEventOutcome(EventOutcome.STUDENT_UPDATED);
       } catch (EntityNotFoundException ex) {
         event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
@@ -174,7 +184,7 @@ public class EventHandlerService {
         StudentEntity entity = studentPair.getLeft();
         choreographyEvent = studentPair.getRight();
         event.setEventOutcome(EventOutcome.STUDENT_CREATED);
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(mapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.
       }
       studentEvent = createStudentEventRecord(event);
     } else {
@@ -203,7 +213,7 @@ public class EventHandlerService {
     if (isSynchronous) {
       val optionalStudentEntity = getStudentRepository().findStudentEntityByPen(event.getEventPayload());
       if (optionalStudentEntity.isPresent()) {
-        return JsonUtil.getJsonBytesFromObject(mapper.toStructure(optionalStudentEntity.get()));
+        return JsonUtil.getJsonBytesFromObject(studentMapper.toStructure(optionalStudentEntity.get()));
       } else {
         return new byte[0];
       }
@@ -215,11 +225,84 @@ public class EventHandlerService {
       log.trace(EVENT_PAYLOAD, event);
       val optionalStudentEntity = getStudentRepository().findStudentEntityByPen(event.getEventPayload());
       if (optionalStudentEntity.isPresent()) {
-        Student student = mapper.toStructure(optionalStudentEntity.get()); // need to convert to structure MANDATORY otherwise jackson will break.
+        Student student = studentMapper.toStructure(optionalStudentEntity.get()); // need to convert to structure MANDATORY otherwise jackson will break.
         event.setEventPayload(JsonUtil.getJsonStringFromObject(student));
         event.setEventOutcome(EventOutcome.STUDENT_FOUND);
       } else {
         event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
+      }
+      studentEvent = createStudentEventRecord(event);
+    } else { // just update the status of the event so that it will be polled and send again to the saga orchestrator.
+      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
+      studentEvent = studentEventOptional.get();
+      studentEvent.setUpdateDate(LocalDateTime.now());
+    }
+    getStudentEventRepository().save(studentEvent);
+    return createResponseEvent(studentEvent);
+  }
+
+  /**
+   * Handle create student history event byte [ ].
+   *
+   * @param event the event
+   * @return the byte [ ]
+   * @throws JsonProcessingException the json processing exception
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public byte[] handleCreateStudentHistoryEvent(Event event) throws JsonProcessingException {
+    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
+    StudentEvent studentEvent;
+    if (studentEventOptional.isEmpty()) {
+      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
+      StudentHistory studentHistory = JsonUtil.getJsonObjectFromString(StudentHistory.class, event.getEventPayload());
+
+      if (!StringUtils.isBlank(studentHistory.getStudentHistoryID())) {
+        event.setEventOutcome(EventOutcome.STUDENT_HISTORY_ALREADY_EXIST);
+        event.setEventPayload(studentHistory.getStudentHistoryID()); // return the studentHistory ID in response.
+      } else {
+        RequestUtil.setAuditColumnsForCreate(studentHistory);
+        StudentHistoryEntity entity = getStudentHistoryService().createStudentHistory(studentHistory);
+        event.setEventOutcome(EventOutcome.STUDENT_HISTORY_CREATED);
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentHistoryMapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.
+      }
+      studentEvent = createStudentEventRecord(event);
+    } else {
+      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
+      studentEvent = studentEventOptional.get();
+      studentEvent.setUpdateDate(LocalDateTime.now());
+    }
+
+    getStudentEventRepository().save(studentEvent);
+    return createResponseEvent(studentEvent);
+  }
+
+
+  /**
+   * Saga should never be null for this type of event.
+   * this method expects that the event payload contains a pen number.
+   *
+   * @param event         containing the student PEN.
+   * @return the byte [ ]
+   * @throws JsonProcessingException the json processing exception
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public byte[] handleGetStudentHistoryEvent(Event event) throws JsonProcessingException {
+    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
+    StudentEvent studentEvent;
+    if (studentEventOptional.isEmpty()) {
+      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
+      val studentHistoryEntityList = getStudentHistoryRepository().findByStudentID(UUID.fromString(event.getEventPayload()));
+      if (!studentHistoryEntityList.isEmpty()) {
+        var studentHistoryList = studentHistoryEntityList.stream().map(studentHistoryMapper::toStructure).collect(Collectors.toList());
+
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentHistoryList));
+        event.setEventOutcome(EventOutcome.STUDENT_HISTORY_FOUND);
+      } else {
+        event.setEventOutcome(EventOutcome.STUDENT_HISTORY_NOT_FOUND);
       }
       studentEvent = createStudentEventRecord(event);
     } else { // just update the status of the event so that it will be polled and send again to the saga orchestrator.
@@ -289,7 +372,7 @@ public class EventHandlerService {
     Specification<StudentEntity> studentSpecs = studentSearchService.setSpecificationAndSortCriteria(sortCriteriaJson, searchCriteriaListJson, objectMapper, sorts);
     return getStudentService()
         .findAll(studentSpecs, pageNumber, pageSize, sorts)
-        .thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure))
+        .thenApplyAsync(studentEntities -> studentEntities.map(studentMapper::toStructure))
         .thenApplyAsync(studentEntities -> {
           try {
             log.info("found {} students for {}", studentEntities.getContent().size(), event.getSagaId());

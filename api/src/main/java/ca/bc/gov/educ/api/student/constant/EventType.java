@@ -17,6 +17,14 @@ public enum EventType {
    */
   UPDATE_STUDENT,
   /**
+   * Get student event type.
+   */
+  GET_STUDENT_HISTORY,
+  /**
+   * Create student event type.
+   */
+  CREATE_STUDENT_HISTORY,
+  /**
    * Student event outbox processed event type.
    */
   STUDENT_EVENT_OUTBOX_PROCESSED,
