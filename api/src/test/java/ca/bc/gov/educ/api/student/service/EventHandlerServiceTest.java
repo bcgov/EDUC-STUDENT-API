@@ -2,10 +2,13 @@ package ca.bc.gov.educ.api.student.service;
 
 import ca.bc.gov.educ.api.student.constant.Topics;
 import ca.bc.gov.educ.api.student.filter.FilterOperation;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentHistoryMapper;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
+import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentEventRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepository;
 import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
 import ca.bc.gov.educ.api.student.service.v1.EventHandlerService;
 import ca.bc.gov.educ.api.student.struct.v1.*;
@@ -60,11 +63,14 @@ public class EventHandlerServiceTest {
   @Autowired
   private StudentRepository studentRepository;
   @Autowired
+  private StudentHistoryRepository studentHistoryRepository;
+  @Autowired
   private StudentEventRepository studentEventRepository;
 
   @Autowired
   private EventHandlerService eventHandlerServiceUnderTest;
-  private static final StudentMapper mapper = StudentMapper.mapper;
+  private static final StudentMapper studentMapper = StudentMapper.mapper;
+  private static final StudentHistoryMapper studentHistoryMapper = StudentHistoryMapper.mapper;
   private final boolean isSynchronous = false;
   @Before
   public void setUp() {
@@ -89,8 +95,19 @@ public class EventHandlerServiceTest {
   }
 
   @Test
+  public void testHandleEvent_givenEventTypeGET_STUDENT_HISTORY__whenNoStudentExist_shouldHaveEventOutcomeSTUDENT_HISTORY_NOT_FOUND() throws JsonProcessingException {
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(GET_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(UUID.randomUUID().toString()).build();
+    eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event, isSynchronous);
+    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT_HISTORY.toString());
+    assertThat(studentEventUpdated).isPresent();
+    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
+    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_HISTORY_NOT_FOUND.toString());
+  }
+
+  @Test
   public void testHandleEvent_givenEventTypeGET_STUDENT__whenStudentExist_shouldHaveEventOutcomeSTUDENT_FOUND() throws JsonProcessingException {
-    StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
+    StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(entity.getPen()).build();
     eventHandlerServiceUnderTest.handleGetStudentEvent(event, isSynchronous);
@@ -101,8 +118,24 @@ public class EventHandlerServiceTest {
   }
 
   @Test
+  public void testHandleEvent_givenEventTypeGET_STUDENT_HISTORY__whenStudentExist_shouldHaveEventOutcomeSTUDENT_HISTORY_FOUND() throws JsonProcessingException {
+    StudentEntity student = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    StudentHistory history = getStudentHistoryEntityFromJsonString();
+    history.setStudentID(student.getStudentID().toString());
+
+    StudentHistoryEntity entity = studentHistoryRepository.save(studentHistoryMapper.toModel(history));
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(GET_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(entity.getStudentID().toString()).build();
+    eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event, isSynchronous);
+    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT_HISTORY.toString());
+    assertThat(studentEventUpdated).isPresent();
+    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
+    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_HISTORY_FOUND.toString());
+  }
+
+  @Test
   public void testHandleEvent_givenEventTypeGET_STUDENT__whenStudentExistAndDuplicateSagaMessage_shouldHaveEventOutcomeSTUDENT_FOUND() throws JsonProcessingException {
-    StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
+    StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
 
     var sagaId = UUID.randomUUID();
     var studentEvent = StudentEvent.builder().sagaId(sagaId).replyChannel(STUDENT_API_TOPIC).eventType(GET_STUDENT.toString()).eventOutcome(STUDENT_FOUND.toString()).
@@ -119,8 +152,8 @@ public class EventHandlerServiceTest {
 
   @Test
   public void testHandleEvent_givenEventTypeGET_STUDENT__whenStudentExistAndSynchronousNatsMessage_shouldRespondWithStudentData() throws JsonProcessingException {
-    StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
-    var studentBytes = JsonUtil.getJsonBytesFromObject(mapper.toStructure(entity));
+    StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    var studentBytes = JsonUtil.getJsonBytesFromObject(studentMapper.toStructure(entity));
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT).sagaId(sagaId).eventPayload(entity.getPen()).build();
     var response = eventHandlerServiceUnderTest.handleGetStudentEvent(event, true);
@@ -161,7 +194,7 @@ public class EventHandlerServiceTest {
 
     ObjectMapper objectMapper = new ObjectMapper();
     String criteriaJSON = objectMapper.writeValueAsString(searches);
-    studentRepository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    studentRepository.saveAll(entities.stream().map(studentMapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_PAGINATED_STUDENT_BY_CRITERIA).sagaId(sagaId).eventPayload(SEARCH_CRITERIA_LIST.concat("=").concat(URLEncoder.encode(criteriaJSON, StandardCharsets.UTF_8)).concat("&").concat(PAGE_SIZE).concat("=").concat("100000").concat("&pageNumber=0")).build();
     var response = eventHandlerServiceUnderTest.handleGetPaginatedStudent(event).get();
@@ -187,11 +220,11 @@ public class EventHandlerServiceTest {
 
   @Test
   public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenStudentExist_shouldHaveEventOutcomeSTUDENT_UPDATED() throws JsonProcessingException {
-    StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
+    StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
     var studentUpdate = new StudentUpdate();
     studentUpdate.setStudentID(entity.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("USEREDIT");
-    BeanUtils.copyProperties(mapper.toStructure(entity), studentUpdate);
+    BeanUtils.copyProperties(studentMapper.toStructure(entity), studentUpdate);
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
     eventHandlerServiceUnderTest.handleUpdateStudentEvent(event);
@@ -203,7 +236,7 @@ public class EventHandlerServiceTest {
 
   @Test
   public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenStudentExistAndDuplicateSagaMessage_shouldHaveEventOutcomeSTUDENT_UPDATED() throws JsonProcessingException {
-    StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
+    StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
 
     var sagaId = UUID.randomUUID();
     var penRequestEvent = StudentEvent.builder().sagaId(sagaId).replyChannel(STUDENT_API_TOPIC).eventType(UPDATE_STUDENT.toString()).eventOutcome(STUDENT_UPDATED.toString()).
@@ -220,10 +253,10 @@ public class EventHandlerServiceTest {
 
   @Test
   public void testHandleEvent_givenEventTypeUPDATE_STUDENT_and_InvalidHistoryActivityCode_shouldThrowException() throws JsonProcessingException {
-    StudentEntity entity = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString()));
+    StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
     var studentUpdate = new StudentUpdate();
     studentUpdate.setStudentID(entity.getStudentID().toString());
-    BeanUtils.copyProperties(mapper.toStructure(entity), studentUpdate);
+    BeanUtils.copyProperties(studentMapper.toStructure(entity), studentUpdate);
     studentUpdate.setHistoryActivityCode(null);
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
@@ -243,8 +276,8 @@ public class EventHandlerServiceTest {
 
   @Test
   public void testHandleEvent_givenEventTypeCREATE_STUDENT_whenStudentDoNotExist_and_hasTwinAndMergeStudent_shouldHaveEventOutcomeSTUDENT_CREATED() throws JsonProcessingException {
-    var twinStudent = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString(Optional.of("127054022"))));
-    var mergeStudent = studentRepository.save(mapper.toModel(getStudentEntityFromJsonString(Optional.of("127054023"))));
+    var twinStudent = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString(Optional.of("127054022"))));
+    var mergeStudent = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString(Optional.of("127054023"))));
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(CREATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(
       placeHolderStudentJSON(Optional.of(twinStudent.getStudentID().toString()), Optional.of(mergeStudent.getStudentID().toString()), Optional.empty())).build();
@@ -304,6 +337,18 @@ public class EventHandlerServiceTest {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private StudentHistory getStudentHistoryEntityFromJsonString() {
+    try {
+      return new ObjectMapper().readValue(placeHolderStudentHistoryJSON(), StudentHistory.class);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected String placeHolderStudentHistoryJSON() {
+    return placeHolderStudentJSON(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("USERNEW"));
   }
 
   protected String placeHolderStudentJSON() {
