@@ -26,7 +26,7 @@ public interface StudentHistoryRepository extends JpaRepository<StudentHistoryEn
    * Find by student id.
    *
    * @param studentID the student id
-   * @return the page
+   * @return list
    */
   List<StudentHistoryEntity> findByStudentID(UUID studentID);
 
