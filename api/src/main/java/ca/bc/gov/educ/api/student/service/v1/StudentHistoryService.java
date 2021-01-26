@@ -126,6 +126,7 @@ public class StudentHistoryService {
   public StudentHistoryEntity createStudentHistory(StudentHistory studentHistory) {
     StudentEntity studentEntity = new StudentEntity();
     BeanUtils.copyProperties(studentHistory, studentEntity);
+    studentEntity.setStudentID(UUID.fromString(studentHistory.getStudentID()));
     return createStudentHistory(studentEntity, studentHistory.getHistoryActivityCode(), studentHistory.getUpdateUser());
   }
 

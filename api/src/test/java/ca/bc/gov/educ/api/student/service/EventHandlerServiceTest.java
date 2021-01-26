@@ -120,8 +120,7 @@ public class EventHandlerServiceTest {
   @Test
   public void testHandleEvent_givenEventTypeGET_STUDENT_HISTORY__whenStudentExist_shouldHaveEventOutcomeSTUDENT_HISTORY_FOUND() throws JsonProcessingException {
     StudentEntity student = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
-    StudentHistory history = getStudentHistoryEntityFromJsonString();
-    history.setStudentID(student.getStudentID().toString());
+    StudentHistory history = getStudentHistoryEntityFromJsonString(student.getStudentID().toString());
 
     StudentHistoryEntity entity = studentHistoryRepository.save(studentHistoryMapper.toModel(history));
     var sagaId = UUID.randomUUID();
@@ -275,6 +274,20 @@ public class EventHandlerServiceTest {
   }
 
   @Test
+  public void testHandleEvent_givenEventTypeCREATE_STUDENT_HISTORY_whenStudentDoNotExist_shouldHaveEventOutcomeSTUDENT_HISTORY_CREATED() throws JsonProcessingException {
+    StudentEntity student = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    String history = placeHolderStudentHistoryJSON(student.getStudentID().toString());
+
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(CREATE_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(history).build();
+    eventHandlerServiceUnderTest.handleCreateStudentHistoryEvent(event);
+    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, CREATE_STUDENT_HISTORY.toString());
+    assertThat(studentEventUpdated).isPresent();
+    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
+    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_HISTORY_CREATED.toString());
+  }
+
+  @Test
   public void testHandleEvent_givenEventTypeCREATE_STUDENT_whenStudentDoNotExist_and_hasTwinAndMergeStudent_shouldHaveEventOutcomeSTUDENT_CREATED() throws JsonProcessingException {
     var twinStudent = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString(Optional.of("127054022"))));
     var mergeStudent = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString(Optional.of("127054023"))));
@@ -339,16 +352,16 @@ public class EventHandlerServiceTest {
     }
   }
 
-  private StudentHistory getStudentHistoryEntityFromJsonString() {
+  private StudentHistory getStudentHistoryEntityFromJsonString(String studentID) {
     try {
-      return new ObjectMapper().readValue(placeHolderStudentHistoryJSON(), StudentHistory.class);
+      return new ObjectMapper().readValue(placeHolderStudentHistoryJSON(studentID), StudentHistory.class);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected String placeHolderStudentHistoryJSON() {
-    return placeHolderStudentJSON(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("USERNEW"));
+  protected String placeHolderStudentHistoryJSON(String studentID) {
+    return placeHolderStudentHistoryJSON(studentID, Optional.empty(), Optional.of("USERNEW"));
   }
 
   protected String placeHolderStudentJSON() {
@@ -365,6 +378,12 @@ public class EventHandlerServiceTest {
 
   protected String placeHolderStudentJSON(Optional<String> twinStudentID, Optional<String> mergeStudentID, Optional<String> pen) {
     return placeHolderStudentJSON(twinStudentID, mergeStudentID, pen, Optional.of("USERNEW"));
+  }
+
+  protected String placeHolderStudentHistoryJSON(String studentID, Optional<String> pen, Optional<String> historyActivityCode) {
+    return "{\"studentID\":\"" + studentID + "\",\"legalFirstName\":\"Chester\",\"legalMiddleNames\":\"Grestie\",\"legalLastName\":\"Baulk\",\"dob\":\"1952-10-31\",\"genderCode\":\"M\",\"sexCode\":\"M\"," +
+            "\"statusCode\":\"A\",\"demogCode\":\"A\",\"email\":\"cbaulk0@bluehost.com\",\"emailVerified\":\"N\",\"currentSchool\":\"Xanthoparmelia wyomingica (Gyel.) Hale\"," +
+            "\"pen\":\"" + pen.orElse("127054021") + "\"," + (historyActivityCode.isPresent() ? "\"historyActivityCode\":\"" + historyActivityCode.get() + "\"}" : "") ;
   }
 
   protected String placeHolderStudentJSON(Optional<String> twinStudentID, Optional<String> mergeStudentID, Optional<String> pen, Optional<String> historyActivityCode) {
