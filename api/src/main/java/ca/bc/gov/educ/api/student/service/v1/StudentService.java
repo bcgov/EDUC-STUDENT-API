@@ -128,7 +128,7 @@ public class StudentService {
     repository.save(student);
     studentHistoryService.createStudentHistory(student, studentCreate.getHistoryActivityCode(), student.getCreateUser());
     final StudentEvent studentEvent =
-        createStudentEvent(studentCreate.getCreateUser(), studentCreate.getUpdateUser(), JsonUtil.getJsonStringFromObject(StudentMapper.mapper.toStructure(student)), CREATE_STUDENT, STUDENT_CREATED);
+        createStudentEvent(studentCreate.getCreateUser(), studentCreate.getUpdateUser(), JsonUtil.getJsonStringFromObject(StudentMapper.mapper.toStructure(student, studentCreate.getHistoryActivityCode())), CREATE_STUDENT, STUDENT_CREATED);
     getStudentEventRepository().save(studentEvent);
     return Pair.of(student, studentEvent);
   }

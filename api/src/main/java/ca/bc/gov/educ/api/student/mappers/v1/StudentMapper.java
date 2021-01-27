@@ -35,6 +35,15 @@ public interface StudentMapper {
    */
   Student toStructure(StudentEntity studentEntity);
 
+
+  /**
+   * To structure student create.
+   *
+   * @param studentEntity the student entity
+   * @return the student
+   */
+  StudentCreate toStructure(StudentEntity studentEntity, String historyActivityCode);
+
   /**
    * To model sex code entity.
    *

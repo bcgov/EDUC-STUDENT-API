@@ -1,7 +1,7 @@
 package ca.bc.gov.educ.api.student.repository.v1;
 
 import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * The interface Student event repository.
  */
-public interface StudentEventRepository extends CrudRepository<StudentEvent, UUID> {
+public interface StudentEventRepository extends JpaRepository<StudentEvent, UUID> {
   /**
    * Find by saga id optional.
    *
