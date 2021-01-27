@@ -20,7 +20,7 @@ import java.util.UUID;
  */
 @Service
 @Slf4j
-public class StudentEventService {
+public class StudentWrapperService {
 
   private final StudentService studentService;
 
@@ -30,7 +30,7 @@ public class StudentEventService {
    * @param studentService the student service
    */
   @Autowired
-  public StudentEventService(StudentService studentService) {
+  public StudentWrapperService(StudentService studentService) {
     this.studentService = studentService;
   }
 

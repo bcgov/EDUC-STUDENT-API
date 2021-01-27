@@ -23,5 +23,21 @@ public enum EventOutcome {
   /**
    * Student already exist event outcome.
    */
-  STUDENT_ALREADY_EXIST
+  STUDENT_ALREADY_EXIST,
+  /**
+   * Student history found event outcome.
+   */
+  STUDENT_HISTORY_FOUND,
+  /**
+   * Student history not found event outcome.
+   */
+  STUDENT_HISTORY_NOT_FOUND,
+  /**
+   * Student history created event outcome.
+   */
+  STUDENT_HISTORY_CREATED,
+  /**
+   * Student history already exist event outcome.
+   */
+  STUDENT_HISTORY_ALREADY_EXIST
 }
