@@ -1,18 +1,30 @@
 package ca.bc.gov.educ.api.student.struct.v1;
 
+import ca.bc.gov.educ.api.student.constant.EventOutcome;
+import ca.bc.gov.educ.api.student.constant.EventType;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * The type Choreographed event.
  */
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class ChoreographedEvent extends Event {
+public class ChoreographedEvent {
   /**
    * The Event id.
    */
   String eventID; // the primary key of student event table.
+  /**
+   * The Event type.
+   */
+  EventType eventType;
+  /**
+   * The Event outcome.
+   */
+  EventOutcome eventOutcome;
+  /**
+   * The Event payload.
+   */
+  String eventPayload;
   /**
    * The Create user.
    */
