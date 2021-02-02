@@ -239,10 +239,10 @@ public class EventHandlerServiceTest {
 
     var sagaId = UUID.randomUUID();
     var penRequestEvent = StudentEvent.builder().sagaId(sagaId).replyChannel(STUDENT_API_TOPIC).eventType(UPDATE_STUDENT.toString()).eventOutcome(STUDENT_UPDATED.toString()).
-      eventStatus(MESSAGE_PUBLISHED.toString()).eventPayload(entity.getPen()).createDate(LocalDateTime.now()).createUser("TEST").build();
+      eventStatus(MESSAGE_PUBLISHED.toString()).eventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(entity))).createDate(LocalDateTime.now()).createUser("TEST").build();
     studentEventRepository.save(penRequestEvent);
 
-    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(entity)).build();
+    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(entity))).build();
     eventHandlerServiceUnderTest.handleUpdateStudentEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, UPDATE_STUDENT.toString());
     assertThat(studentEventUpdated).isPresent();

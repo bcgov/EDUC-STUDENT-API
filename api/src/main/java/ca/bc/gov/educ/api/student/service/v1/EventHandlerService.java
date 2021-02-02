@@ -133,10 +133,10 @@ public class EventHandlerService {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     StudentEvent choreographyEvent = null;
-    if (studentEventOptional.isEmpty()) {
+    var student = JsonUtil.getJsonObjectFromString(StudentUpdate.class, event.getEventPayload());
+    if (studentEventOptional.isEmpty() || !isSameStudent(student, studentEventOptional.get().getEventPayload())) {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
-      var student = JsonUtil.getJsonObjectFromString(StudentUpdate.class, event.getEventPayload());
       RequestUtil.setAuditColumnsForCreate(student);
       try {
         val pair = getStudentService().updateStudent(student, UUID.fromString(student.getStudentID()));
@@ -170,10 +170,10 @@ public class EventHandlerService {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     StudentEvent choreographyEvent = null;
-    if (studentEventOptional.isEmpty()) {
+    StudentCreate student = JsonUtil.getJsonObjectFromString(StudentCreate.class, event.getEventPayload());
+    if (studentEventOptional.isEmpty() || !isSameStudent(student, studentEventOptional.get().getEventPayload())) {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
-      StudentCreate student = JsonUtil.getJsonObjectFromString(StudentCreate.class, event.getEventPayload());
       val optionalStudent = getStudentRepository().findStudentEntityByPen(student.getPen());
       if (optionalStudent.isPresent()) {
         event.setEventOutcome(EventOutcome.STUDENT_ALREADY_EXIST);
@@ -220,7 +220,7 @@ public class EventHandlerService {
     }
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
-    if (studentEventOptional.isEmpty()) {
+    if (studentEventOptional.isEmpty() || !StringUtils.equals(studentEventOptional.get().getEventPayload(), event.getEventPayload())) {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
       val optionalStudentEntity = getStudentRepository().findStudentEntityByPen(event.getEventPayload());
@@ -337,6 +337,21 @@ public class EventHandlerService {
         .eventOutcome(EventOutcome.valueOf(event.getEventOutcome()))
         .eventPayload(event.getEventPayload()).build();
     return JsonUtil.getJsonBytesFromObject(responseEvent);
+  }
+
+  private boolean isSameStudent(BaseStudent currentStudent, String existingPayload) {
+    boolean result = false;
+    if (currentStudent != null && StringUtils.isNotBlank(existingPayload)) {
+      try {
+        var existingStudent = JsonUtil.getJsonObjectFromString(StudentUpdate.class, existingPayload);
+        if (StringUtils.equals(currentStudent.getStudentID(), existingStudent.getStudentID())) {
+          result = true;
+        }
+      } catch (JsonProcessingException jpe) {
+        // error returns false as impossible to verify
+      }
+    }
+    return result;
   }
 
   /**
