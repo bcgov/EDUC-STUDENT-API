@@ -17,6 +17,7 @@ import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,14 +86,14 @@ public class EventHandlerServiceTest {
   }
 
   @Test
-  public void testHandleEvent_givenEventTypeGET_STUDENT__whenNoStudentExist_shouldHaveEventOutcomeSTUDENT_NOT_FOUND() throws JsonProcessingException {
+  public void testHandleEvent_givenEventTypeGET_STUDENT__whenNoStudentExist_shouldHaveEventOutcomeSTUDENT_NOT_FOUND() throws JsonProcessingException, IOException {
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(UUID.randomUUID().toString()).build();
-    eventHandlerServiceUnderTest.handleGetStudentEvent(event, isSynchronous);
-    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT.toString());
-    assertThat(studentEventUpdated).isPresent();
-    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
-    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_NOT_FOUND.toString());
+    byte[] response = eventHandlerServiceUnderTest.handleGetStudentEvent(event, isSynchronous);
+    assertThat(response).isNotEmpty();
+    Event responseEvent = JsonUtil.getObjectFromJsonBytes(Event.class, response);
+    assertThat(responseEvent).isNotNull();
+    assertThat(responseEvent.getEventOutcome()).isEqualTo(STUDENT_NOT_FOUND);
   }
 
   @Test
@@ -107,15 +108,15 @@ public class EventHandlerServiceTest {
   }
 
   @Test
-  public void testHandleEvent_givenEventTypeGET_STUDENT__whenStudentExist_shouldHaveEventOutcomeSTUDENT_FOUND() throws JsonProcessingException {
+  public void testHandleEvent_givenEventTypeGET_STUDENT__whenStudentExist_shouldHaveEventOutcomeSTUDENT_FOUND() throws JsonProcessingException, IOException {
     StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(entity.getPen()).build();
-    eventHandlerServiceUnderTest.handleGetStudentEvent(event, isSynchronous);
-    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT.toString());
-    assertThat(studentEventUpdated).isPresent();
-    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
-    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_FOUND.toString());
+    byte[] response = eventHandlerServiceUnderTest.handleGetStudentEvent(event, isSynchronous);
+    assertThat(response).isNotEmpty();
+    Event responseEvent = JsonUtil.getObjectFromJsonBytes(Event.class, response);
+    assertThat(responseEvent).isNotNull();
+    assertThat(responseEvent.getEventOutcome()).isEqualTo(STUDENT_FOUND);
   }
 
   @Test
@@ -235,24 +236,28 @@ public class EventHandlerServiceTest {
   }
 
   @Test
-  public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenStudentExistAndDuplicateSagaMessage_shouldHaveEventOutcomeSTUDENT_UPDATED() throws JsonProcessingException {
+  public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenStudentExistAndDuplicateSagaMessage_shouldHaveEventOutcomeSTUDENT_UPDATED() throws JsonProcessingException, IOException {
     StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(entity.getStudentID().toString());
+    studentUpdate.setHistoryActivityCode("MERGE");
+    BeanUtils.copyProperties(studentMapper.toStructure(entity), studentUpdate);
 
     var sagaId = UUID.randomUUID();
     var penRequestEvent = StudentEvent.builder().sagaId(sagaId).replyChannel(STUDENT_API_TOPIC).eventType(UPDATE_STUDENT.toString()).eventOutcome(STUDENT_UPDATED.toString()).
       eventStatus(MESSAGE_PUBLISHED.toString()).eventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(entity))).createDate(LocalDateTime.now()).createUser("TEST").build();
     studentEventRepository.save(penRequestEvent);
 
-    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(entity))).build();
-    eventHandlerServiceUnderTest.handleUpdateStudentEvent(event);
-    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, UPDATE_STUDENT.toString());
-    assertThat(studentEventUpdated).isPresent();
-    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
-    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_UPDATED.toString());
+    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
+    Pair<byte[], StudentEvent> response = eventHandlerServiceUnderTest.handleUpdateStudentEvent(event);
+    assertThat(response).isNotNull();
+    Event responseEvent = JsonUtil.getObjectFromJsonBytes(Event.class, response.getLeft());
+    assertThat(responseEvent).isNotNull();
+    assertThat(responseEvent.getEventOutcome()).isEqualTo(STUDENT_UPDATED);
   }
 
   @Test
-  public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenEventExistsWithDifferentStudentInSagaMessage_shouldHaveEventOutcomeSTUDENT_UPDATED() throws JsonProcessingException {
+  public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenEventExistsWithDifferentStudentInSagaMessage_shouldHaveEventOutcomeSTUDENT_UPDATED() throws JsonProcessingException, IOException {
     var studentEntity1 = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString(Optional.of("127054022"))));
     var studentEntity2 = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
     var studentUpdate = new StudentUpdate();
@@ -266,11 +271,11 @@ public class EventHandlerServiceTest {
     studentEventRepository.save(penRequestEvent);
 
     final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
-    eventHandlerServiceUnderTest.handleUpdateStudentEvent(event);
-    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, UPDATE_STUDENT.toString());
-    assertThat(studentEventUpdated).isPresent();
-    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
-    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_UPDATED.toString());
+    Pair<byte[], StudentEvent> response = eventHandlerServiceUnderTest.handleUpdateStudentEvent(event);
+    assertThat(response).isNotNull();
+    Event responseEvent = JsonUtil.getObjectFromJsonBytes(Event.class, response.getLeft());
+    assertThat(responseEvent).isNotNull();
+    assertThat(responseEvent.getEventOutcome()).isEqualTo(STUDENT_UPDATED);
   }
 
   @Test
