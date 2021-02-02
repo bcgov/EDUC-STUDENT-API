@@ -130,30 +130,20 @@ public class EventHandlerService {
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Pair<byte[], StudentEvent> handleUpdateStudentEvent(Event event) throws JsonProcessingException {
-    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
-    StudentEvent studentEvent;
     StudentEvent choreographyEvent = null;
-    if (studentEventOptional.isEmpty()) {
-      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      var student = JsonUtil.getJsonObjectFromString(StudentUpdate.class, event.getEventPayload());
-      RequestUtil.setAuditColumnsForCreate(student);
-      try {
-        val pair = getStudentService().updateStudent(student, UUID.fromString(student.getStudentID()));
-        choreographyEvent = pair.getRight();
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(pair.getLeft())));// need to convert to structure MANDATORY otherwise jackson will break.
-        event.setEventOutcome(EventOutcome.STUDENT_UPDATED);
-      } catch (EntityNotFoundException ex) {
-        event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
-      }
-      studentEvent = createStudentEventRecord(event);
-    } else {
-      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      studentEvent = studentEventOptional.get();
-      studentEvent.setUpdateDate(LocalDateTime.now());
+    log.trace(EVENT_PAYLOAD, event);
+    var student = JsonUtil.getJsonObjectFromString(StudentUpdate.class, event.getEventPayload());
+    RequestUtil.setAuditColumnsForCreate(student);
+    try {
+      val pair = getStudentService().updateStudent(student, UUID.fromString(student.getStudentID()));
+      choreographyEvent = pair.getRight();
+      event.setEventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(pair.getLeft())));// need to convert to structure MANDATORY otherwise jackson will break.
+      event.setEventOutcome(EventOutcome.STUDENT_UPDATED);
+    } catch (EntityNotFoundException ex) {
+      event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
     }
 
+    StudentEvent studentEvent = createStudentEventRecord(event);
     getStudentEventRepository().save(studentEvent);
     return Pair.of(createResponseEvent(studentEvent), choreographyEvent);
   }
@@ -218,27 +208,17 @@ public class EventHandlerService {
         return new byte[0];
       }
     }
-    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
-    StudentEvent studentEvent;
-    if (studentEventOptional.isEmpty()) {
-      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      val optionalStudentEntity = getStudentRepository().findStudentEntityByPen(event.getEventPayload());
-      if (optionalStudentEntity.isPresent()) {
-        Student student = studentMapper.toStructure(optionalStudentEntity.get()); // need to convert to structure MANDATORY otherwise jackson will break.
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(student));
-        event.setEventOutcome(EventOutcome.STUDENT_FOUND);
-      } else {
-        event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
-      }
-      studentEvent = createStudentEventRecord(event);
-    } else { // just update the status of the event so that it will be polled and send again to the saga orchestrator.
-      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      studentEvent = studentEventOptional.get();
-      studentEvent.setUpdateDate(LocalDateTime.now());
+
+    log.trace(EVENT_PAYLOAD, event);
+    val optionalStudentEntity = getStudentRepository().findStudentEntityByPen(event.getEventPayload());
+    if (optionalStudentEntity.isPresent()) {
+      Student student = studentMapper.toStructure(optionalStudentEntity.get()); // need to convert to structure MANDATORY otherwise jackson will break.
+      event.setEventPayload(JsonUtil.getJsonStringFromObject(student));
+      event.setEventOutcome(EventOutcome.STUDENT_FOUND);
+    } else {
+      event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
     }
-    getStudentEventRepository().save(studentEvent);
+    StudentEvent studentEvent = createStudentEventRecord(event);
     return createResponseEvent(studentEvent);
   }
 
