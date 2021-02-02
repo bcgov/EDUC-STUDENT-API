@@ -146,7 +146,12 @@ public class EventHandlerService {
       } catch (EntityNotFoundException ex) {
         event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
       }
-      studentEvent = createStudentEventRecord(event);
+      if (studentEventOptional.isEmpty()) {
+        studentEvent = createStudentEventRecord(event);
+      } else {
+        studentEvent = studentEventOptional.get();
+        studentEvent.setUpdateDate(LocalDateTime.now());
+      }
     } else {
       log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
@@ -170,10 +175,10 @@ public class EventHandlerService {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     StudentEvent choreographyEvent = null;
-    StudentCreate student = JsonUtil.getJsonObjectFromString(StudentCreate.class, event.getEventPayload());
-    if (studentEventOptional.isEmpty() || !isSameStudent(student, studentEventOptional.get().getEventPayload())) {
+    if (studentEventOptional.isEmpty()) {
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
+      StudentCreate student = JsonUtil.getJsonObjectFromString(StudentCreate.class, event.getEventPayload());
       val optionalStudent = getStudentRepository().findStudentEntityByPen(student.getPen());
       if (optionalStudent.isPresent()) {
         event.setEventOutcome(EventOutcome.STUDENT_ALREADY_EXIST);
@@ -231,7 +236,12 @@ public class EventHandlerService {
       } else {
         event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
       }
-      studentEvent = createStudentEventRecord(event);
+      if (studentEventOptional.isEmpty()) {
+        studentEvent = createStudentEventRecord(event);
+      } else {
+        studentEvent = studentEventOptional.get();
+        studentEvent.setUpdateDate(LocalDateTime.now());
+      }
     } else { // just update the status of the event so that it will be polled and send again to the saga orchestrator.
       log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);

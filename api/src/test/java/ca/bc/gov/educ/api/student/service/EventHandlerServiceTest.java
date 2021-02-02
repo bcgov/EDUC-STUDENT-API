@@ -81,6 +81,7 @@ public class EventHandlerServiceTest {
   public void tearDown() {
     studentRepository.deleteAll();
     studentEventRepository.deleteAll();
+    studentHistoryRepository.deleteAll();
   }
 
   @Test
@@ -243,6 +244,28 @@ public class EventHandlerServiceTest {
     studentEventRepository.save(penRequestEvent);
 
     final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(entity))).build();
+    eventHandlerServiceUnderTest.handleUpdateStudentEvent(event);
+    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, UPDATE_STUDENT.toString());
+    assertThat(studentEventUpdated).isPresent();
+    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
+    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_UPDATED.toString());
+  }
+
+  @Test
+  public void testHandleEvent_givenEventTypeUPDATE_STUDENT__whenEventExistsWithDifferentStudentInSagaMessage_shouldHaveEventOutcomeSTUDENT_UPDATED() throws JsonProcessingException {
+    var studentEntity1 = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString(Optional.of("127054022"))));
+    var studentEntity2 = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    var studentUpdate = new StudentUpdate();
+    studentUpdate.setStudentID(studentEntity2.getStudentID().toString());
+    studentUpdate.setHistoryActivityCode("MERGE");
+    BeanUtils.copyProperties(studentMapper.toStructure(studentEntity2), studentUpdate);
+
+    var sagaId = UUID.randomUUID();
+    var penRequestEvent = StudentEvent.builder().sagaId(sagaId).replyChannel(STUDENT_API_TOPIC).eventType(UPDATE_STUDENT.toString()).eventOutcome(STUDENT_UPDATED.toString()).
+            eventStatus(MESSAGE_PUBLISHED.toString()).eventPayload(JsonUtil.getJsonStringFromObject(studentMapper.toStructure(studentEntity1))).createDate(LocalDateTime.now()).createUser("TEST").build();
+    studentEventRepository.save(penRequestEvent);
+
+    final Event event = Event.builder().eventType(UPDATE_STUDENT).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(studentUpdate)).build();
     eventHandlerServiceUnderTest.handleUpdateStudentEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, UPDATE_STUDENT.toString());
     assertThat(studentEventUpdated).isPresent();
