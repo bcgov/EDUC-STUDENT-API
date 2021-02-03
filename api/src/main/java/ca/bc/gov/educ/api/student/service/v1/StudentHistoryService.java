@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.service.v1;
 
+import ca.bc.gov.educ.api.student.mappers.v1.StudentHistoryMapper;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryActivityCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
@@ -124,10 +125,11 @@ public class StudentHistoryService {
    */
   @Transactional(propagation = Propagation.MANDATORY)
   public StudentHistoryEntity createStudentHistory(StudentHistory studentHistory) {
+    StudentHistoryEntity historyEntity = StudentHistoryMapper.mapper.toModel(studentHistory);
     StudentEntity studentEntity = new StudentEntity();
-    BeanUtils.copyProperties(studentHistory, studentEntity);
+    BeanUtils.copyProperties(historyEntity, studentEntity);
     studentEntity.setStudentID(UUID.fromString(studentHistory.getStudentID()));
-    return createStudentHistory(studentEntity, studentHistory.getHistoryActivityCode(), studentHistory.getUpdateUser());
+    return createStudentHistory(studentEntity, historyEntity.getHistoryActivityCode(), historyEntity.getUpdateUser());
   }
 
   /**
