@@ -15,6 +15,8 @@ import ca.bc.gov.educ.api.student.struct.v1.*;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -69,8 +71,14 @@ public class EventHandlerService {
   private final StudentRepository studentRepository;
   @Getter(PRIVATE)
   private final StudentHistoryRepository studentHistoryRepository;
+
   private static final StudentMapper studentMapper = StudentMapper.mapper;
   private static final StudentHistoryMapper studentHistoryMapper = StudentHistoryMapper.mapper;
+  /**
+   * The Ob mapper.
+   */
+  private final ObjectMapper obMapper = new ObjectMapper();
+
   @Getter(PRIVATE)
   private final StudentEventRepository studentEventRepository;
 
@@ -234,19 +242,28 @@ public class EventHandlerService {
     val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
     StudentEvent studentEvent;
     if (studentEventOptional.isEmpty()) {
+      List<StudentHistory> studentList = new ArrayList<>();
       log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
       log.trace(EVENT_PAYLOAD, event);
-      StudentHistory studentHistory = JsonUtil.getJsonObjectFromString(StudentHistory.class, event.getEventPayload());
+      JavaType type = obMapper.getTypeFactory().
+              constructCollectionType(List.class, StudentHistory.class);
+      List<StudentHistory> audits = obMapper.readValue(event.getEventPayload(), type);
+      audits.stream().forEach(studentHistory -> {
+        if (StringUtils.isBlank(studentHistory.getStudentHistoryID())) {
+          RequestUtil.setAuditColumnsForCreate(studentHistory);
+          StudentHistoryEntity entity = getStudentHistoryService().createStudentHistory(studentHistory);
+          studentList.add(studentHistoryMapper.toStructure(entity));
+        }
+      });
 
-      if (!StringUtils.isBlank(studentHistory.getStudentHistoryID())) {
+      if (studentList.isEmpty()) {
         event.setEventOutcome(EventOutcome.STUDENT_HISTORY_ALREADY_EXIST);
-        event.setEventPayload(studentHistory.getStudentHistoryID()); // return the studentHistory ID in response.
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(audits.stream().map(i -> i.getStudentHistoryID())));
       } else {
-        RequestUtil.setAuditColumnsForCreate(studentHistory);
-        StudentHistoryEntity entity = getStudentHistoryService().createStudentHistory(studentHistory);
         event.setEventOutcome(EventOutcome.STUDENT_HISTORY_CREATED);
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentHistoryMapper.toStructure(entity)));// need to convert to structure MANDATORY otherwise jackson will break.
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentList));// need to convert to s
       }
+
       studentEvent = createStudentEventRecord(event);
     } else {
       log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
@@ -346,17 +363,15 @@ public class EventHandlerService {
       }
     }
 
-
-    final ObjectMapper objectMapper = new ObjectMapper();
     final List<Sort.Order> sorts = new ArrayList<>();
-    Specification<StudentEntity> studentSpecs = studentSearchService.setSpecificationAndSortCriteria(sortCriteriaJson, searchCriteriaListJson, objectMapper, sorts);
+    Specification<StudentEntity> studentSpecs = studentSearchService.setSpecificationAndSortCriteria(sortCriteriaJson, searchCriteriaListJson, obMapper, sorts);
     return getStudentService()
         .findAll(studentSpecs, pageNumber, pageSize, sorts)
         .thenApplyAsync(studentEntities -> studentEntities.map(studentMapper::toStructure))
         .thenApplyAsync(studentEntities -> {
           try {
             log.info("found {} students for {}", studentEntities.getContent().size(), event.getSagaId());
-            val resBytes = objectMapper.writeValueAsBytes(studentEntities);
+            val resBytes = obMapper.writeValueAsBytes(studentEntities);
             log.info("response prepared for {}, response length {}", event.getSagaId(), resBytes.length);
             return resBytes;
           } catch (JsonProcessingException e) {
