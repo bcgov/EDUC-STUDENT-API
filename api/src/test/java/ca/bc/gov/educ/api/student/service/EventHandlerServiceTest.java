@@ -303,11 +303,11 @@ public class EventHandlerServiceTest {
 
   @Test
   public void testHandleEvent_givenEventTypeCREATE_STUDENT_HISTORY_whenStudentDoNotExist_shouldHaveEventOutcomeSTUDENT_HISTORY_CREATED() throws JsonProcessingException {
-    StudentEntity student = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
-    String history = placeHolderStudentHistoryJSON(student.getStudentID().toString(), Optional.empty());
+    StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    StudentHistory history = getStudentHistoryEntityFromJsonString(entity.getStudentID().toString(), Optional.empty());
 
     var sagaId = UUID.randomUUID();
-    final Event event = Event.builder().eventType(CREATE_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(history).build();
+    final Event event = Event.builder().eventType(CREATE_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(Arrays.asList(history))).build();
     eventHandlerServiceUnderTest.handleCreateStudentHistoryEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, CREATE_STUDENT_HISTORY.toString());
     assertThat(studentEventUpdated).isPresent();
@@ -317,11 +317,11 @@ public class EventHandlerServiceTest {
 
   @Test
   public void testHandleEvent_givenEventTypeCREATE_STUDENT_HISTORY_whenStudentDoNotExist_shouldHaveEventOutcomeSTUDENT_HISTORY_ALREADY_EXISTS() throws JsonProcessingException {
-    StudentEntity student = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
-    String history = placeHolderStudentHistoryJSON(student.getStudentID().toString(), Optional.ofNullable(UUID.randomUUID().toString()));
+    StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    StudentHistory history = getStudentHistoryEntityFromJsonString(entity.getStudentID().toString(), Optional.ofNullable(UUID.randomUUID().toString()));
 
     var sagaId = UUID.randomUUID();
-    final Event event = Event.builder().eventType(CREATE_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(history).build();
+    final Event event = Event.builder().eventType(CREATE_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(Arrays.asList(history))).build();
     eventHandlerServiceUnderTest.handleCreateStudentHistoryEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, CREATE_STUDENT_HISTORY.toString());
     assertThat(studentEventUpdated).isPresent();
