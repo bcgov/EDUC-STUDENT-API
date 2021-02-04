@@ -5,10 +5,10 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.nats.client.Connection;
 import io.nats.client.ConnectionListener;
 import io.nats.client.Nats;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.threads.EnhancedQueueExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import java.io.Closeable;
@@ -21,7 +21,6 @@ import java.time.Duration;
 @Component
 @Slf4j
 public class NatsConnection implements Closeable {
-  @Getter
   private final Connection natsCon;
 
   /**
@@ -70,5 +69,10 @@ public class NatsConnection implements Closeable {
       }
       log.info("nats connection closed...");
     }
+  }
+
+  @Bean
+  public Connection connection() {
+    return this.natsCon;
   }
 }
