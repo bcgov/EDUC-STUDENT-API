@@ -28,6 +28,15 @@ public interface StudentMapper {
   StudentEntity toModel(BaseStudent student);
 
   /**
+   * To model student entity.
+   *
+   * @param student the student
+   * @return the student entity
+   */
+  @Mapping(target = "demogCode", source = "demogCode", defaultValue = "A")
+  StudentEntity toModel(StudentCreate student);
+
+  /**
    * To structure student.
    *
    * @param studentEntity the student entity
