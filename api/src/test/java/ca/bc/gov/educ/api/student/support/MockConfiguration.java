@@ -6,6 +6,7 @@ import ca.bc.gov.educ.api.student.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.messaging.NatsConnection;
 import ca.bc.gov.educ.api.student.messaging.stan.Publisher;
 import ca.bc.gov.educ.api.student.messaging.stan.Subscriber;
+import io.nats.client.Connection;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,11 @@ public class MockConfiguration {
     return Mockito.mock(MessageSubscriber.class);
   }
 
+  @Bean
+  @Primary
+  public Connection connection() {
+    return Mockito.mock(Connection.class);
+  }
 
   @Bean
   @Primary

@@ -165,7 +165,7 @@ public class StudentService {
 
     if (curStudentEntity.isPresent()) {
       final StudentEntity newStudentEntity = curStudentEntity.get();
-      BeanUtils.copyProperties(student, newStudentEntity);
+      BeanUtils.copyProperties(student, newStudentEntity, "createDate", "createUser");
       TransformUtil.uppercaseFields(newStudentEntity);
       studentHistoryService.createStudentHistory(newStudentEntity, studentUpdate.getHistoryActivityCode(), newStudentEntity.getUpdateUser());
       final StudentEvent studentEvent =
