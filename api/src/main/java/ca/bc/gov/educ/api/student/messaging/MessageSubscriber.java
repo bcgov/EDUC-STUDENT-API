@@ -33,13 +33,13 @@ public class MessageSubscriber {
   /**
    * Instantiates a new Message subscriber.
    *
-   * @param natsConnection                 the nats connection
+   * @param connection                     the nats connection
    * @param eventHandlerDelegatorServiceV1 the event handler delegator service v 1
    */
   @Autowired
-  public MessageSubscriber(final NatsConnection natsConnection, EventHandlerDelegatorService eventHandlerDelegatorServiceV1) {
+  public MessageSubscriber(final Connection connection, EventHandlerDelegatorService eventHandlerDelegatorServiceV1) {
     this.eventHandlerDelegatorServiceV1 = eventHandlerDelegatorServiceV1;
-    this.connection = natsConnection.getNatsCon();
+    this.connection = connection;
     messageProcessingThreads = new EnhancedQueueExecutor.Builder().setThreadFactory(new ThreadFactoryBuilder().setNameFormat("nats-message-subscriber-%d").build()).setCorePoolSize(10).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build();
   }
 

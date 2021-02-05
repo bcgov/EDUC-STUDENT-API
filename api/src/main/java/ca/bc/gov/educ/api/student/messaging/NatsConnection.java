@@ -21,6 +21,7 @@ import java.time.Duration;
 @Component
 @Slf4j
 public class NatsConnection implements Closeable {
+
   private final Connection natsCon;
 
   /**
@@ -73,6 +74,6 @@ public class NatsConnection implements Closeable {
 
   @Bean
   public Connection connection() {
-    return this.natsCon;
+    return natsCon;
   }
 }

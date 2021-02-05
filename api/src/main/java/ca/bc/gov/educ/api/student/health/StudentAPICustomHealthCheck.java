@@ -1,6 +1,5 @@
 package ca.bc.gov.educ.api.student.health;
 
-import ca.bc.gov.educ.api.student.messaging.NatsConnection;
 import io.nats.client.Connection;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -8,9 +7,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class StudentAPICustomHealthCheck implements HealthIndicator {
-  private final NatsConnection natsConnection;
+  private final Connection natsConnection;
 
-  public StudentAPICustomHealthCheck(NatsConnection natsConnection) {
+  public StudentAPICustomHealthCheck(Connection natsConnection) {
     this.natsConnection = natsConnection;
   }
 
@@ -26,9 +25,7 @@ public class StudentAPICustomHealthCheck implements HealthIndicator {
   }
 
   private Health healthCheck() {
-    if (this.natsConnection.getNatsCon() == null) {
-      return Health.down().withDetail("NATS", " Connection is null.").build();
-    } else if (this.natsConnection.getNatsCon().getStatus() == Connection.Status.CLOSED) {
+    if (this.natsConnection.getStatus() == Connection.Status.CLOSED) {
       return Health.down().withDetail("NATS", " Connection is Closed.").build();
     }
     return Health.up().build();

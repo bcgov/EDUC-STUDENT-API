@@ -1,11 +1,11 @@
 package ca.bc.gov.educ.api.student.messaging.stan;
 
-import ca.bc.gov.educ.api.student.messaging.NatsConnection;
 import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 import ca.bc.gov.educ.api.student.service.v1.STANEventHandlerService;
 import ca.bc.gov.educ.api.student.struct.v1.ChoreographedEvent;
 import ca.bc.gov.educ.api.student.struct.v1.Event;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
+import io.nats.client.Connection;
 import io.nats.streaming.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,12 +41,12 @@ public class Subscriber implements Closeable {
    * @throws InterruptedException the interrupted exception
    */
   @Autowired
-  public Subscriber(ApplicationProperties applicationProperties, NatsConnection natsConnection, STANEventHandlerService stanEventHandlerService) throws IOException, InterruptedException {
+  public Subscriber(ApplicationProperties applicationProperties, Connection natsConnection, STANEventHandlerService stanEventHandlerService) throws IOException, InterruptedException {
     this.stanEventHandlerService = stanEventHandlerService;
     Options options = new Options.Builder()
         .clusterId(applicationProperties.getStanCluster())
         .connectionLostHandler(this::connectionLostHandler)
-        .natsConn(natsConnection.getNatsCon())
+        .natsConn(natsConnection)
         .maxPingsOut(30)
         .pingInterval(Duration.ofSeconds(2))
         .clientId("student-api-subscriber" + UUID.randomUUID().toString()).build();
