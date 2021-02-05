@@ -19,11 +19,11 @@ public class MessagePublisher {
   /**
    * Instantiates a new Message publisher.
    *
-   * @param natsConnection the nats connection
+   * @param connection the nats connection
    */
   @Autowired
-  public MessagePublisher(final NatsConnection natsConnection) {
-    this.connection = natsConnection.getNatsCon();
+  public MessagePublisher(final Connection connection) {
+    this.connection = connection;
   }
 
   /**

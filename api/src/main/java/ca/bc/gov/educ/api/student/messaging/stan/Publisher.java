@@ -2,11 +2,11 @@ package ca.bc.gov.educ.api.student.messaging.stan;
 
 import ca.bc.gov.educ.api.student.constant.EventOutcome;
 import ca.bc.gov.educ.api.student.constant.EventType;
-import ca.bc.gov.educ.api.student.messaging.NatsConnection;
 import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
 import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 import ca.bc.gov.educ.api.student.struct.v1.ChoreographedEvent;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
+import io.nats.client.Connection;
 import io.nats.streaming.Options;
 import io.nats.streaming.StreamingConnection;
 import io.nats.streaming.StreamingConnectionFactory;
@@ -41,11 +41,11 @@ public class Publisher implements Closeable {
    * @throws InterruptedException the interrupted exception
    */
   @Autowired
-  public Publisher(ApplicationProperties applicationProperties, NatsConnection natsConnection) throws IOException, InterruptedException {
+  public Publisher(ApplicationProperties applicationProperties, Connection natsConnection) throws IOException, InterruptedException {
     Options options = new Options.Builder()
         .clusterId(applicationProperties.getStanCluster())
         .connectionLostHandler(this::connectionLostHandler)
-        .natsConn(natsConnection.getNatsCon())
+        .natsConn(natsConnection)
         .maxPingsOut(30)
         .pingInterval(Duration.ofSeconds(2))
         .clientId("student-api-publisher" + UUID.randomUUID().toString()).build();
