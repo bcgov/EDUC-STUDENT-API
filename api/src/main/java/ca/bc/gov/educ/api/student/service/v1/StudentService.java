@@ -161,18 +161,18 @@ public class StudentService {
     if (studentID == null || !studentID.equals(student.getStudentID())) {
       throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, String.valueOf(studentID));
     }
-    Optional<StudentEntity> curStudentEntity = repository.findById(student.getStudentID());
+    Optional<StudentEntity> curStudentEntityOptional = repository.findById(student.getStudentID());
 
-    if (curStudentEntity.isPresent()) {
-      final StudentEntity newStudentEntity = curStudentEntity.get();
-      BeanUtils.copyProperties(student, newStudentEntity, "createDate", "createUser");
-      TransformUtil.uppercaseFields(newStudentEntity);
-      studentHistoryService.createStudentHistory(newStudentEntity, studentUpdate.getHistoryActivityCode(), newStudentEntity.getUpdateUser());
+    if (curStudentEntityOptional.isPresent()) {
+      final StudentEntity currentStudentEntity = curStudentEntityOptional.get();
+      BeanUtils.copyProperties(student, currentStudentEntity, "createDate", "createUser"); // update current student entity with incoming payload ignoring the fields.
+      TransformUtil.uppercaseFields(currentStudentEntity); // convert the input to upper case.
+      studentHistoryService.createStudentHistory(currentStudentEntity, studentUpdate.getHistoryActivityCode(), currentStudentEntity.getUpdateUser());
       final StudentEvent studentEvent =
-          createStudentEvent(studentUpdate.getCreateUser(), studentUpdate.getUpdateUser(), JsonUtil.getJsonStringFromObject(studentUpdate), UPDATE_STUDENT, STUDENT_UPDATED);
-      repository.save(newStudentEntity);
+          createStudentEvent(studentUpdate.getUpdateUser(), studentUpdate.getUpdateUser(), JsonUtil.getJsonStringFromObject(studentUpdate), UPDATE_STUDENT, STUDENT_UPDATED);
+      repository.save(currentStudentEntity);
       getStudentEventRepository().save(studentEvent);
-      return Pair.of(newStudentEntity, studentEvent);
+      return Pair.of(currentStudentEntity, studentEvent);
     } else {
       throw new EntityNotFoundException(StudentEntity.class, STUDENT_ID_ATTRIBUTE, student.getStudentID().toString());
     }
