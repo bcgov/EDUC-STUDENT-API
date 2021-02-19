@@ -34,6 +34,21 @@ public class RequestUtil {
   }
 
   /**
+   * set audit data to the object if audit (createUser/createDate) is blank
+   *
+   * @param baseRequest The object which will be persisted.
+   */
+  public static void setAuditColumnsForCreateIfBlank(@NotNull BaseRequest baseRequest) {
+    if (StringUtils.isBlank(baseRequest.getCreateUser())) {
+      baseRequest.setCreateUser(ApplicationProperties.STUDENT_API);
+    }
+    if (StringUtils.isBlank(baseRequest.getCreateDate())) {
+      baseRequest.setCreateDate(LocalDateTime.now().toString());
+    }
+    setAuditColumnsForUpdate(baseRequest);
+  }
+
+  /**
    * set audit data to the object.
    *
    * @param baseRequest The object which will be persisted.
