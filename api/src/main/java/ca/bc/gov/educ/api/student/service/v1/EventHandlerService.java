@@ -250,7 +250,7 @@ public class EventHandlerService {
       List<StudentHistory> audits = obMapper.readValue(event.getEventPayload(), type);
       audits.stream().forEach(studentHistory -> {
         if (StringUtils.isBlank(studentHistory.getStudentHistoryID())) {
-          RequestUtil.setAuditColumnsForCreate(studentHistory);
+          RequestUtil.setAuditColumnsForCreateIfBlank(studentHistory);
           StudentHistoryEntity entity = getStudentHistoryService().createStudentHistory(studentHistory);
           studentList.add(studentHistoryMapper.toStructure(entity));
         }
