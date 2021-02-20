@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.tuple.Pair;
+import org.assertj.core.util.DateUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -160,6 +162,7 @@ public class EventHandlerServiceTest {
     var response = eventHandlerServiceUnderTest.handleGetStudentEvent(event, true);
     assertThat(studentBytes).isEqualTo(response);
   }
+
   @Test
   public void testHandleEvent_givenEventTypeGET_STUDENT__whenStudentDoesNotExistAndSynchronousNatsMessage_shouldRespondWithBlankObjectData() throws JsonProcessingException {
     var studentBytes = new byte[0];
@@ -311,6 +314,25 @@ public class EventHandlerServiceTest {
     eventHandlerServiceUnderTest.handleCreateStudentHistoryEvent(event);
     var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, CREATE_STUDENT_HISTORY.toString());
     assertThat(studentEventUpdated).isPresent();
+    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
+    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_HISTORY_CREATED.toString());
+  }
+
+  @Test
+  public void testHandleEvent_givenEventTypeCREATE_STUDENT_HISTORY_whenStudentDoNotExist_shouldHaveEventOutcomeSTUDENT_HISTORY_CREATED_and_retainTheGivenCreateDate() throws JsonProcessingException {
+    StudentEntity entity = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    StudentHistory history = getStudentHistoryEntityFromJsonString(entity.getStudentID().toString(), Optional.empty());
+    history.setCreateDate(LocalDateTime.of(2000, 6,1, 7, 30, 45).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+    var sagaId = UUID.randomUUID();
+    final Event event = Event.builder().eventType(CREATE_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(Arrays.asList(history))).build();
+    eventHandlerServiceUnderTest.handleCreateStudentHistoryEvent(event);
+    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, CREATE_STUDENT_HISTORY.toString());
+    assertThat(studentEventUpdated).isPresent();
+    List<StudentHistory> payload = new ObjectMapper().readValue(studentEventUpdated.get().getEventPayload(), new TypeReference<>() {
+    });
+    assertThat(payload.size()).isEqualTo(1);
+    assertThat(payload.get(0).getCreateDate()).isEqualTo(history.getCreateDate());
     assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
     assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_HISTORY_CREATED.toString());
   }
