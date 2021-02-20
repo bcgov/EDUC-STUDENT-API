@@ -104,15 +104,16 @@ public class StudentHistoryService {
    *
    * @param curStudentEntity    the cur student entity
    * @param historyActivityCode the history activity code
-   * @param updateUser      the manipulate user
+   * @param updateUser          the manipulate user
+   * @param copyAudit           if true, then the audit fields(createDate/createUser) data will be kept. otherwise will be reset.
    */
   @Transactional(propagation = Propagation.MANDATORY)
-  public StudentHistoryEntity createStudentHistory(StudentEntity curStudentEntity, String historyActivityCode, String updateUser) {
+  public StudentHistoryEntity createStudentHistory(StudentEntity curStudentEntity, String historyActivityCode, String updateUser, boolean copyAudit) {
     final StudentHistoryEntity studentHistoryEntity = new StudentHistoryEntity();
     BeanUtils.copyProperties(curStudentEntity, studentHistoryEntity);
     studentHistoryEntity.setHistoryActivityCode(historyActivityCode);
     studentHistoryEntity.setCreateUser(updateUser);
-    if (studentHistoryEntity.getCreateDate() == null) {
+    if (!copyAudit) {
       studentHistoryEntity.setCreateDate(LocalDateTime.now());
     }
     studentHistoryEntity.setUpdateUser(updateUser);
@@ -124,14 +125,15 @@ public class StudentHistoryService {
    * Create student history.
    *
    * @param studentHistory    the cur student history entity
+   * @param copyAudit         if true, then the audit fields(createDate/createUser) data will be kept. otherwise will be reset.
    */
   @Transactional(propagation = Propagation.MANDATORY)
-  public StudentHistoryEntity createStudentHistory(StudentHistory studentHistory) {
+  public StudentHistoryEntity createStudentHistory(StudentHistory studentHistory, boolean copyAudit) {
     StudentHistoryEntity historyEntity = StudentHistoryMapper.mapper.toModel(studentHistory);
     StudentEntity studentEntity = new StudentEntity();
     BeanUtils.copyProperties(historyEntity, studentEntity);
     studentEntity.setStudentID(UUID.fromString(studentHistory.getStudentID()));
-    return createStudentHistory(studentEntity, historyEntity.getHistoryActivityCode(), historyEntity.getUpdateUser());
+    return createStudentHistory(studentEntity, historyEntity.getHistoryActivityCode(), historyEntity.getUpdateUser(), copyAudit);
   }
 
   /**
