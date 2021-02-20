@@ -232,6 +232,7 @@ public class EventHandlerService {
 
   /**
    * Handle create student history event byte [ ].
+   *  => External interface to copy audit history so that copyAudit flag should be true to keep createDate and createUser audit info.
    *
    * @param event the event
    * @return the byte [ ]
@@ -251,7 +252,7 @@ public class EventHandlerService {
       audits.stream().forEach(studentHistory -> {
         if (StringUtils.isBlank(studentHistory.getStudentHistoryID())) {
           RequestUtil.setAuditColumnsForCreateIfBlank(studentHistory);
-          StudentHistoryEntity entity = getStudentHistoryService().createStudentHistory(studentHistory);
+          StudentHistoryEntity entity = getStudentHistoryService().createStudentHistory(studentHistory, true);
           studentList.add(studentHistoryMapper.toStructure(entity));
         }
       });
