@@ -112,7 +112,9 @@ public class StudentHistoryService {
     BeanUtils.copyProperties(curStudentEntity, studentHistoryEntity);
     studentHistoryEntity.setHistoryActivityCode(historyActivityCode);
     studentHistoryEntity.setCreateUser(updateUser);
-    studentHistoryEntity.setCreateDate(LocalDateTime.now());
+    if (studentHistoryEntity.getCreateDate() == null) {
+      studentHistoryEntity.setCreateDate(LocalDateTime.now());
+    }
     studentHistoryEntity.setUpdateUser(updateUser);
     studentHistoryEntity.setUpdateDate(LocalDateTime.now());
     return studentHistoryRepository.save(studentHistoryEntity);
