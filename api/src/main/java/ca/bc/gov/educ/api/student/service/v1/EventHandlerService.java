@@ -15,7 +15,6 @@ import ca.bc.gov.educ.api.student.struct.v1.*;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -249,7 +248,7 @@ public class EventHandlerService {
       JavaType type = obMapper.getTypeFactory().
               constructCollectionType(List.class, StudentHistory.class);
       List<StudentHistory> audits = obMapper.readValue(event.getEventPayload(), type);
-      audits.stream().forEach(studentHistory -> {
+      audits.forEach(studentHistory -> {
         if (StringUtils.isBlank(studentHistory.getStudentHistoryID())) {
           RequestUtil.setAuditColumnsForCreateIfBlank(studentHistory);
           StudentHistoryEntity entity = getStudentHistoryService().createStudentHistory(studentHistory, true);
@@ -259,7 +258,7 @@ public class EventHandlerService {
 
       if (studentList.isEmpty()) {
         event.setEventOutcome(EventOutcome.STUDENT_HISTORY_ALREADY_EXIST);
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(audits.stream().map(i -> i.getStudentHistoryID())));
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(audits.stream().map(StudentHistory::getStudentHistoryID)));
       } else {
         event.setEventOutcome(EventOutcome.STUDENT_HISTORY_CREATED);
         event.setEventPayload(JsonUtil.getJsonStringFromObject(studentList));// need to convert to s
