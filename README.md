@@ -26,8 +26,7 @@ The student api is simple CRU microservice (api/README.md).
 
 ## Documentation
 
-* [Online Student API Spec](https://student-api-mvubjx-test.pathfinder.gov.bc.ca/swagger-ui/index.html?url=/v3/api-docs)
-* [Openshift Readme](tools/README.md)
+* [Online Student API Spec](https://student-api-75e61b-dev.apps.silver.devops.gov.bc.ca/swagger-ui/index.html?url=/v3/api-docs)
 * [PEN Registry Wiki](https://github.com/bcgov/EDUC-INFRA-COMMON/wiki)
 
 ## Getting Help or Reporting an Issue
