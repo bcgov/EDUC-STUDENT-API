@@ -1,0 +1,3 @@
+UPDATE STUDENT
+SET DEMOG_CODE='A'
+where DEMOG_CODE is null;
