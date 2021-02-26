@@ -112,6 +112,8 @@ public class StudentServiceTest {
 
     StudentEntity student = service.createStudent(getStudentCreate()).getLeft();
     student.setLegalFirstName("updatedFirstName");
+    var trueStudentID = UUID.randomUUID();
+    student.setTrueStudentID(trueStudentID);
 
     var studentUpdate = new StudentUpdate();
     studentUpdate.setStudentID(student.getStudentID().toString());
@@ -127,6 +129,7 @@ public class StudentServiceTest {
     assertThat(history.getContent().get(1).getHistoryActivityCode()).isEqualTo("USEREDIT");
     assertThat(history.getContent().get(1).getCreateUser()).isEqualTo(studentUpdate.getUpdateUser());
     assertThat(history.getContent().get(1).getLegalFirstName()).isEqualTo(studentUpdate.getLegalFirstName().toUpperCase());
+    assertThat(history.getContent().get(1).getTrueStudentID()).isEqualTo(trueStudentID);
 
   }
 
