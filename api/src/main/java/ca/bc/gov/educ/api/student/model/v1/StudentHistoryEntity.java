@@ -146,6 +146,11 @@ public class StudentHistoryEntity {
   @Column(name = "DEMOG_CODE")
   String demogCode;
   /**
+   * The True student id.
+   */
+  @Column(name = "TRUE_STUDENT_ID", columnDefinition = "BINARY(16)")
+  UUID trueStudentID;
+  /**
    * The Status code.
    */
   @Column(name = "STATUS_CODE")
