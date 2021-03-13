@@ -33,17 +33,17 @@ public abstract class BaseStudent extends BaseRequest {
   /**
    * The Legal first name.
    */
-  @Size(max = 40)
+  @Size(max = 25)
   String legalFirstName;
   /**
    * The Legal middle names.
    */
-  @Size(max = 60)
+  @Size(max = 25)
   String legalMiddleNames;
   /**
    * The Legal last name.
    */
-  @Size(max = 40)
+  @Size(max = 25)
   @NotNull(message = "Legal Last Name can not be null.")
   String legalLastName;
   /**
@@ -63,17 +63,17 @@ public abstract class BaseStudent extends BaseRequest {
   /**
    * The Usual first name.
    */
-  @Size(max = 40)
+  @Size(max = 25)
   String usualFirstName;
   /**
    * The Usual middle names.
    */
-  @Size(max = 60)
+  @Size(max = 25)
   String usualMiddleNames;
   /**
    * The Usual last name.
    */
-  @Size(max = 40)
+  @Size(max = 25)
   String usualLastName;
   /**
    * The Email.
