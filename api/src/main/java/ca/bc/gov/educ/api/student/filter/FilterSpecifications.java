@@ -69,7 +69,7 @@ public class FilterSpecifications<E, T extends Comparable<T>> {
         .get(filterCriteria.getFieldName()).in(filterCriteria.getConvertedValues()));
 
     map.put(FilterOperation.NOT_IN, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
-        .not(root.get(filterCriteria.getFieldName()).in(filterCriteria.getConvertedSingleValue())));
+        .not(root.get(filterCriteria.getFieldName()).in(filterCriteria.getConvertedValues())));
 
     map.put(FilterOperation.BETWEEN,
         filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.between(
