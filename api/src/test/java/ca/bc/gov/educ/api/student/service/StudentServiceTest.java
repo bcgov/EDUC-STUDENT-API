@@ -152,14 +152,6 @@ public class StudentServiceTest {
     assertNotNull(service.findAll(null, 0, 5, new ArrayList<>()).get());
   }
 
-  @Test(expected = Exception.class)
-  public void testFindAllStudent_WhenStudentSpecsIsValid_ShouldThrowException() throws ExecutionException, InterruptedException {
-    var repository = mock(StudentRepository.class);
-    when(repository.findAll(isNull(), any(Pageable.class))).thenThrow(EntityNotFoundException.class);
-    var service = new StudentService(studentEventRepository, repository, codeTableService, studentHistoryService);
-    service.findAll(null, 0, 5, new ArrayList<>()).get();
-  }
-
   private StudentEntity getStudentEntity() {
     StudentEntity student = new StudentEntity();
     student.setPen("987654321");

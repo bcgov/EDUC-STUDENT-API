@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -244,7 +245,11 @@ public class EventHandlerService {
     StudentEvent studentEvent;
     if (studentEventOptional.isEmpty()) {
       List<UUID> studentIdList = obMapper.readValue(event.getEventPayload(), new TypeReference<>(){});
-      val studentEntityList = getStudentRepository().findStudentEntityByStudentIDIn(studentIdList);
+      var partitionedList = Lists.partition(studentIdList, 900);
+      List<StudentEntity> studentEntityList = new ArrayList<>();
+      for(List<UUID> list : partitionedList) {
+        studentEntityList.addAll(getStudentRepository().findStudentEntityByStudentIDIn(list));
+      }
       if (!studentEntityList.isEmpty() && studentEntityList.size() == studentIdList.size()) {
         var studentList = studentEntityList.stream().map(studentMapper::toStructure).collect(Collectors.toList());
         event.setEventPayload(JsonUtil.getJsonStringFromObject(studentList));
