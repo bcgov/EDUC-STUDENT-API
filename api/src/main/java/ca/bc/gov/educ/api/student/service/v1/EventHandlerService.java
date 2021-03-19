@@ -15,8 +15,10 @@ import ca.bc.gov.educ.api.student.struct.v1.*;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -226,6 +228,43 @@ public class EventHandlerService {
       event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
     }
     StudentEvent studentEvent = createStudentEventRecord(event);
+    return createResponseEvent(studentEvent);
+  }
+
+  /**
+   * Saga should never be null for this type of event.
+   * this method expects that the event payload contains a list of pen numbers.
+   *
+   * @param event         containing the student PENs.
+   * @return the byte [ ]
+   * @throws JsonProcessingException the json processing exception
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public byte[] handleGetStudentsEvent(Event event) throws JsonProcessingException {
+    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
+    StudentEvent studentEvent;
+    if (studentEventOptional.isEmpty()) {
+      List<UUID> studentIdList = obMapper.readValue(event.getEventPayload(), new TypeReference<>(){});
+      var partitionedList = Lists.partition(studentIdList, 900);
+      List<StudentEntity> studentEntityList = new ArrayList<>();
+      for(List<UUID> list : partitionedList) {
+        studentEntityList.addAll(getStudentRepository().findStudentEntityByStudentIDIn(list));
+      }
+      if (!studentEntityList.isEmpty() && studentEntityList.size() == studentIdList.size()) {
+        var studentList = studentEntityList.stream().map(studentMapper::toStructure).collect(Collectors.toList());
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentList));
+        event.setEventOutcome(EventOutcome.STUDENTS_FOUND);
+      } else {
+        event.setEventOutcome(EventOutcome.STUDENTS_NOT_FOUND);
+      }
+      studentEvent = createStudentEventRecord(event);
+    } else {
+      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
+      log.trace(EVENT_PAYLOAD, event);
+      studentEvent = studentEventOptional.get();
+      studentEvent.setUpdateDate(LocalDateTime.now());
+    }
+    getStudentEventRepository().save(studentEvent);
     return createResponseEvent(studentEvent);
   }
 

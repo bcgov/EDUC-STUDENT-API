@@ -1,8 +1,8 @@
 package ca.bc.gov.educ.api.student.repository.v1;
 
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * The interface Student repository.
  */
-public interface StudentRepository extends CrudRepository<StudentEntity, UUID>, JpaSpecificationExecutor<StudentEntity> {
+public interface StudentRepository extends JpaRepository<StudentEntity, UUID>, JpaSpecificationExecutor<StudentEntity> {
   /**
    * Find student entity by pen optional.
    *
@@ -21,13 +21,11 @@ public interface StudentRepository extends CrudRepository<StudentEntity, UUID>, 
   Optional<StudentEntity> findStudentEntityByPen(String pen);
 
   /**
-   * Find student entity by email optional.
+   * Find student entities by student ids.
    *
-   * @param email the email
-   * @return the optional
+   * @param studentID the list of student ids
+   * @return the list of student entities
    */
-  Optional<StudentEntity> findStudentEntityByEmail(String email);
-
-  List<StudentEntity> findAll();
+  List<StudentEntity> findStudentEntityByStudentIDIn(List<UUID> studentID);
 
 }

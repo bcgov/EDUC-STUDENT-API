@@ -13,6 +13,14 @@ public enum EventOutcome {
    */
   STUDENT_NOT_FOUND,
   /**
+   * Students found event outcome.
+   */
+  STUDENTS_FOUND,
+  /**
+   * Students not found event outcome.
+   */
+  STUDENTS_NOT_FOUND,
+  /**
    * Student created event outcome.
    */
   STUDENT_CREATED,
