@@ -21,6 +21,14 @@ public interface StudentRepository extends CrudRepository<StudentEntity, UUID>, 
   Optional<StudentEntity> findStudentEntityByPen(String pen);
 
   /**
+   * Find student entities by student ids.
+   *
+   * @param studentID the list of student ids
+   * @return the list of student entities
+   */
+  List<StudentEntity> findStudentEntityByStudentIDIn(List<UUID> studentID);
+
+  /**
    * Find student entity by email optional.
    *
    * @param email the email
