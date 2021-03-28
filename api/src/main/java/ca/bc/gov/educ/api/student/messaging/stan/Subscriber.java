@@ -16,7 +16,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.constant.Topics.STUDENT_EVENTS_TOPIC;
@@ -26,7 +25,7 @@ import static ca.bc.gov.educ.api.student.constant.Topics.STUDENT_EVENTS_TOPIC;
  */
 @Component
 @Slf4j
-public class Subscriber implements Closeable {
+public class Subscriber extends PubSub implements Closeable {
   private final StreamingConnectionFactory connectionFactory;
   private final STANEventHandlerService stanEventHandlerService;
   private StreamingConnection connection;
@@ -90,70 +89,15 @@ public class Subscriber implements Closeable {
   }
 
 
-  private void retrySubscription() {
-    int numOfRetries = 0;
-    while (true) {
-      try {
-        log.trace("retrying subscription as connection was lost :: retrying ::" + numOfRetries++);
-        this.subscribe();
-        log.info("successfully resubscribed after {} attempts", numOfRetries);
-        break;
-      } catch (InterruptedException | TimeoutException | IOException exception) {
-        log.error("exception occurred while retrying subscription", exception);
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
   /**
    * This method will keep retrying for a connection.
    */
   private void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
-    if (e != null) {
-      reconnect();
-      retrySubscription();
-    }
-  }
-
-  private void reconnect() {
-    int numOfRetries = 1;
-    while (true) {
-      try {
-        log.trace("retrying connection as connection was lost :: retrying ::" + numOfRetries++);
-        connection = connectionFactory.createConnection();
-        log.info("successfully reconnected after {} attempts", numOfRetries);
-        break;
-      } catch (IOException ex) {
-        backOff(numOfRetries, ex);
-      } catch (InterruptedException interruptedException) {
-        Thread.currentThread().interrupt();
-        backOff(numOfRetries, interruptedException);
-      }
-    }
-  }
-
-  private void backOff(int numOfRetries, Exception ex) {
-    log.error("exception occurred", ex);
-    try {
-      double sleepTime = (2 * numOfRetries);
-      TimeUnit.SECONDS.sleep((long) sleepTime);
-    } catch (InterruptedException exc) {
-      log.error("exception occurred", exc);
-      Thread.currentThread().interrupt();
-    }
+    this.connection = super.connectionLostHandler(this.connectionFactory);
   }
 
   @Override
   public void close() {
-    if (connection != null) {
-      log.info("closing stan connection...");
-      try {
-        connection.close();
-      } catch (IOException | TimeoutException | InterruptedException e) {
-        log.error("error while closing stan connection...", e);
-        Thread.currentThread().interrupt();
-      }
-      log.info("stan connection closed...");
-    }
+    super.close(this.connection);
   }
 }
