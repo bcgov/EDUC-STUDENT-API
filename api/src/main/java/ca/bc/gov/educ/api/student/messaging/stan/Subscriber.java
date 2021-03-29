@@ -94,6 +94,21 @@ public class Subscriber extends PubSub implements Closeable {
    */
   private void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
     this.connection = super.connectionLostHandler(this.connectionFactory);
+    this.retrySubscription();
+  }
+  private void retrySubscription() {
+    int numOfRetries = 0;
+    while (true) {
+      try {
+        log.trace("retrying subscription as connection was lost :: retrying ::" + numOfRetries++);
+        this.subscribe();
+        log.info("successfully resubscribed after {} attempts", numOfRetries);
+        break;
+      } catch (InterruptedException | TimeoutException | IOException exception) {
+        log.error("exception occurred while retrying subscription", exception);
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   @Override
