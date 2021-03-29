@@ -46,6 +46,7 @@ public class Subscriber extends PubSub implements Closeable {
         .clusterId(applicationProperties.getStanCluster())
         .connectionLostHandler(this::connectionLostHandler)
         .natsConn(natsConnection)
+        .traceConnection()
         .maxPingsOut(30)
         .pingInterval(Duration.ofSeconds(2))
         .clientId("student-api-subscriber" + UUID.randomUUID().toString()).build();
