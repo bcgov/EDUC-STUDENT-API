@@ -43,7 +43,7 @@ public class StanConnection implements Closeable {
         .traceConnection()
         .maxPingsOut(30)
         .pingInterval(Duration.ofSeconds(2))
-        .clientId("student-api::" + UUID.randomUUID().toString()).build();
+        .clientId("student-api-" + UUID.randomUUID().toString()).build();
     connectionFactory = new StreamingConnectionFactory(options);
     connection = connectionFactory.createConnection();
   }
