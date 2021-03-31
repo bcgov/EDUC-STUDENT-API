@@ -1,7 +1,7 @@
 package ca.bc.gov.educ.api.student.service.v1;
 
 import ca.bc.gov.educ.api.student.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.messaging.stan.Publisher;
+import ca.bc.gov.educ.api.student.messaging.stan.StanPublisher;
 import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
 import ca.bc.gov.educ.api.student.struct.v1.Event;
 import io.nats.client.Message;
@@ -27,7 +27,7 @@ public class EventHandlerDelegatorService {
   public static final String RESPONDING_BACK_TO_NATS_ON_CHANNEL = "responding back to NATS on {} channel ";
   private final MessagePublisher messagePublisher;
   private final EventHandlerService eventHandlerService;
-  private final Publisher publisher;
+  private final StanPublisher publisher;
 
   /**
    * Instantiates a new Event handler delegator service.
@@ -37,7 +37,7 @@ public class EventHandlerDelegatorService {
    * @param publisher           the publisher
    */
   @Autowired
-  public EventHandlerDelegatorService(MessagePublisher messagePublisher, EventHandlerService eventHandlerService, Publisher publisher) {
+  public EventHandlerDelegatorService(MessagePublisher messagePublisher, EventHandlerService eventHandlerService, StanPublisher publisher) {
     this.messagePublisher = messagePublisher;
     this.eventHandlerService = eventHandlerService;
     this.publisher = publisher;

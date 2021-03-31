@@ -4,7 +4,7 @@ import ca.bc.gov.educ.api.student.endpoint.v1.StudentEndpoint;
 import ca.bc.gov.educ.api.student.exception.InvalidPayloadException;
 import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
-import ca.bc.gov.educ.api.student.messaging.stan.Publisher;
+import ca.bc.gov.educ.api.student.messaging.stan.StanPublisher;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.service.v1.StudentWrapperService;
 import ca.bc.gov.educ.api.student.service.v1.StudentSearchService;
@@ -49,7 +49,7 @@ public class StudentController implements StudentEndpoint {
   private final StudentService service;
 
   @Getter(AccessLevel.PRIVATE)
-  private final Publisher publisher;
+  private final StanPublisher publisher;
 
   @Getter(AccessLevel.PRIVATE)
   private final StudentWrapperService studentEventService;
@@ -69,7 +69,7 @@ public class StudentController implements StudentEndpoint {
    * @param studentSearchService the student search service
    */
   @Autowired
-  StudentController(final StudentService studentService, Publisher publisher, StudentWrapperService studentEventService, StudentPayloadValidator payloadValidator, StudentSearchService studentSearchService) {
+  StudentController(final StudentService studentService, StanPublisher publisher, StudentWrapperService studentEventService, StudentPayloadValidator payloadValidator, StudentSearchService studentSearchService) {
     this.service = studentService;
     this.publisher = publisher;
     this.studentEventService = studentEventService;

@@ -1,6 +1,6 @@
 package ca.bc.gov.educ.api.student.schedulers;
 
-import ca.bc.gov.educ.api.student.messaging.stan.Publisher;
+import ca.bc.gov.educ.api.student.messaging.stan.StanPublisher;
 import ca.bc.gov.educ.api.student.repository.v1.StudentEventRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockAssert;
@@ -21,7 +21,7 @@ import static ca.bc.gov.educ.api.student.constant.EventStatus.DB_COMMITTED;
 public class STANEventScheduler {
 
   private final StudentEventRepository studentEventRepository;
-  private final Publisher publisher;
+  private final StanPublisher publisher;
 
   /**
    * Instantiates a new Stan event scheduler.
@@ -29,7 +29,7 @@ public class STANEventScheduler {
    * @param studentEventRepository the student event repository
    * @param publisher              the publisher
    */
-  public STANEventScheduler(StudentEventRepository studentEventRepository, Publisher publisher) {
+  public STANEventScheduler(StudentEventRepository studentEventRepository, StanPublisher publisher) {
     this.studentEventRepository = studentEventRepository;
     this.publisher = publisher;
   }
