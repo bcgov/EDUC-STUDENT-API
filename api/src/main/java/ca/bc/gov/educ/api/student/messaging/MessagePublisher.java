@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * This publisher will publish messages to NATS, for publishing directly to STAN,
- * please follow {@link ca.bc.gov.educ.api.student.messaging.stan.StanPublisher}.
+ * please follow {@link ca.bc.gov.educ.api.student.messaging.stan.Publisher}.
  */
 @Component
 @Slf4j

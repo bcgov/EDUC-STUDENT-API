@@ -4,9 +4,8 @@ package ca.bc.gov.educ.api.student.support;
 import ca.bc.gov.educ.api.student.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.messaging.NatsConnection;
-import ca.bc.gov.educ.api.student.messaging.stan.StanPublisher;
-import ca.bc.gov.educ.api.student.messaging.stan.StanSubscriber;
-import ca.bc.gov.educ.api.student.messaging.stan.StanConnection;
+import ca.bc.gov.educ.api.student.messaging.stan.Publisher;
+import ca.bc.gov.educ.api.student.messaging.stan.Subscriber;
 import io.nats.client.Connection;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
@@ -43,19 +42,15 @@ public class MockConfiguration {
 
   @Bean
   @Primary
-  public StanPublisher stanPublisher() {
-    return Mockito.mock(StanPublisher.class);
+  public Publisher publisher() {
+    return Mockito.mock(Publisher.class);
   }
 
   @Bean
   @Primary
-  public StanSubscriber stanSubscriber() {
-    return Mockito.mock(StanSubscriber.class);
+  public Subscriber subscriber() {
+    return Mockito.mock(Subscriber.class);
   }
-  @Bean
-  @Primary
-  public StanConnection stanConnection() {
-    return Mockito.mock(StanConnection.class);
-  }
+
 
 }

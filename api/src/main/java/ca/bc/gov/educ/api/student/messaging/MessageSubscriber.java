@@ -1,6 +1,6 @@
 package ca.bc.gov.educ.api.student.messaging;
 
-import ca.bc.gov.educ.api.student.messaging.stan.StanSubscriber;
+import ca.bc.gov.educ.api.student.messaging.stan.Subscriber;
 import ca.bc.gov.educ.api.student.service.v1.EventHandlerDelegatorService;
 import ca.bc.gov.educ.api.student.struct.v1.Event;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
@@ -21,7 +21,7 @@ import static ca.bc.gov.educ.api.student.constant.Topics.STUDENT_API_TOPIC;
 
 /**
  * This is for subscribing directly to NATS. for subscribing to STAN please
- * follow {@link StanSubscriber}
+ * follow {@link Subscriber}
  */
 @Component
 @Slf4j
