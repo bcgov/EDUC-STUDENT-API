@@ -33,14 +33,13 @@ public class NatsConnection implements Closeable {
    */
   @Autowired
   public NatsConnection(final ApplicationProperties applicationProperties) throws IOException, InterruptedException {
-    this.natsCon = connectToNats(applicationProperties.getStanUrl(), applicationProperties.getNatsMaxReconnect());
+    this.natsCon = connectToNats(applicationProperties.getNatsUrl(), applicationProperties.getNatsMaxReconnect());
   }
 
   private Connection connectToNats(String stanUrl, int maxReconnects) throws IOException, InterruptedException {
     io.nats.client.Options natsOptions = new io.nats.client.Options.Builder()
         .connectionListener(this::connectionListener)
         .maxPingsOut(5)
-        .oldRequestStyle()
         .pingInterval(Duration.ofSeconds(2))
         .connectionName("STUDENT-API")
         .connectionTimeout(Duration.ofSeconds(5))

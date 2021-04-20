@@ -17,18 +17,13 @@ public class ApplicationProperties {
    * The constant STUDENT_API.
    */
   public static final String STUDENT_API = "STUDENT-API";
-
+  public static final String STREAM_NAME="STUDENT_EVENTS";
   /**
    * The Stan url.
    */
   @Value("${stan.url}")
-  String stanUrl;
+  String natsUrl;
 
-  /**
-   * The Stan cluster.
-   */
-  @Value("${stan.cluster}")
-  String stanCluster;
 
   @Value("${nats.maxReconnect}")
   Integer natsMaxReconnect;
