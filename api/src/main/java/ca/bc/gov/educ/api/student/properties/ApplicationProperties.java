@@ -21,7 +21,7 @@ public class ApplicationProperties {
   /**
    * The Stan url.
    */
-  @Value("${stan.url}")
+  @Value("${nats.url}")
   String natsUrl;
 
 
