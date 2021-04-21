@@ -12,11 +12,11 @@ import java.util.UUID;
 import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
 
 /**
- * This class will process events from STAN, which is used in choreography pattern, where messages are published if a student is created or updated.
+ * This class will process events from Jet Stream, which is used in choreography pattern, where messages are published if a student is created or updated.
  */
 @Service
 @Slf4j
-public class STANEventHandlerService {
+public class JetStreamEventHandlerService {
 
   private final StudentEventRepository studentEventRepository;
 
@@ -27,7 +27,7 @@ public class STANEventHandlerService {
    * @param studentEventRepository the student event repository
    */
   @Autowired
-  public STANEventHandlerService(StudentEventRepository studentEventRepository) {
+  public JetStreamEventHandlerService(StudentEventRepository studentEventRepository) {
     this.studentEventRepository = studentEventRepository;
   }
 

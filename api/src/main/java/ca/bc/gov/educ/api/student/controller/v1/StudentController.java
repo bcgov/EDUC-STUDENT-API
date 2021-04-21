@@ -4,7 +4,7 @@ import ca.bc.gov.educ.api.student.endpoint.v1.StudentEndpoint;
 import ca.bc.gov.educ.api.student.exception.InvalidPayloadException;
 import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
-import ca.bc.gov.educ.api.student.messaging.stan.Publisher;
+import ca.bc.gov.educ.api.student.messaging.jetstream.Publisher;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.service.v1.StudentWrapperService;
 import ca.bc.gov.educ.api.student.service.v1.StudentSearchService;

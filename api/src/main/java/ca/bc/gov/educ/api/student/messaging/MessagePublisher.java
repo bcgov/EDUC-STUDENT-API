@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * This publisher will publish messages to NATS, for publishing directly to STAN,
- * please follow {@link ca.bc.gov.educ.api.student.messaging.stan.Publisher}.
+ * This publisher will publish messages to NATS, for publishing directly to Jet Stream,
+ * please follow {@link ca.bc.gov.educ.api.student.messaging.jetstream.Publisher}.
  */
 @Component
 @Slf4j

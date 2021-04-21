@@ -26,10 +26,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
-public class STANEventHandlerServiceTest {
+public class JetStreamEventHandlerServiceTest {
 
   @Autowired
-  STANEventHandlerService stanEventHandlerService;
+  JetStreamEventHandlerService jetStreamEventHandlerService;
 
   @Autowired
   StudentEventRepository studentEventRepository;
@@ -46,7 +46,7 @@ public class STANEventHandlerServiceTest {
     choreographedEvent.setEventOutcome(STUDENT_CREATED);
     choreographedEvent.setEventType(CREATE_STUDENT);
     choreographedEvent.setEventPayload(JsonUtil.getJsonStringFromObject(new StudentCreate()));
-    stanEventHandlerService.updateEventStatus(choreographedEvent);
+    jetStreamEventHandlerService.updateEventStatus(choreographedEvent);
     var results = studentEventRepository.findByEventStatus(MESSAGE_PUBLISHED.toString());
     assertThat(results).isEmpty();
   }
@@ -57,14 +57,14 @@ public class STANEventHandlerServiceTest {
     choreographedEvent.setEventOutcome(STUDENT_CREATED);
     choreographedEvent.setEventType(CREATE_STUDENT);
     choreographedEvent.setEventPayload(JsonUtil.getJsonStringFromObject(new StudentCreate()));
-    stanEventHandlerService.updateEventStatus(choreographedEvent);
+    jetStreamEventHandlerService.updateEventStatus(choreographedEvent);
     var results = studentEventRepository.findByEventStatus(MESSAGE_PUBLISHED.toString());
     assertThat(results).isEmpty();
   }
 
   @Test
   public void testUpdateEventStatus_givenChoreographedEventNull_shouldDONothing() {
-    stanEventHandlerService.updateEventStatus(null);
+    jetStreamEventHandlerService.updateEventStatus(null);
     var results = studentEventRepository.findByEventStatus(MESSAGE_PUBLISHED.toString());
     assertThat(results).isEmpty();
   }
@@ -77,7 +77,7 @@ public class STANEventHandlerServiceTest {
     choreographedEvent.setEventOutcome(STUDENT_CREATED);
     choreographedEvent.setEventType(CREATE_STUDENT);
     choreographedEvent.setEventPayload(JsonUtil.getJsonStringFromObject(new StudentCreate()));
-    stanEventHandlerService.updateEventStatus(choreographedEvent);
+    jetStreamEventHandlerService.updateEventStatus(choreographedEvent);
     var results = studentEventRepository.findByEventStatus(MESSAGE_PUBLISHED.toString());
     assertThat(results).hasSize(1);
     assertThat(results.get(0)).isNotNull();

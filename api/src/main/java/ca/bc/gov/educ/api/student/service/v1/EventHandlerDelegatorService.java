@@ -1,7 +1,7 @@
 package ca.bc.gov.educ.api.student.service.v1;
 
 import ca.bc.gov.educ.api.student.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.messaging.stan.Publisher;
+import ca.bc.gov.educ.api.student.messaging.jetstream.Publisher;
 import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
 import ca.bc.gov.educ.api.student.struct.v1.Event;
 import io.nats.client.Message;
@@ -75,7 +75,7 @@ public class EventHandlerDelegatorService {
           pair = eventHandlerService.handleCreateStudentEvent(event);
           log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           publishToNATS(event, message, isSynchronous, pair.getLeft());
-          publishToSTAN(pair.getRight());
+          publishToJetStream(pair.getRight());
           break;
         case UPDATE_STUDENT:
           log.info("received update student event :: {}", event.getSagaId());
@@ -83,7 +83,7 @@ public class EventHandlerDelegatorService {
           pair = eventHandlerService.handleUpdateStudentEvent(event);
           log.info(RESPONDING_BACK_TO_NATS_ON_CHANNEL, message.getReplyTo() != null ? message.getReplyTo() : event.getReplyTo());
           publishToNATS(event, message, isSynchronous, pair.getLeft());
-          publishToSTAN(pair.getRight());
+          publishToJetStream(pair.getRight());
           break;
         case GET_STUDENT_HISTORY:
           log.info("received GET_STUDENT_HISTORY event :: {}", event.getSagaId());
@@ -126,7 +126,7 @@ public class EventHandlerDelegatorService {
     }
   }
 
-  private void publishToSTAN(StudentEvent event) {
+  private void publishToJetStream(final StudentEvent event) {
     publisher.dispatchChoreographyEvent(event);
   }
 }
