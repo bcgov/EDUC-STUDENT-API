@@ -70,7 +70,8 @@ public class Subscriber {
    * @param message the string representation of {@link Event} if it not type of event then it will throw exception and will be ignored.
    */
   public void onStudentEventsTopicMessage(final Message message) {
-    log.debug("Received message :: {}", message);
+    log.info("Received message Subject:: {} , SID :: {} , sequence :: {}, pending :: {} ", message.getSubject(), message.getSID(), message.metaData().consumerSequence(),
+      message.metaData().pendingCount());
     try {
       String eventString = new String(message.getData());
       ChoreographedEvent event = JsonUtil.getJsonObjectFromString(ChoreographedEvent.class, eventString);
