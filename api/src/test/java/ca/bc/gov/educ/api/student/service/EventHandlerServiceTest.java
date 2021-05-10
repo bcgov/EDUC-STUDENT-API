@@ -17,6 +17,7 @@ import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
 import org.assertj.core.util.DateUtil;
 import org.junit.After;
@@ -99,14 +100,13 @@ public class EventHandlerServiceTest {
   }
 
   @Test
-  public void testHandleEvent_givenEventTypeGET_STUDENT_HISTORY__whenNoStudentExist_shouldHaveEventOutcomeSTUDENT_HISTORY_NOT_FOUND() throws JsonProcessingException {
+  public void testHandleEvent_givenEventTypeGET_STUDENT_HISTORY__whenNoStudentExist_shouldHaveEventOutcomeSTUDENT_HISTORY_NOT_FOUND() throws IOException {
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(UUID.randomUUID().toString()).build();
-    eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event);
-    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT_HISTORY.toString());
-    assertThat(studentEventUpdated).isPresent();
-    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
-    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_HISTORY_NOT_FOUND.toString());
+    val responseEventBytes = eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event);
+    val responseEvent = JsonUtil.getObjectFromJsonBytes(Event.class, responseEventBytes);
+    assertThat(responseEvent).isNotNull();
+    assertThat(responseEvent.getEventOutcome()).isEqualTo(STUDENT_HISTORY_NOT_FOUND);
   }
 
   @Test
@@ -122,18 +122,17 @@ public class EventHandlerServiceTest {
   }
 
   @Test
-  public void testHandleEvent_givenEventTypeGET_STUDENT_HISTORY__whenStudentExist_shouldHaveEventOutcomeSTUDENT_HISTORY_FOUND() throws JsonProcessingException {
+  public void testHandleEvent_givenEventTypeGET_STUDENT_HISTORY__whenStudentExist_shouldHaveEventOutcomeSTUDENT_HISTORY_FOUND() throws IOException {
     StudentEntity student = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
     StudentHistory history = getStudentHistoryEntityFromJsonString(student.getStudentID().toString(), Optional.empty());
 
     StudentHistoryEntity entity = studentHistoryRepository.save(studentHistoryMapper.toModel(history));
     var sagaId = UUID.randomUUID();
     final Event event = Event.builder().eventType(GET_STUDENT_HISTORY).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(entity.getStudentID().toString()).build();
-    eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event);
-    var studentEventUpdated = studentEventRepository.findBySagaIdAndEventType(sagaId, GET_STUDENT_HISTORY.toString());
-    assertThat(studentEventUpdated).isPresent();
-    assertThat(studentEventUpdated.get().getEventStatus()).isEqualTo(MESSAGE_PUBLISHED.toString());
-    assertThat(studentEventUpdated.get().getEventOutcome()).isEqualTo(STUDENT_HISTORY_FOUND.toString());
+    val responseEventBytes = eventHandlerServiceUnderTest.handleGetStudentHistoryEvent(event);
+    val responseEvent = JsonUtil.getObjectFromJsonBytes(Event.class, responseEventBytes);
+    assertThat(responseEvent).isNotNull();
+    assertThat(responseEvent.getEventOutcome()).isEqualTo(STUDENT_HISTORY_FOUND);
   }
 
   @Test

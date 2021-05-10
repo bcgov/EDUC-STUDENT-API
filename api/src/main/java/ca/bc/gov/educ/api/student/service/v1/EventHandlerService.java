@@ -241,31 +241,23 @@ public class EventHandlerService {
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public byte[] handleGetStudentsEvent(Event event) throws JsonProcessingException {
-    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
-    StudentEvent studentEvent;
-    if (studentEventOptional.isEmpty()) {
-      List<UUID> studentIdList = obMapper.readValue(event.getEventPayload(), new TypeReference<>(){});
-      var partitionedList = Lists.partition(studentIdList, 900);
-      List<StudentEntity> studentEntityList = new ArrayList<>();
-      for(List<UUID> list : partitionedList) {
-        studentEntityList.addAll(getStudentRepository().findStudentEntityByStudentIDIn(list));
-      }
-      if (!studentEntityList.isEmpty() && studentEntityList.size() == studentIdList.size()) {
-        var studentList = studentEntityList.stream().map(studentMapper::toStructure).collect(Collectors.toList());
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentList));
-        event.setEventOutcome(EventOutcome.STUDENTS_FOUND);
-      } else {
-        event.setEventOutcome(EventOutcome.STUDENTS_NOT_FOUND);
-      }
-      studentEvent = createStudentEventRecord(event);
-    } else {
-      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      studentEvent = studentEventOptional.get();
-      studentEvent.setUpdateDate(LocalDateTime.now());
+    List<UUID> studentIdList = obMapper.readValue(event.getEventPayload(), new TypeReference<>() {
+    });
+    var partitionedList = Lists.partition(studentIdList, 900);
+    List<StudentEntity> studentEntityList = new ArrayList<>();
+    for (List<UUID> list : partitionedList) {
+      studentEntityList.addAll(getStudentRepository().findStudentEntityByStudentIDIn(list));
     }
-    getStudentEventRepository().save(studentEvent);
-    return createResponseEvent(studentEvent);
+    log.info("Found :: {} students for saga ID :: {}", studentEntityList.size(), event.getSagaId());
+    if (!studentEntityList.isEmpty() && studentEntityList.size() == studentIdList.size()) {
+      var studentList = studentEntityList.stream().map(studentMapper::toStructure).collect(Collectors.toList());
+      event.setEventPayload(JsonUtil.getJsonStringFromObject(studentList));
+      event.setEventOutcome(EventOutcome.STUDENTS_FOUND);
+    } else {
+      event.setEventOutcome(EventOutcome.STUDENTS_NOT_FOUND);
+    }
+    log.info("Event outcome for saga ID :: {}, is :: {}", event.getSagaId(), event.getEventOutcome());
+    return createResponseEvent(createStudentEventRecord(event));
   }
 
   /**
@@ -326,29 +318,17 @@ public class EventHandlerService {
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public byte[] handleGetStudentHistoryEvent(Event event) throws JsonProcessingException {
-    val studentEventOptional = getStudentEventRepository().findBySagaIdAndEventType(event.getSagaId(), event.getEventType().toString());
-    StudentEvent studentEvent;
-    if (studentEventOptional.isEmpty()) {
-      log.info(NO_RECORD_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      val studentHistoryEntityList = getStudentHistoryRepository().findByStudentID(UUID.fromString(event.getEventPayload()));
-      if (!studentHistoryEntityList.isEmpty()) {
-        var studentHistoryList = studentHistoryEntityList.stream().map(studentHistoryMapper::toStructure).collect(Collectors.toList());
-
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(studentHistoryList));
-        event.setEventOutcome(EventOutcome.STUDENT_HISTORY_FOUND);
-      } else {
-        event.setEventOutcome(EventOutcome.STUDENT_HISTORY_NOT_FOUND);
-      }
-      studentEvent = createStudentEventRecord(event);
-    } else { // just update the status of the event so that it will be polled and send again to the saga orchestrator.
-      log.info(RECORD_FOUND_FOR_SAGA_ID_EVENT_TYPE);
-      log.trace(EVENT_PAYLOAD, event);
-      studentEvent = studentEventOptional.get();
-      studentEvent.setUpdateDate(LocalDateTime.now());
+    val studentHistoryEntityList = getStudentHistoryRepository().findByStudentID(UUID.fromString(event.getEventPayload()));
+    log.info("Found :: {} student history records for saga ID :: {}", studentHistoryEntityList.size(), event.getSagaId());
+    if (!studentHistoryEntityList.isEmpty()) {
+      var studentHistoryList = studentHistoryEntityList.stream().map(studentHistoryMapper::toStructure).collect(Collectors.toList());
+      event.setEventPayload(JsonUtil.getJsonStringFromObject(studentHistoryList));
+      event.setEventOutcome(EventOutcome.STUDENT_HISTORY_FOUND);
+    } else {
+      event.setEventOutcome(EventOutcome.STUDENT_HISTORY_NOT_FOUND);
     }
-    getStudentEventRepository().save(studentEvent);
-    return createResponseEvent(studentEvent);
+    log.info("Event outcome for saga ID :: {}, is :: {}", event.getSagaId(), event.getEventOutcome());
+    return createResponseEvent(createStudentEventRecord(event));
   }
 
   private StudentEvent createStudentEventRecord(Event event) {
