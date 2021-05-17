@@ -46,12 +46,12 @@ public class JsonUtil {
    * @throws JsonProcessingException the json processing exception
    */
   public static byte[] getJsonBytesFromObject(Object payload) throws JsonProcessingException {
-    return new ObjectMapper().writeValueAsBytes(payload);
+    return mapper.writeValueAsBytes(payload);
   }
 
   /**
    * Get object from json byte [ ].
-   * 
+   *
    * @param <T>     the type parameter
    * @param clazz   the clazz
    * @param payload the byte [ ]
@@ -59,6 +59,6 @@ public class JsonUtil {
    * @throws JsonProcessingException the json processing exception
    */
   public static <T> T getObjectFromJsonBytes(Class<T> clazz, byte[] payload) throws IOException {
-    return new ObjectMapper().readValue(payload, clazz);
+    return mapper.readValue(payload, clazz);
   }
 }

@@ -29,6 +29,7 @@ public abstract class BaseStudent extends BaseRequest {
    * The Pen.
    */
   @NotNull(message = "PEN Number can not be null.")
+  @Size(min = 9, max = 9)
   String pen;
   /**
    * The Legal first name.
