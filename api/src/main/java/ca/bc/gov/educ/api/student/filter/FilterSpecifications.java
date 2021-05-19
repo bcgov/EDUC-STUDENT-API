@@ -44,11 +44,21 @@ public class FilterSpecifications<E, T extends Comparable<T>> {
     map = new EnumMap<>(FilterOperation.class);
 
     // Equal
-    map.put(FilterOperation.EQUAL, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
-        .equal(root.get(filterCriteria.getFieldName()), filterCriteria.getConvertedSingleValue()));
+    map.put(FilterOperation.EQUAL, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> {
+      if(filterCriteria.getConvertedSingleValue() == null){
+        return criteriaBuilder.isNull(root.get(filterCriteria.getFieldName()));
+      }
+      return criteriaBuilder
+              .equal(root.get(filterCriteria.getFieldName()), filterCriteria.getConvertedSingleValue());
+    });
 
-    map.put(FilterOperation.NOT_EQUAL, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
-        .notEqual(root.get(filterCriteria.getFieldName()), filterCriteria.getConvertedSingleValue()));
+    map.put(FilterOperation.NOT_EQUAL, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> {
+      if(filterCriteria.getConvertedSingleValue() == null){
+        return criteriaBuilder.isNotNull(root.get(filterCriteria.getFieldName()));
+      }
+      return criteriaBuilder
+              .notEqual(root.get(filterCriteria.getFieldName()), filterCriteria.getConvertedSingleValue());
+    });
 
     map.put(FilterOperation.GREATER_THAN,
         filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.greaterThan(
