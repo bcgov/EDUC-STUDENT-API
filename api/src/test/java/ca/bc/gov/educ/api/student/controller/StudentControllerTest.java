@@ -241,6 +241,52 @@ public class StudentControllerTest {
   }
 
   @Test
+  public void testReadStudentPaginated_givenValueNull_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    val entitiesFromDB = repository.findAll();
+    SearchCriteria criteria = SearchCriteria.builder().key("localID").operation(FilterOperation.EQUAL).value(null).valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    this.mockMvc.perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk());
+  }
+
+  @Test
+  public void testReadStudentPaginated_givenValueNotNull_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    val entitiesFromDB = repository.findAll();
+    SearchCriteria criteria = SearchCriteria.builder().key("localID").operation(FilterOperation.NOT_EQUAL).value(null).valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    this.mockMvc.perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+            .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk());
+  }
+
+  @Test
   public void testDeleteStudent_GivenValidId_ShouldReturnStatus204() throws Exception {
     StudentEntity entity = createStudent();
     repository.save(entity);
@@ -409,6 +455,37 @@ public class StudentControllerTest {
             .contentType(APPLICATION_JSON))
         .andReturn();
     this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(3)));
+  }
+
+  @Test
+  public void testReadStudentPaginated_GivenFirstAndLastNull_ShouldReturnStatusOk() throws Exception {
+    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final File file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    String fromDate = "1990-04-01";
+    String toDate = "2020-04-15";
+    SearchCriteria criteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    SearchCriteria criteriaFirstName = SearchCriteria.builder().condition(AND).key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
+    SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.EQUAL).value(null).valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    criteriaList.add(criteriaFirstName);
+    criteriaList.add(criteriaLastName);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    MvcResult result = mockMvc
+            .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0)));
   }
 
   @Test
