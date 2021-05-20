@@ -1,8 +1,8 @@
 package ca.bc.gov.educ.api.student.filter;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.NonNull;
 
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,7 +65,7 @@ public class FilterCriteria<T extends Comparable<T>> {
    * @param filterOperation   the filter operation
    * @param converterFunction the converter function
    */
-  public FilterCriteria(@NotNull String fieldName, @NotNull String fieldValue, @NotNull FilterOperation filterOperation, Function<String, T> converterFunction) {
+  public FilterCriteria(@NonNull String fieldName, String fieldValue, @NonNull FilterOperation filterOperation, Function<String, T> converterFunction) {
 
     this.fieldName = fieldName;
     this.converterFunction = converterFunction;
