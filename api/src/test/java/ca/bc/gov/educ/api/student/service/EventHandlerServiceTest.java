@@ -17,6 +17,8 @@ import ca.bc.gov.educ.api.student.util.TransformUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.core.util.Json;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
 import org.assertj.core.util.DateUtil;
@@ -53,6 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest
+@Slf4j
 public class EventHandlerServiceTest {
 
   /**
@@ -440,6 +443,26 @@ public class EventHandlerServiceTest {
     assertThat(responseEvent).isNotNull();
     assertThat(responseEvent.getEventOutcome()).isEqualTo(STUDENTS_FOUND);
   }
+
+  @Test
+  public void testHandleEvent_givenEventTypeGET_STUDENTS__whenStudentsExistAndRepeatedStudentIDProvided_shouldHaveEventOutcomeSTUDENTS_FOUND() throws IOException {
+    StudentEntity entity1 = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    StudentEntity entity2 = studentRepository.save(studentMapper.toModel(getStudentEntityFromJsonString()));
+    var sagaId = UUID.randomUUID();
+    List<UUID> ids = Arrays.asList(entity1.getStudentID(), entity2.getStudentID(),entity1.getStudentID(), entity2.getStudentID());
+    final Event event = Event.builder().eventType(GET_STUDENTS).sagaId(sagaId).replyTo(STUDENT_API_TOPIC).eventPayload(JsonUtil.getJsonStringFromObject(ids)).build();
+    log.info("Event is :: {}", event);
+    byte[] response = eventHandlerServiceUnderTest.handleGetStudentsEvent(event);
+    assertThat(response).isNotEmpty();
+    Event responseEvent = JsonUtil.getObjectFromJsonBytes(Event.class, response);
+    assertThat(responseEvent).isNotNull();
+    assertThat(responseEvent.getEventOutcome()).isEqualTo(STUDENTS_FOUND);
+    assertThat(responseEvent.getEventPayload()).isNotBlank();
+    List<Student> students = JsonUtil.mapper.readValue(responseEvent.getEventPayload(), new TypeReference<>() {
+    });
+    assertThat(students).isNotEmpty().hasSize(2);
+  }
+
 
   @Test
   public void testHandleEvent_givenEventTypeGET_STUDENTS__whenStudentExistAndDuplicateSagaMessage_shouldHaveEventOutcomeSTUDENTS_FOUND() throws JsonProcessingException {

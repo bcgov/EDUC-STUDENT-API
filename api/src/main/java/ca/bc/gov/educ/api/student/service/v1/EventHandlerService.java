@@ -18,7 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Iterables;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -152,7 +153,7 @@ public class EventHandlerService {
       event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
     }
 
-    StudentEvent studentEvent = createStudentEventRecord(event);
+    val studentEvent = createStudentEventRecord(event);
     getStudentEventRepository().save(studentEvent);
     return Pair.of(createResponseEvent(studentEvent), choreographyEvent);
   }
@@ -227,7 +228,7 @@ public class EventHandlerService {
     } else {
       event.setEventOutcome(EventOutcome.STUDENT_NOT_FOUND);
     }
-    StudentEvent studentEvent = createStudentEventRecord(event);
+    val studentEvent = createStudentEventRecord(event);
     return createResponseEvent(studentEvent);
   }
 
@@ -241,22 +242,21 @@ public class EventHandlerService {
    */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public byte[] handleGetStudentsEvent(Event event) throws JsonProcessingException {
-    List<UUID> studentIdList = obMapper.readValue(event.getEventPayload(), new TypeReference<>() {
-    });
-    var partitionedList = Lists.partition(studentIdList, 900);
+    Set<UUID> studentIds = obMapper.readValue(event.getEventPayload(), new TypeReference<>() {
+    }); // typecast to a set to eliminate duplicates.
+    var partitionedList = Iterables.partition(studentIds, 900);
     List<StudentEntity> studentEntityList = new ArrayList<>();
     for (List<UUID> list : partitionedList) {
       studentEntityList.addAll(getStudentRepository().findStudentEntityByStudentIDIn(list));
     }
-    log.info("Found :: {} students for saga ID :: {}", studentEntityList.size(), event.getSagaId());
-    if (!studentEntityList.isEmpty() && studentEntityList.size() == studentIdList.size()) {
+    if (!studentEntityList.isEmpty() && studentEntityList.size() == studentIds.size()) {
       var studentList = studentEntityList.stream().map(studentMapper::toStructure).collect(Collectors.toList());
       event.setEventPayload(JsonUtil.getJsonStringFromObject(studentList));
       event.setEventOutcome(EventOutcome.STUDENTS_FOUND);
     } else {
       event.setEventOutcome(EventOutcome.STUDENTS_NOT_FOUND);
     }
-    log.info("Event outcome for saga ID :: {}, is :: {}", event.getSagaId(), event.getEventOutcome());
+    log.info("Found :: {} unique students, Event outcome for saga ID :: {}, is :: {}", studentEntityList.size(), event.getSagaId(), event.getEventOutcome());
     return createResponseEvent(createStudentEventRecord(event));
   }
 
@@ -347,7 +347,7 @@ public class EventHandlerService {
   }
 
   private byte[] createResponseEvent(StudentEvent event) throws JsonProcessingException {
-    Event responseEvent = Event.builder()
+    val responseEvent = Event.builder()
         .sagaId(event.getSagaId())
         .eventType(EventType.valueOf(event.getEventType()))
         .eventOutcome(EventOutcome.valueOf(event.getEventOutcome()))
@@ -364,8 +364,8 @@ public class EventHandlerService {
   public CompletableFuture<byte[]> handleGetPaginatedStudent(Event event) {
     String sortCriteriaJson = null;
     String searchCriteriaListJson = null;
-    int pageNumber = 0;
-    int pageSize = 100000;
+    var pageNumber = 0;
+    var pageSize = 100000;
     var params = event.getEventPayload().split("&");
     for (String param : params) {
       if (param != null) {
