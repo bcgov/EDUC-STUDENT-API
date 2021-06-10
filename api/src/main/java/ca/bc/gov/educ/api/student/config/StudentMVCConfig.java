@@ -14,20 +14,20 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class StudentMVCConfig implements WebMvcConfigurer {
 
   @Getter(AccessLevel.PRIVATE)
-  private final StudentRequestInterceptor studentRequestInterceptor;
+  private final RequestResponseInterceptor requestResponseInterceptor;
 
   /**
    * Instantiates a new Student mvc config.
    *
-   * @param studentRequestInterceptor the student request interceptor
+   * @param requestResponseInterceptor the student request interceptor
    */
   @Autowired
-  public StudentMVCConfig(final StudentRequestInterceptor studentRequestInterceptor) {
-    this.studentRequestInterceptor = studentRequestInterceptor;
+  public StudentMVCConfig(final RequestResponseInterceptor requestResponseInterceptor) {
+    this.requestResponseInterceptor = requestResponseInterceptor;
   }
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
-    registry.addInterceptor(studentRequestInterceptor).addPathPatterns("/**");
+    registry.addInterceptor(requestResponseInterceptor).addPathPatterns("/**");
   }
 }

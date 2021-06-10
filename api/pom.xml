@@ -23,6 +23,7 @@
       src/main/java/ca/bc/gov/educ/api/student/service/v1/EventHandlerDelegatorService.java,
       src/main/java/ca/bc/gov/educ/api/student/messaging/**,
       src/main/java/ca/bc/gov/educ/api/student/StudentApiApplication.java
+      src/main/java/ca/bc/gov/educ/api/student/helpers/LogHelper.java
     </sonar.exclusions>
     <java.version>11</java.version>
 

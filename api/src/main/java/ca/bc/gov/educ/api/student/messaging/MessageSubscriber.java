@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.messaging;
 
+import ca.bc.gov.educ.api.student.helpers.LogHelper;
 import ca.bc.gov.educ.api.student.messaging.jetstream.Subscriber;
 import ca.bc.gov.educ.api.student.service.v1.EventHandlerDelegatorService;
 import ca.bc.gov.educ.api.student.struct.v1.Event;
@@ -64,6 +65,7 @@ public class MessageSubscriber {
       if (message != null) {
         try {
           var eventString = new String(message.getData());
+          LogHelper.logMessagingEventDetails(eventString);
           var event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
           if (event.getPayloadVersion() == null) {
             event.setPayloadVersion("V1");

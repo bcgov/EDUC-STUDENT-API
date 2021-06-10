@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.messaging.jetstream;
 
+import ca.bc.gov.educ.api.student.helpers.LogHelper;
 import ca.bc.gov.educ.api.student.properties.ApplicationProperties;
 import ca.bc.gov.educ.api.student.service.v1.JetStreamEventHandlerService;
 import ca.bc.gov.educ.api.student.struct.v1.ChoreographedEvent;
@@ -72,7 +73,8 @@ public class Subscriber {
   public void onStudentEventsTopicMessage(final Message message) {
     log.info("Received message Subject:: {} , SID :: {} , sequence :: {}, pending :: {} ", message.getSubject(), message.getSID(), message.metaData().consumerSequence(), message.metaData().pendingCount());
     try {
-      String eventString = new String(message.getData());
+      val eventString = new String(message.getData());
+      LogHelper.logMessagingEventDetails(eventString);
       ChoreographedEvent event = JsonUtil.getJsonObjectFromString(ChoreographedEvent.class, eventString);
       jetStreamEventHandlerService.updateEventStatus(event);
       log.info("received event :: {} ", event);
