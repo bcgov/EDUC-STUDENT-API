@@ -16,9 +16,9 @@ import static org.mockito.Mockito.*;
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest
-public class StudentRequestInterceptorTest {
+public class RequestResponseInterceptorTest {
   @Autowired
-  private StudentRequestInterceptor requestInterceptor;
+  private RequestResponseInterceptor requestInterceptor;
 
   @Test
   public void testPreHandle_givenRequest_shouldLogMessage() {
