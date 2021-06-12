@@ -16,8 +16,11 @@ public class RequestResponseInterceptor implements AsyncHandlerInterceptor {
 
   @Override
   public boolean preHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler) {
-    final long startTime = Instant.now().toEpochMilli();
-    request.setAttribute("startTime", startTime);
+    // for async this is called twice so need a check to avoid setting twice.
+    if(request.getAttribute("startTime") == null){
+      final long startTime = Instant.now().toEpochMilli();
+      request.setAttribute("startTime", startTime);
+    }
     return true;
   }
 
