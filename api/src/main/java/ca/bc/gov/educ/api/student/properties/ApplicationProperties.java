@@ -18,6 +18,7 @@ public class ApplicationProperties {
    */
   public static final String STUDENT_API = "STUDENT-API";
   public static final String STREAM_NAME="STUDENT_EVENTS";
+  public static final String CORRELATION_ID = "correlationID";
   /**
    * The Stan url.
    */
