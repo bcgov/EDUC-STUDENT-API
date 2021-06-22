@@ -1,9 +1,6 @@
 package ca.bc.gov.educ.api.student.struct.v1;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.Email;
@@ -19,6 +16,7 @@ import javax.validation.constraints.Size;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(callSuper = true)
 public abstract class BaseStudent extends BaseRequest {
 
   /**
