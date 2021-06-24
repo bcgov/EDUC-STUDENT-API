@@ -13,12 +13,9 @@ import io.nats.client.api.StreamConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.UUID;
 
 import static ca.bc.gov.educ.api.student.constant.Topics.STUDENT_EVENTS_TOPIC;
 
@@ -51,7 +48,7 @@ public class Publisher {
    * @throws JetStreamApiException the jet stream api exception
    */
   private void createOrUpdateStudentEventStream(final Connection natsConnection) throws IOException, JetStreamApiException {
-    val streamConfiguration = StreamConfiguration.builder().name(ApplicationProperties.STREAM_NAME).replicas(1).maxMessages(1000000).addSubjects(STUDENT_EVENTS_TOPIC.toString()).build();
+    val streamConfiguration = StreamConfiguration.builder().name(ApplicationProperties.STREAM_NAME).replicas(1).maxMessages(10000).addSubjects(STUDENT_EVENTS_TOPIC.toString()).build();
     try {
       natsConnection.jetStreamManagement().updateStream(streamConfiguration);
     } catch (final JetStreamApiException exception) {
@@ -72,7 +69,7 @@ public class Publisher {
    */
   public void dispatchChoreographyEvent(final StudentEvent event) {
     if (event != null && event.getEventId() != null) {
-      ChoreographedEvent choreographedEvent = new ChoreographedEvent();
+      val choreographedEvent = new ChoreographedEvent();
       choreographedEvent.setEventType(EventType.valueOf(event.getEventType()));
       choreographedEvent.setEventOutcome(EventOutcome.valueOf(event.getEventOutcome()));
       choreographedEvent.setEventPayload(event.getEventPayload());
