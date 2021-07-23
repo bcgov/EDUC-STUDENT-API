@@ -94,7 +94,7 @@ public abstract class BaseStudent extends BaseRequest {
   /**
    * The Postal code.
    */
-  @Size(max = 6)
+  @Size(max = 7)
   String postalCode;
   /**
    * The Mincode.
