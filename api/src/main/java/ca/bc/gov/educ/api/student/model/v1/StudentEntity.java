@@ -37,7 +37,7 @@ public class StudentEntity {
    * The Pen.
    */
   @NotNull(message = "pen cannot be null")
-  @Column(name = "PEN")
+  @Column(name = "PEN", length = 9)
   String pen;
   /**
    * The Legal first name.
@@ -66,13 +66,13 @@ public class StudentEntity {
   /**
    * The Sex code.
    */
-  @Column(name = "SEX_CODE")
+  @Column(name = "SEX_CODE", length = 1)
   @UpperCase
   String sexCode;
   /**
    * The Gender code.
    */
-  @Column(name = "GENDER_CODE")
+  @Column(name = "GENDER_CODE", length = 1)
   @UpperCase
   String genderCode;
   /**
@@ -103,7 +103,7 @@ public class StudentEntity {
    * The Email verified.
    */
   @NotNull(message = "Email verified cannot be null")
-  @Column(name = "EMAIL_VERIFIED")
+  @Column(name = "EMAIL_VERIFIED", length = 1)
   @UpperCase
   String emailVerified;
   /**
@@ -115,41 +115,41 @@ public class StudentEntity {
   /**
    * The Postal code.
    */
-  @Column(name = "POSTAL_CODE")
+  @Column(name = "POSTAL_CODE", length = 7)
   @UpperCase
   String postalCode;
   /**
    * The Mincode.
    */
-  @Column(name = "MINCODE")
+  @Column(name = "MINCODE", length = 8)
   @UpperCase
   String mincode;
   /**
    * The Local id.
    */
-  @Column(name = "LOCAL_ID")
+  @Column(name = "LOCAL_ID", length = 12)
   @UpperCase
   String localID;
   /**
    * The Grade code.
    */
-  @Column(name = "GRADE_CODE")
+  @Column(name = "GRADE_CODE", length = 2)
   @UpperCase
   String gradeCode;
   /**
    * The Memo.
    */
-  @Column(name = "MEMO")
+  @Column(name = "MEMO", length = 4000)
   String memo;
   /**
    * The Grade year.
    */
-  @Column(name = "GRADE_YEAR")
+  @Column(name = "GRADE_YEAR", length = 4)
   String gradeYear;
   /**
    * The Demog code.
    */
-  @Column(name = "DEMOG_CODE")
+  @Column(name = "DEMOG_CODE", length = 1)
   @UpperCase
   String demogCode;
   /**
@@ -160,13 +160,13 @@ public class StudentEntity {
   /**
    * The Status code.
    */
-  @Column(name = "STATUS_CODE")
+  @Column(name = "STATUS_CODE", length = 1)
   @UpperCase
   String statusCode;
   /**
    * The Create user.
    */
-  @Column(name = "CREATE_USER", updatable = false)
+  @Column(name = "CREATE_USER", updatable = false, length = 32)
   String createUser;
   /**
    * The Create date.
@@ -177,7 +177,7 @@ public class StudentEntity {
   /**
    * The Update user.
    */
-  @Column(name = "UPDATE_USER")
+  @Column(name = "UPDATE_USER", length = 32)
   String updateUser;
   /**
    * The Update date.

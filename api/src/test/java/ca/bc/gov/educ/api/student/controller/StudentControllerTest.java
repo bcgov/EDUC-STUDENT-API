@@ -182,6 +182,19 @@ public class StudentControllerTest {
         .andExpect(MockMvcResultMatchers.jsonPath("$.legalFirstName").value(student.getLegalFirstName().toUpperCase()));
   }
 
+  @Test
+  public void testCreateStudent_GivenInvalidPostalCode_ShouldReturnStatusCreated() throws Exception {
+    var student = getStudentCreate();
+    student.setPostalCode("12345678"); // checking for length, max allowed is 7.
+    this.mockMvc.perform(post(STUDENT)
+      .contentType(MediaType.APPLICATION_JSON)
+      .accept(MediaType.APPLICATION_JSON)
+      .content(asJsonString(student))
+      .with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))))
+      .andDo(print())
+      .andExpect(status().isBadRequest());
+  }
+
 
   @Test
   public void testCreateStudent_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
