@@ -120,11 +120,13 @@ public abstract class BaseStudent extends BaseRequest {
    * The Demog code.
    */
   @Size(max = 1)
+  @NotNull
   String demogCode;
   /**
    * The Status code.
    */
   @Size(max = 1)
+  @NotNull
   String statusCode;
   /**
    * The Memo.

@@ -147,7 +147,7 @@ public class StudentHistoryEntity {
   /**
    * The Demog code.
    */
-  @Column(name = "DEMOG_CODE", length = 1)
+  @Column(name = "DEMOG_CODE", length = 1, nullable = false)
   String demogCode;
   /**
    * The True student id.
@@ -157,7 +157,7 @@ public class StudentHistoryEntity {
   /**
    * The Status code.
    */
-  @Column(name = "STATUS_CODE", length = 1)
+  @Column(name = "STATUS_CODE", length = 1, nullable = false)
   String statusCode;
   /**
    * The Create user.

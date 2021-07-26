@@ -21,7 +21,7 @@ public class RequestResponseInterceptorTest {
   private RequestResponseInterceptor requestInterceptor;
 
   @Test
-  public void testPreHandle_givenRequest_shouldLogMessage() {
+  public void testPreHandle_givenRequest_shouldLogMessage() throws Exception{
     var request = mock(HttpServletRequest.class);
     var response = mock(HttpServletResponse.class);
     when(request.getMethod()).thenReturn("get");
