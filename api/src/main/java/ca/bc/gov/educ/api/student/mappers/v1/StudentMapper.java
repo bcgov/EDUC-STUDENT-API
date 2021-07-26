@@ -34,7 +34,6 @@ public interface StudentMapper {
    * @return the student entity
    */
   @Mapping(target = "demogCode", source = "demogCode", defaultValue = "A")
-  @Mapping(target = "statusCode", source = "statusCode", defaultValue = "A")
   StudentEntity toModel(StudentCreate student);
 
   /**
