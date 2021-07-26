@@ -11,7 +11,9 @@
     "sexCode": "U",
     "emailVerified": "Y",
     "postalCode": "V3I9O0",
-    "grade": 4
+    "grade": 4,
+    "demogCode": "A",
+    "statusCode": "A"
   },
   {
     "pen": 316029342,
@@ -22,7 +24,9 @@
     "sexCode": "F",
     "emailVerified": "N",
     "postalCode": "V3I9O0",
-    "grade": "K"
+    "grade": "K",
+    "demogCode": "A",
+    "statusCode": "A"
   },
   {
     "pen": 316029342,
@@ -33,7 +37,9 @@
     "sexCode": "F",
     "emailVerified": "N",
     "postalCode": "V3I9O0",
-    "grade": "K"
+    "grade": "K",
+    "demogCode": "A",
+    "statusCode": "A"
   },
   {
     "pen": 982641108,
@@ -44,7 +50,9 @@
     "sexCode": "F",
     "emailVerified": "N",
     "postalCode": "V3I9O0",
-    "grade": 8
+    "grade": 8,
+    "demogCode": "A",
+    "statusCode": "A"
   },
   {
     "pen": 377021056,
@@ -55,7 +63,9 @@
     "sexCode": "F",
     "emailVerified": "Y",
     "postalCode": "V3I9O0",
-    "grade": 9
+    "grade": 9,
+    "demogCode": "A",
+    "statusCode": "A"
   },
   {
     "pen": 763326624,
@@ -66,6 +76,8 @@
     "sexCode": "F",
     "emailVerified": "N",
     "postalCode": "V3I9O0",
-    "grade": 5
+    "grade": 5,
+    "demogCode": "A",
+    "statusCode": "A"
   }
 ]

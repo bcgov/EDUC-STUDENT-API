@@ -149,7 +149,7 @@ public class StudentEntity {
   /**
    * The Demog code.
    */
-  @Column(name = "DEMOG_CODE", length = 1)
+  @Column(name = "DEMOG_CODE", length = 1, nullable = false)
   @UpperCase
   String demogCode;
   /**
@@ -160,7 +160,7 @@ public class StudentEntity {
   /**
    * The Status code.
    */
-  @Column(name = "STATUS_CODE", length = 1)
+  @Column(name = "STATUS_CODE", length = 1, nullable = false)
   @UpperCase
   String statusCode;
   /**

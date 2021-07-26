@@ -812,6 +812,8 @@ public class StudentControllerTest {
     student.setEmail("theduke@someplace.com");
     student.setEmailVerified("Y");
     student.setDeceasedDate(LocalDate.parse("1979-06-11"));
+    student.setDemogCode("A");
+    student.setStatusCode("A");
     return student;
   }
 
