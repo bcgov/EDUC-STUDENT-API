@@ -54,10 +54,10 @@ import static lombok.AccessLevel.PRIVATE;
 @Service
 @Slf4j
 public class StudentService {
-  private final Executor paginatedQueryExecutor = new EnhancedQueueExecutor.Builder()
-      .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-pagination-query-executor-%d").build())
-      .setCorePoolSize(2).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build();
   private static final String STUDENT_ID_ATTRIBUTE = "studentID";
+  private final Executor paginatedQueryExecutor = new EnhancedQueueExecutor.Builder()
+    .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-pagination-query-executor-%d").build())
+    .setCorePoolSize(2).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build();
   @Getter(PRIVATE)
   private final StudentEventRepository studentEventRepository;
 
@@ -128,22 +128,22 @@ public class StudentService {
     repository.save(student);
     studentHistoryService.createStudentHistory(student, studentCreate.getHistoryActivityCode(), student.getCreateUser(), false);
     final StudentEvent studentEvent =
-        createStudentEvent(studentCreate.getCreateUser(), studentCreate.getUpdateUser(), JsonUtil.getJsonStringFromObject(StudentMapper.mapper.toStructure(student, studentCreate.getHistoryActivityCode())), CREATE_STUDENT, STUDENT_CREATED);
+      createStudentEvent(studentCreate.getCreateUser(), studentCreate.getUpdateUser(), JsonUtil.getJsonStringFromObject(StudentMapper.mapper.toStructure(student, studentCreate.getHistoryActivityCode())), CREATE_STUDENT, STUDENT_CREATED);
     getStudentEventRepository().save(studentEvent);
     return Pair.of(student, studentEvent);
   }
 
   private StudentEvent createStudentEvent(String createUser, String updateUser, String jsonString, EventType eventType, EventOutcome eventOutcome) {
     return StudentEvent.builder()
-        .createDate(LocalDateTime.now())
-        .updateDate(LocalDateTime.now())
-        .createUser(createUser)
-        .updateUser(updateUser)
-        .eventPayload(jsonString)
-        .eventType(eventType.toString())
-        .eventStatus(DB_COMMITTED.toString())
-        .eventOutcome(eventOutcome.toString())
-        .build();
+      .createDate(LocalDateTime.now())
+      .updateDate(LocalDateTime.now())
+      .createUser(createUser)
+      .updateUser(updateUser)
+      .eventPayload(jsonString)
+      .eventType(eventType.toString())
+      .eventStatus(DB_COMMITTED.toString())
+      .eventOutcome(eventOutcome.toString())
+      .build();
   }
 
   /**
@@ -167,9 +167,9 @@ public class StudentService {
       final StudentEntity currentStudentEntity = curStudentEntityOptional.get();
       BeanUtils.copyProperties(student, currentStudentEntity, "createDate", "createUser"); // update current student entity with incoming payload ignoring the fields.
       TransformUtil.uppercaseFields(currentStudentEntity); // convert the input to upper case.
-      studentHistoryService.createStudentHistory(currentStudentEntity, studentUpdate.getHistoryActivityCode(), currentStudentEntity.getUpdateUser(),false);
+      studentHistoryService.createStudentHistory(currentStudentEntity, studentUpdate.getHistoryActivityCode(), currentStudentEntity.getUpdateUser(), false);
       final StudentEvent studentEvent =
-          createStudentEvent(studentUpdate.getUpdateUser(), studentUpdate.getUpdateUser(), JsonUtil.getJsonStringFromObject(studentUpdate), UPDATE_STUDENT, STUDENT_UPDATED);
+        createStudentEvent(studentUpdate.getUpdateUser(), studentUpdate.getUpdateUser(), JsonUtil.getJsonStringFromObject(StudentMapper.mapper.toStudentUpdateStruct(currentStudentEntity, studentUpdate.getHistoryActivityCode())), UPDATE_STUDENT, STUDENT_UPDATED);
       repository.save(currentStudentEntity);
       getStudentEventRepository().save(studentEvent);
       return Pair.of(currentStudentEntity, studentEvent);

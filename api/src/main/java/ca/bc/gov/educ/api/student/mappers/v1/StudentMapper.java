@@ -53,6 +53,8 @@ public interface StudentMapper {
    */
   StudentCreate toStructure(StudentEntity studentEntity, String historyActivityCode);
 
+  StudentUpdate toStudentUpdateStruct(StudentEntity studentEntity, String historyActivityCode);
+
   /**
    * To model sex code entity.
    *
