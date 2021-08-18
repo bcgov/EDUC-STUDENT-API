@@ -1,14 +1,23 @@
 package ca.bc.gov.educ.api.student.service.v1;
 
+import ca.bc.gov.educ.api.student.exception.InvalidPayloadException;
+import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentHistoryMapper;
+import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryActivityCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepository;
+import ca.bc.gov.educ.api.student.struct.v1.Search;
+import ca.bc.gov.educ.api.student.struct.v1.Student;
 import ca.bc.gov.educ.api.student.struct.v1.StudentHistory;
+import ca.bc.gov.educ.api.student.util.JsonUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.jboss.threads.EnhancedQueueExecutor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +33,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 /**
  * Student History Service
@@ -35,8 +47,8 @@ import java.util.concurrent.Executor;
 @Service
 public class StudentHistoryService {
   private final Executor paginatedQueryExecutor = new EnhancedQueueExecutor.Builder()
-      .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-history-pagination-query-executor-%d").build())
-      .setCorePoolSize(2).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build();
+    .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-history-pagination-query-executor-%d").build())
+    .setCorePoolSize(2).setMaximumPoolSize(10).setKeepAliveTime(Duration.ofSeconds(60)).build();
   @Getter(AccessLevel.PRIVATE)
   private final StudentHistoryRepository studentHistoryRepository;
 
@@ -124,8 +136,8 @@ public class StudentHistoryService {
   /**
    * Create student history.
    *
-   * @param studentHistory    the cur student history entity
-   * @param copyAudit         if true, then the audit fields(createDate/createUser) data will be kept. otherwise will be reset.
+   * @param studentHistory the cur student history entity
+   * @param copyAudit      if true, then the audit fields(createDate/createUser) data will be kept. otherwise will be reset.
    */
   @Transactional(propagation = Propagation.MANDATORY)
   public StudentHistoryEntity createStudentHistory(StudentHistory studentHistory, boolean copyAudit) {
@@ -153,5 +165,21 @@ public class StudentHistoryService {
   @Transactional(propagation = Propagation.MANDATORY)
   public void deleteByStudentID(final UUID studentID) {
     studentHistoryRepository.deleteByStudentID(studentID);
+  }
+
+  public Page<Student> findDistinctStudents(final Integer pageNumber, final Integer pageSize, final String sortCriteriaJson, final String searchCriteriaListJson) {
+    try {
+      Map<String, String> sortMap = null;
+      if (StringUtils.isNotBlank(sortCriteriaJson)) {
+        sortMap = JsonUtil.mapper.readValue(sortCriteriaJson, new TypeReference<>() {
+        });
+      }
+      final List<Search> searches = JsonUtil.mapper.readValue(searchCriteriaListJson, new TypeReference<>() {
+      });
+      return this.studentHistoryRepository.findDistinctStudentsByStudentHistoryCriteria(sortMap, searches, pageNumber, pageSize).map(StudentMapper.mapper::toStructure);
+    } catch (final JsonProcessingException e) {
+      final ApiError error = ApiError.builder().timestamp(LocalDateTime.now()).message("Invalid json string in search criteria").status(BAD_REQUEST).build();
+      throw new InvalidPayloadException(error);
+    }
   }
 }

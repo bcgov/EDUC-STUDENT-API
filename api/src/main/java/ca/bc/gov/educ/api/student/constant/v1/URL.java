@@ -41,21 +41,13 @@ public final class URL {
    */
   public static final String HISTORY = "/history";
   /**
-   * The constant MERGES.
+   * The constant DISTINCT.
    */
-  public static final String MERGES = "/merges";
+  public static final String DISTINCT = "/distinct";
   /**
-   * The constant MERGE_SOURCE_CODES.
+   * The constant STUDENTS.
    */
-  public static final String MERGE_SOURCE_CODES = "/merge-source-codes";
-  /**
-   * The constant TWINS.
-   */
-  public static final String TWINS = "/twins";
-  /**
-   * The constant TWIN_REASON_CODES.
-   */
-  public static final String TWIN_REASON_CODES = "/twin-reason-codes";
+  public static final String STUDENTS = "/students";
 
   private URL() {
 

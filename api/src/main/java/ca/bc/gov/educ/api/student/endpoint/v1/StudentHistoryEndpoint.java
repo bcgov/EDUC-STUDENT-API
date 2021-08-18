@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.endpoint.v1;
 
+import ca.bc.gov.educ.api.student.struct.v1.Student;
 import ca.bc.gov.educ.api.student.struct.v1.StudentHistory;
 import ca.bc.gov.educ.api.student.struct.v1.StudentHistoryActivityCode;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -75,4 +76,13 @@ public interface StudentHistoryEndpoint {
                                                   @RequestParam(name = "sort", defaultValue = "") String sortCriteriaJson,
                                                   @RequestParam(name = "searchCriteriaList", required = false) String searchCriteriaListJson);
 
+  @GetMapping(HISTORY + PAGINATED + DISTINCT + STUDENTS)
+  @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_HISTORY')")
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK"), @ApiResponse(responseCode = "400", description = "BAD REQUEST"), @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR.")})
+  @Transactional(readOnly = true)
+  @Tag(name = "Endpoint to retrieve unique student records with sort, filter and pagination from audit records.", description = "Endpoint to retrieve unique student records with sort, filter and pagination from audit records.")
+  Page<Student> findDistinctStudents(@RequestParam(name = "pageNumber", defaultValue = "0") Integer pageNumber,
+                                     @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+                                     @RequestParam(name = "sort", defaultValue = "") String sortCriteriaJson,
+                                     @RequestParam(name = "searchCriteriaList") String searchCriteriaListJson);
 }

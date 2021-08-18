@@ -93,6 +93,11 @@ public class StudentHistoryController implements StudentHistoryEndpoint {
     return getService().findAll(studentHistorySpecs, pageNumber, pageSize, sorts).thenApplyAsync(studentHistoryEntities -> studentHistoryEntities.map(mapper::toStructure));
   }
 
+  @Override
+  public Page<Student> findDistinctStudents(final Integer pageNumber, final Integer pageSize, final String sortCriteriaJson, final String searchCriteriaListJson) {
+    return this.getService().findDistinctStudents(pageNumber, pageSize, sortCriteriaJson, searchCriteriaListJson);
+  }
+
   /**
    * Gets specifications.
    *

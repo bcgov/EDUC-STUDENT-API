@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * The interface Student history repository.
  */
-public interface StudentHistoryRepository extends JpaRepository<StudentHistoryEntity, UUID>, JpaSpecificationExecutor<StudentHistoryEntity> {
+public interface StudentHistoryRepository extends JpaRepository<StudentHistoryEntity, UUID>, JpaSpecificationExecutor<StudentHistoryEntity>, StudentHistoryRepositoryCustom {
   /**
    * Find by student id page.
    *
