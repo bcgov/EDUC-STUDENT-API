@@ -22,19 +22,19 @@ public class TransformUtil {
    * Uppercase fields t.
    *
    * @param <T>    the type parameter
-   * @param record the record
+   * @param claz the claz
    * @return the t
    */
-  public static <T> T uppercaseFields(T record) {
-    var clazz = record.getClass();
+  public static <T> T uppercaseFields(T claz) {
+    var clazz = claz.getClass();
     List<Field> fields = new ArrayList<>();
     var superClazz = clazz;
     while (!superClazz.equals(Object.class)) {
       fields.addAll(Arrays.asList(superClazz.getDeclaredFields()));
       superClazz = superClazz.getSuperclass();
     }
-    fields.forEach(field -> TransformUtil.transformFieldToUppercase(field, record));
-    return record;
+    fields.forEach(field -> TransformUtil.transformFieldToUppercase(field, claz));
+    return claz;
   }
 
   /**
@@ -57,7 +57,7 @@ public class TransformUtil {
     return false;
   }
 
-  private static <T> void transformFieldToUppercase(Field field, T record) {
+  private static <T> void transformFieldToUppercase(Field field, T claz) {
     if (!field.getType().equals(String.class)) {
       return;
     }
@@ -65,10 +65,10 @@ public class TransformUtil {
     if (field.getAnnotation(UpperCase.class) != null) {
       try {
         var fieldName = capitalize(field.getName());
-        var expr = new Expression(record, "get" + fieldName, new Object[0]);
+        var expr = new Expression(claz, "get" + fieldName, new Object[0]);
         var entityFieldValue = (String) expr.getValue();
         if (entityFieldValue != null) {
-          var stmt = new Statement(record, "set" + fieldName, new Object[]{entityFieldValue.toUpperCase()});
+          var stmt = new Statement(claz, "set" + fieldName, new Object[]{entityFieldValue.toUpperCase()});
           stmt.execute();
         }
       } catch (Exception ex) {
