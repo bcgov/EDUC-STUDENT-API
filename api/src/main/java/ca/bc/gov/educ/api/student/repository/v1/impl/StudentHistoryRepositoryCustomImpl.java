@@ -32,6 +32,7 @@ import java.util.Map;
  */
 @Repository
 @Slf4j
+@SuppressWarnings("java:S2077")
 public class StudentHistoryRepositoryCustomImpl implements StudentHistoryRepositoryCustom {
   private static final String START_QUERY = "SELECT * FROM (SELECT ROW_.*, ROWNUM ROWNUM_   FROM (SELECT DISTINCT (B.STUDENT_ID) AS STUDENT_DISTINCT_ID, A.* FROM STUDENT_HISTORY B INNER JOIN STUDENT A ON B.STUDENT_ID = A.STUDENT_ID WHERE ";
   private static final String END_QUERY = " ) ROW_   WHERE ROWNUM <=%d) WHERE ROWNUM_ > %d";
