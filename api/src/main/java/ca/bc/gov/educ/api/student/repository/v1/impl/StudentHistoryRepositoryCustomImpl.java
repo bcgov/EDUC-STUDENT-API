@@ -6,6 +6,7 @@ import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepositoryCustom;
 import ca.bc.gov.educ.api.student.struct.v1.Search;
 import ca.bc.gov.educ.api.student.struct.v1.SearchCriteria;
+import ca.bc.gov.educ.api.student.struct.v1.ValueType;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +20,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * This is special implementation to get paged unique students by searching the audit history of student.
@@ -155,23 +155,39 @@ public class StudentHistoryRepositoryCustomImpl implements StudentHistoryReposit
       whereClause.append("B.").append(this.entityColumnMap.get(innerSearch.getKey())).append(" ").append(this.symbolMap.get(innerSearch.getOperation().toString())).append(" ");
       if (innerSearch.getOperation().equals(FilterOperation.BETWEEN)) {
         val values = innerSearch.getValue().split(",");
-        parameterMap.put("min" + innerSearch.getKey(), values[0]);
-        parameterMap.put("max" + innerSearch.getKey(), values[1]);
+        parameterMap.put("min" + innerSearch.getKey(), this.getConvertedValue(values[0], innerSearch.getValueType()) );
+        parameterMap.put("max" + innerSearch.getKey(), this.getConvertedValue(values[1], innerSearch.getValueType()));
         whereClause.append(":min").append(innerSearch.getKey()).append(" AND ").append(":max").append(innerSearch.getKey());
       } else if (innerSearch.getOperation().equals(FilterOperation.STARTS_WITH)) {
-        parameterMap.put(innerSearch.getKey(), innerSearch.getValue() + "%");
+        parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
         whereClause.append(":").append(innerSearch.getKey());
       } else if (innerSearch.getOperation().equals(FilterOperation.CONTAINS)) {
-        parameterMap.put(innerSearch.getKey(), "%" + innerSearch.getValue() + "%");
+        parameterMap.put(innerSearch.getKey(), "%" + this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
         whereClause.append(":").append(innerSearch.getKey());
       } else {
-        parameterMap.put(innerSearch.getKey(), innerSearch.getValue());
+        parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()));
         whereClause.append(":").append(innerSearch.getKey());
       }
       innerIndex++;
       if (innerIndex != searchCriterias.size()) {
         whereClause.append(" ").append(innerSearch.getCondition().toString()).append(" ");
       }
+    }
+  }
+  private Object getConvertedValue(final String value, final ValueType valueType){
+    switch (valueType){
+      case DATE:
+        return LocalDate.parse(value);
+      case LONG:
+        return Long.valueOf(value);
+      case UUID:
+        return UUID.fromString(value);
+      case INTEGER:
+        return Integer.valueOf(value);
+      case DATE_TIME:
+        return LocalDateTime.parse(value);
+      default:
+        return value;
     }
   }
 }
