@@ -100,9 +100,9 @@ public class StudentHistoryRepositoryCustomImpl implements StudentHistoryReposit
 
     final Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(sorts));
 
-    log.info("query is :: {}", studentsQuery);
-    log.info("count query is :: {}", countQueryString);
-    log.info(parameterMap.toString());
+    log.debug("query is :: {}", studentsQuery);
+    log.debug("count query is :: {}", countQueryString);
+    log.debug(parameterMap.toString());
     final Query q = this.entityManager.createNativeQuery(studentsQuery, StudentEntity.class);
     parameterMap.forEach(q::setParameter);
     final List<StudentEntity> studentEntities = q.getResultList();
@@ -153,20 +153,25 @@ public class StudentHistoryRepositoryCustomImpl implements StudentHistoryReposit
     int innerIndex = 0;
     for (val innerSearch : searchCriterias) {
       whereClause.append("B.").append(this.entityColumnMap.get(innerSearch.getKey())).append(" ").append(this.symbolMap.get(innerSearch.getOperation().toString())).append(" ");
-      if (innerSearch.getOperation().equals(FilterOperation.BETWEEN)) {
-        val values = innerSearch.getValue().split(",");
-        parameterMap.put("min" + innerSearch.getKey(), this.getConvertedValue(values[0], innerSearch.getValueType()) );
-        parameterMap.put("max" + innerSearch.getKey(), this.getConvertedValue(values[1], innerSearch.getValueType()));
-        whereClause.append(":min").append(innerSearch.getKey()).append(" AND ").append(":max").append(innerSearch.getKey());
-      } else if (innerSearch.getOperation().equals(FilterOperation.STARTS_WITH)) {
-        parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
-        whereClause.append(":").append(innerSearch.getKey());
-      } else if (innerSearch.getOperation().equals(FilterOperation.CONTAINS)) {
-        parameterMap.put(innerSearch.getKey(), "%" + this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
-        whereClause.append(":").append(innerSearch.getKey());
-      } else {
-        parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()));
-        whereClause.append(":").append(innerSearch.getKey());
+      switch (innerSearch.getOperation()){
+        case BETWEEN:
+          val values = innerSearch.getValue().split(",");
+          parameterMap.put("min" + innerSearch.getKey(), this.getConvertedValue(values[0], innerSearch.getValueType()) );
+          parameterMap.put("max" + innerSearch.getKey(), this.getConvertedValue(values[1], innerSearch.getValueType()));
+          whereClause.append(":min").append(innerSearch.getKey()).append(" AND ").append(":max").append(innerSearch.getKey());
+          break;
+        case STARTS_WITH:
+          parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
+          whereClause.append(":").append(innerSearch.getKey());
+          break;
+        case CONTAINS:
+          parameterMap.put(innerSearch.getKey(), "%" + this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
+          whereClause.append(":").append(innerSearch.getKey());
+          break;
+        default:
+          parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()));
+          whereClause.append(":").append(innerSearch.getKey());
+          break;
       }
       innerIndex++;
       if (innerIndex != searchCriterias.size()) {
