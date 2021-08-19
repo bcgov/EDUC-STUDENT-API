@@ -1,6 +1,5 @@
 package ca.bc.gov.educ.api.student.repository.v1.impl;
 
-import ca.bc.gov.educ.api.student.filter.FilterOperation;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepositoryCustom;
