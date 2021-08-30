@@ -1,9 +1,6 @@
 package ca.bc.gov.educ.api.student.validator;
 
-import ca.bc.gov.educ.api.student.model.v1.GenderCodeEntity;
-import ca.bc.gov.educ.api.student.model.v1.SexCodeEntity;
-import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
-import ca.bc.gov.educ.api.student.model.v1.StudentHistoryActivityCodeEntity;
+import ca.bc.gov.educ.api.student.model.v1.*;
 import ca.bc.gov.educ.api.student.service.v1.StudentService;
 import ca.bc.gov.educ.api.student.struct.v1.BaseStudent;
 import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
@@ -36,6 +33,10 @@ public class StudentPayloadValidator {
    */
   public static final String SEX_CODE = "sexCode";
   /**
+   * The constant DOCUMENT_TYPE_CODE.
+   */
+  public static final String DOCUMENT_TYPE_CODE = "documentTypeCode";
+  /**
    * The constant PEN.
    */
   public static final String PEN = "pen";
@@ -60,7 +61,7 @@ public class StudentPayloadValidator {
    * Validate payload list.
    *
    * @param student           the student
-   * @param isCreateOperation the is create operation
+   * @param isCreateOperation the is created operation
    * @return the list
    */
   public List<FieldError> validatePayload(BaseStudent student, boolean isCreateOperation) {
@@ -71,8 +72,10 @@ public class StudentPayloadValidator {
     validatePEN(student, isCreateOperation, apiValidationErrors);
     validateGenderCode(student, apiValidationErrors);
     validateSexCode(student, apiValidationErrors);
+    validateDocumentTypeCode(student, apiValidationErrors);
     return apiValidationErrors;
   }
+
 
   /**
    * Validate create payload list.
@@ -140,7 +143,7 @@ public class StudentPayloadValidator {
    * Validate pen.
    *
    * @param student             the student
-   * @param isCreateOperation   the is create operation
+   * @param isCreateOperation   the is created operation
    * @param apiValidationErrors the api validation errors
    */
   protected void validatePEN(BaseStudent student, boolean isCreateOperation, List<FieldError> apiValidationErrors) {
@@ -167,6 +170,25 @@ public class StudentPayloadValidator {
         apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, historyActivityCode, "History Activity Code provided is not yet effective."));
       } else if (historyActivityCodeEntity.get().getExpiryDate() != null && historyActivityCodeEntity.get().getExpiryDate().isBefore(LocalDateTime.now())) {
         apiValidationErrors.add(createFieldError(HISTORY_ACTIVITY_CODE, historyActivityCode, "History Activity Code provided has expired."));
+      }
+    }
+  }
+
+  /**
+   * Validate document type code.
+   *
+   * @param student             the student
+   * @param apiValidationErrors the api validation errors
+   */
+  protected void validateDocumentTypeCode(BaseStudent student, List<FieldError> apiValidationErrors) {
+    if (student.getDocumentTypeCode() != null) {
+      Optional<DocumentTypeCodeEntity> documentTypeCodeEntity = studentService.findDocTypeCode(student.getDocumentTypeCode());
+      if (documentTypeCodeEntity.isEmpty()) {
+        apiValidationErrors.add(createFieldError(DOCUMENT_TYPE_CODE, student.getDocumentTypeCode(), "Invalid Document Type Code."));
+      } else if (documentTypeCodeEntity.get().getEffectiveDate() != null && documentTypeCodeEntity.get().getEffectiveDate().isAfter(LocalDateTime.now())) {
+        apiValidationErrors.add(createFieldError(DOCUMENT_TYPE_CODE, student.getDocumentTypeCode(), "Document Type Code provided is not yet effective."));
+      } else if (documentTypeCodeEntity.get().getExpiryDate() != null && documentTypeCodeEntity.get().getExpiryDate().isBefore(LocalDateTime.now())) {
+        apiValidationErrors.add(createFieldError(DOCUMENT_TYPE_CODE, student.getDocumentTypeCode(), "Document Type Code provided has expired."));
       }
     }
   }

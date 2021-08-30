@@ -24,6 +24,11 @@ public final class URL {
    * The constant GRADE_CODES.
    */
   public static final String GRADE_CODES = "/grade-codes";
+
+  /**
+   * The constant DOC_TYPE_CODES.
+   */
+  public static final String DOC_TYPE_CODES = "/document-type-codes";
   /**
    * The constant GENDER_CODES.
    */

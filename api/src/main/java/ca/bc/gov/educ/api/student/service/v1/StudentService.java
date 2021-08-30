@@ -287,4 +287,18 @@ public class StudentService {
   public Optional<StudentHistoryActivityCodeEntity> findStudentHistoryActivityCode(String historyActivityCode) {
     return getCodeTableService().findStudentHistoryActivityCode(historyActivityCode);
   }
+
+  /**
+   * Find Document Type code optional.
+   *
+   * @param documentTypeCode the Document Type code
+   * @return the optional
+   */
+  public Optional<DocumentTypeCodeEntity> findDocTypeCode(String documentTypeCode) {
+    return getCodeTableService().findDocumentTypeCode(documentTypeCode);
+  }
+
+  public List<DocumentTypeCodeEntity> getAllDocTypeCodes(){
+    return getCodeTableService().getDocumentTypeCodes();
+  }
 }

@@ -30,6 +30,8 @@ public class CodeTableService {
 
   private final StudentHistoryActivityCodeTableRepository historyActivityCodeTableRepo;
 
+  private final DocumentTypeCodeRepository documentTypeCodeRepository;
+
   /**
    * Instantiates a new Code table service.
    *
@@ -39,16 +41,18 @@ public class CodeTableService {
    * @param statusCodeTableRepo          the status code table repo
    * @param gradeCodeTableRepo           the grade code table repo
    * @param historyActivityCodeTableRepo the history activity code table repo
+   * @param documentTypeCodeRepository   the document type code repository
    */
   @Autowired
   public CodeTableService(GenderCodeTableRepository genderCodeTableRepo, SexCodeTableRepository sexCodeTableRepo, DemogCodeTableRepository demogCodeTableRepo,
-                          StatusCodeTableRepository statusCodeTableRepo, GradeCodeTableRepository gradeCodeTableRepo, StudentHistoryActivityCodeTableRepository historyActivityCodeTableRepo) {
+                          StatusCodeTableRepository statusCodeTableRepo, GradeCodeTableRepository gradeCodeTableRepo, StudentHistoryActivityCodeTableRepository historyActivityCodeTableRepo, DocumentTypeCodeRepository documentTypeCodeRepository) {
     this.genderCodeTableRepo = genderCodeTableRepo;
     this.sexCodeTableRepo = sexCodeTableRepo;
     this.demogCodeTableRepo = demogCodeTableRepo;
     this.statusCodeTableRepo = statusCodeTableRepo;
     this.gradeCodeTableRepo = gradeCodeTableRepo;
     this.historyActivityCodeTableRepo = historyActivityCodeTableRepo;
+    this.documentTypeCodeRepository = documentTypeCodeRepository;
   }
 
   /**
@@ -102,6 +106,27 @@ public class CodeTableService {
   }
 
   /**
+   * Returns the full list of document Type Codes
+   *
+   * @return {@link List<GenderCodeEntity>}
+   */
+  @Cacheable("documentTypeCodes")
+  public List<DocumentTypeCodeEntity> getDocumentTypeCodes() {
+    return documentTypeCodeRepository.findAll();
+  }
+
+
+  /**
+   * Find Document Type code optional.
+   *
+   * @param documentTypeCode the Document Type Code
+   * @return the optional
+   */
+  public Optional<DocumentTypeCodeEntity> findDocumentTypeCode(String documentTypeCode) {
+    return Optional.ofNullable(loadAllDocumentTypeCodes().get(documentTypeCode));
+  }
+
+  /**
    * Find sex code optional.
    *
    * @param sexCode the sex code
@@ -145,6 +170,9 @@ public class CodeTableService {
     return getSexCodesList().stream().collect(Collectors.toMap(SexCodeEntity::getSexCode, Function.identity()));
   }
 
+  private Map<String, DocumentTypeCodeEntity> loadAllDocumentTypeCodes() {
+    return getDocumentTypeCodes().stream().collect(Collectors.toMap(DocumentTypeCodeEntity::getDocumentTypeCode, Function.identity()));
+  }
 
   private Map<String, GenderCodeEntity> loadGenderCodes() {
     return getGenderCodesList().stream().collect(Collectors.toMap(GenderCodeEntity::getGenderCode, Function.identity()));

@@ -181,4 +181,10 @@ public class StudentHistoryEntity {
   @Column(name = "UPDATE_DATE")
   @PastOrPresent
   LocalDateTime updateDate;
+
+  @Column(name = "DOCUMENT_TYPE_CODE", length = 10)
+  String documentTypeCode;
+
+  @Column(name = "DATE_OF_CONFIRMATION")
+  LocalDateTime dateOfConfirmation;
 }

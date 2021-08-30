@@ -40,6 +40,7 @@ import static ca.bc.gov.educ.api.student.constant.v1.URL.*;
 import static ca.bc.gov.educ.api.student.struct.v1.Condition.AND;
 import static ca.bc.gov.educ.api.student.struct.v1.Condition.OR;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
@@ -53,7 +54,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = StudentApiApplication.class)
 @AutoConfigureMockMvc
 public class StudentControllerTest {
-
+  private final  String docTypesStr="CABIRTH|Canadian Birth Certificate|Canadian Birth Certificate|10|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "CAPASSPORT|Canadian Passport|Canadian Passport|20|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "CADL|Canadian Driver's Licence|Canadian Driver's Licence|30|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "BCIDCARD|Provincial Identification Card|Provincial Identification Card|40|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "BCSCPHOTO|BC Services Card w Photo|BC Services Card (Photo version only)|50|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "CACITZCARD|Canadian Citizenship Card|Canadian Citizenship Card|60|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "PRCARD|Permanent Residence Card|Permanent Residence Card|70|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "STUDENTPMT|Student / Study Permit|Student / Study Permit|80|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "IMM5292|IMM5292 Conf of Perm Residence|Confirmation of Permanent Residence (IMM5292)|90|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "IMM1000|IMM1000 Record of Landing|Canadian Immigration Record of Landing (IMM 1000, not valid after June 2002)|100|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "INDSTATUS|Indian Status Card|Indian Status Card|110|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "NAMECHANGE|Legal Name Change document|Canadian court order approving legal change of name|120|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "FORPASSPRT|Foreign Passport|Foreign Passport|130|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "ADOPTION|Canadian adoption order|Canadian adoption order|140|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "MARRIAGE|Marriage Certificate|Marriage Certificate|150|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "FORBIRTH|Foreign Birth Certificate|Foreign Birth Certificate (with English translation)|160|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n" +
+    "OTHER|Other|Other document type|170|2020-01-01|2099-12-31|IDIR/GRCHWELO|2019-12-20|IDIR/GRCHWELO|2019-12-20\n";
   private static final StudentMapper mapper = StudentMapper.mapper;
   @Autowired
   private MockMvc mockMvc;
@@ -71,6 +88,9 @@ public class StudentControllerTest {
 
   @Autowired
   DemogCodeTableRepository demogRepo;
+
+  @Autowired
+  DocumentTypeCodeRepository documentTypeCodeRepository;
 
   @Autowired
   StatusCodeTableRepository statusRepo;
@@ -91,12 +111,23 @@ public class StudentControllerTest {
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    genderRepo.save(createGenderCodeData());
-    sexRepo.save(createSexCodeData());
-    demogRepo.save(createDemogCodeData());
-    statusRepo.save(createStatusCodeData());
-    gradeRepo.save(createGradeCodeData());
-    studentHistoryActivityCodeTableRepo.save(createStudentHistoryActivityCodeData());
+    this.documentTypeCodeRepository.saveAll(this.createMockDocTypes());
+    this.genderRepo.save(this.createGenderCodeData());
+    this.sexRepo.save(this.createSexCodeData());
+    this.demogRepo.save(this.createDemogCodeData());
+    this.statusRepo.save(this.createStatusCodeData());
+    this.gradeRepo.save(this.createGradeCodeData());
+    this.studentHistoryActivityCodeTableRepo.save(this.createStudentHistoryActivityCodeData());
+  }
+
+  private List<DocumentTypeCodeEntity> createMockDocTypes() {
+    final List<DocumentTypeCodeEntity> docTypes = new ArrayList<>();
+    Arrays.stream(this.docTypesStr.split("\n")).forEach(el->{
+      val docTypeInsert = el.split("\\|");
+      docTypes.add(DocumentTypeCodeEntity.builder().documentTypeCode(docTypeInsert[0]).description(docTypeInsert[1]).label(docTypeInsert[2]).displayOrder(Integer.parseInt(docTypeInsert[3])).build());
+    });
+
+    return  docTypes;
   }
 
   /**
@@ -104,13 +135,13 @@ public class StudentControllerTest {
    */
   @After
   public void after() {
-    genderRepo.deleteAll();
-    sexRepo.deleteAll();
-    demogRepo.deleteAll();
-    statusRepo.deleteAll();
-    gradeRepo.deleteAll();
-    studentHistoryRepo.deleteAll();
-    repository.deleteAll();
+    this.genderRepo.deleteAll();
+    this.sexRepo.deleteAll();
+    this.demogRepo.deleteAll();
+    this.statusRepo.deleteAll();
+    this.gradeRepo.deleteAll();
+    this.studentHistoryRepo.deleteAll();
+    this.repository.deleteAll();
   }
 
   private SexCodeEntity createSexCodeData() {
@@ -146,32 +177,32 @@ public class StudentControllerTest {
 
   @Test
   public void testRetrieveStudent_GivenRandomID_ShouldThrowEntityNotFoundException() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     this.mockMvc.perform(get(STUDENT + UUID.randomUUID()).with(mockAuthority)).andDo(print()).andExpect(status().isNotFound());
   }
 
 
   @Test
   public void testRetrieveStudent_GivenValidID_ShouldReturnStatusOK() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    StudentEntity entity = repository.save(createStudent());
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final StudentEntity entity = this.repository.save(this.createStudent());
     this.mockMvc.perform(get(STUDENT + "/"+entity.getStudentID()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.studentID").value(entity.getStudentID().toString()));
   }
 
 
   @Test
   public void testRetrieveStudent_GivenPEN_ShouldReturnStatusOK() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    StudentEntity entity = repository.save(createStudent());
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final StudentEntity entity = this.repository.save(this.createStudent());
     this.mockMvc.perform(get(STUDENT + "/?pen=" + entity.getPen()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
   }
 
   @Test
   public void testCreateStudent_GivenValidPayload_ShouldReturnStatusCreated() throws Exception {
-    var student = getStudentCreate();
+    final var student = this.getStudentCreate();
     this.mockMvc.perform(post(STUDENT)
         .contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON)
@@ -184,7 +215,7 @@ public class StudentControllerTest {
 
   @Test
   public void testCreateStudent_GivenInvalidPostalCode_ShouldReturnStatusCreated() throws Exception {
-    var student = getStudentCreate();
+    final var student = this.getStudentCreate();
     student.setPostalCode("12345678"); // checking for length, max allowed is 7.
     this.mockMvc.perform(post(STUDENT)
       .contentType(MediaType.APPLICATION_JSON)
@@ -198,7 +229,7 @@ public class StudentControllerTest {
 
   @Test
   public void testCreateStudent_GivenInvalidPayload_ShouldReturnStatusBadRequest() throws Exception {
-    var student = getStudentCreate();
+    final var student = this.getStudentCreate();
     student.setSexCode("J");
     this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
@@ -212,7 +243,7 @@ public class StudentControllerTest {
 
   @Test
   public void testCreateStudent_GivenInvalidEmailVerifiedAttribute_ShouldReturnStatusBadRequest() throws Exception {
-    var student = getStudentCreate();
+    final var student = this.getStudentCreate();
     student.setEmailVerified("WRONG");
     this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
@@ -220,7 +251,7 @@ public class StudentControllerTest {
 
   @Test
   public void testCreateStudent_GivenInvalidHistoryActivityCodeAttribute_ShouldReturnStatusBadRequest() throws Exception {
-    var student = getStudentCreate();
+    final var student = this.getStudentCreate();
     student.setHistoryActivityCode("WRONG");
     this.mockMvc.perform(post(STUDENT).with(jwt().jwt((jwt) -> jwt.claim("scope", "WRITE_STUDENT"))).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).content(asJsonString(student))).andDo(print()).andExpect(status().isBadRequest());
@@ -228,10 +259,10 @@ public class StudentControllerTest {
 
   @Test
   public void testUpdateStudent_GivenValidPayload_ShouldReturnStatusOk() throws Exception {
-    StudentEntity entity = createStudent();
-    repository.save(entity);
+    final StudentEntity entity = this.createStudent();
+    this.repository.save(entity);
     entity.setLegalFirstName("updated");
-    var studentUpdate = new StudentUpdate();
+    final var studentUpdate = new StudentUpdate();
     studentUpdate.setStudentID(entity.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("USEREDIT");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
@@ -242,10 +273,10 @@ public class StudentControllerTest {
 
   @Test
   public void testUpdateStudent_GivenInvalidHistoryActivityCode_ShouldReturnStatusBadRequest() throws Exception {
-    StudentEntity entity = createStudent();
-    repository.save(entity);
+    final StudentEntity entity = this.createStudent();
+    this.repository.save(entity);
     entity.setLegalFirstName("updated");
-    var studentUpdate = new StudentUpdate();
+    final var studentUpdate = new StudentUpdate();
     studentUpdate.setStudentID(entity.getStudentID().toString());
     studentUpdate.setHistoryActivityCode("WRONG");
     BeanUtils.copyProperties(StudentMapper.mapper.toStructure(entity), studentUpdate);
@@ -255,54 +286,54 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_givenValueNull_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final var file = new File(
+            Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    val entitiesFromDB = repository.findAll();
-    SearchCriteria criteria = SearchCriteria.builder().key("localID").operation(FilterOperation.EQUAL).value(null).valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    val entitiesFromDB = this.repository.findAll();
+    final SearchCriteria criteria = SearchCriteria.builder().key("localID").operation(FilterOperation.EQUAL).value(null).valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     this.mockMvc.perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk());
   }
 
   @Test
   public void testReadStudentPaginated_givenValueNotNull_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    var file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final var file = new File(
+            Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    val entitiesFromDB = repository.findAll();
-    SearchCriteria criteria = SearchCriteria.builder().key("localID").operation(FilterOperation.NOT_EQUAL).value(null).valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    val entitiesFromDB = this.repository.findAll();
+    final SearchCriteria criteria = SearchCriteria.builder().key("localID").operation(FilterOperation.NOT_EQUAL).value(null).valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     this.mockMvc.perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk());
   }
 
   @Test
   public void testDeleteStudent_GivenValidId_ShouldReturnStatus204() throws Exception {
-    StudentEntity entity = createStudent();
-    repository.save(entity);
+    final StudentEntity entity = this.createStudent();
+    this.repository.save(entity);
     this.mockMvc.perform(delete(STUDENT +"/"+ entity.getStudentID().toString()).contentType(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON).with(jwt().jwt((jwt) -> jwt.claim("scope", "DELETE_STUDENT")))).andDo(print()).andExpect(status().isNoContent());
   }
@@ -315,15 +346,15 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_Always_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT+PAGINATED+"?pageSize=2").with(mockAuthority)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -332,9 +363,9 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_whenNoDataInDB_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    MvcResult result = mockMvc
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -343,19 +374,19 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginatedWithSorting_Always_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    Map<String, String> sortMap = new HashMap<>();
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final Map<String, String> sortMap = new HashMap<>();
     sortMap.put("legalLastName", "ASC");
     sortMap.put("legalFirstName", "DESC");
-    String sort = new ObjectMapper().writeValueAsString(sortMap);
-    MvcResult result = mockMvc
+    final String sort = new ObjectMapper().writeValueAsString(sortMap);
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("pageNumber", "1").param("pageSize", "5").param("sort", sort)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -364,23 +395,23 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_GivenFirstNameFilter_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.EQUAL).value("Leonor").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final SearchCriteria criteria = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.EQUAL).value("Leonor").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -389,23 +420,23 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_GivenLastNameFilter_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.EQUAL).value("Warner").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.EQUAL).value("Warner").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -414,25 +445,25 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_GivenSubmitDateBetween_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    String fromDate = "2017-04-01";
-    String toDate = "2018-04-15";
-    SearchCriteria criteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final String fromDate = "2017-04-01";
+    final String toDate = "2018-04-15";
+    final SearchCriteria criteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -441,29 +472,29 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_GivenFirstAndLast_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    String fromDate = "1990-04-01";
-    String toDate = "2020-04-15";
-    SearchCriteria criteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
-    SearchCriteria criteriaFirstName = SearchCriteria.builder().condition(AND).key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
-    SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final String fromDate = "1990-04-01";
+    final String toDate = "2020-04-15";
+    final SearchCriteria criteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    final SearchCriteria criteriaFirstName = SearchCriteria.builder().condition(AND).key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
+    final SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
     criteriaList.add(criteriaFirstName);
     criteriaList.add(criteriaLastName);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -472,29 +503,29 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_GivenFirstAndLastNull_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+            Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    String fromDate = "1990-04-01";
-    String toDate = "2020-04-15";
-    SearchCriteria criteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
-    SearchCriteria criteriaFirstName = SearchCriteria.builder().condition(AND).key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
-    SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.EQUAL).value(null).valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final String fromDate = "1990-04-01";
+    final String toDate = "2020-04-15";
+    final SearchCriteria criteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    final SearchCriteria criteriaFirstName = SearchCriteria.builder().condition(AND).key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
+    final SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.EQUAL).value(null).valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
     criteriaList.add(criteriaFirstName);
     criteriaList.add(criteriaLastName);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
             .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
                     .contentType(APPLICATION_JSON))
             .andReturn();
@@ -503,35 +534,35 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_GivenFirstAndLastOrDOB_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    SearchCriteria criteriaFirstName = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
-    SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new LinkedList<>();
+    final SearchCriteria criteriaFirstName = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
+    final SearchCriteria criteriaLastName = SearchCriteria.builder().condition(AND).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new LinkedList<>();
     criteriaList.add(criteriaFirstName);
     criteriaList.add(criteriaLastName);
 
-    String fromDate = "1990-04-01";
-    String toDate = "2020-04-15";
-    SearchCriteria dobCriteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
-    List<SearchCriteria> criteriaList1 = new LinkedList<>();
+    final String fromDate = "1990-04-01";
+    final String toDate = "2020-04-15";
+    final SearchCriteria dobCriteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    final List<SearchCriteria> criteriaList1 = new LinkedList<>();
     criteriaList1.add(dobCriteria);
 
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     searches.add(Search.builder().condition(OR).searchCriteriaList(criteriaList1).build());
 
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -540,35 +571,35 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_GivenFirstORLastANDDOB_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    SearchCriteria criteriaFirstName = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
-    SearchCriteria criteriaLastName = SearchCriteria.builder().condition(OR).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new LinkedList<>();
+    final SearchCriteria criteriaFirstName = SearchCriteria.builder().key("legalFirstName").operation(FilterOperation.CONTAINS).value("a").valueType(ValueType.STRING).build();
+    final SearchCriteria criteriaLastName = SearchCriteria.builder().condition(OR).key("legalLastName").operation(FilterOperation.CONTAINS).value("l").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new LinkedList<>();
     criteriaList.add(criteriaFirstName);
     criteriaList.add(criteriaLastName);
 
-    String fromDate = "1990-04-01";
-    String toDate = "2020-04-15";
-    SearchCriteria dobCriteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
-    List<SearchCriteria> criteriaList1 = new LinkedList<>();
+    final String fromDate = "1990-04-01";
+    final String toDate = "2020-04-15";
+    final SearchCriteria dobCriteria = SearchCriteria.builder().key("dob").operation(FilterOperation.BETWEEN).value(fromDate + "," + toDate).valueType(ValueType.DATE).build();
+    final List<SearchCriteria> criteriaList1 = new LinkedList<>();
     criteriaList1.add(dobCriteria);
 
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     searches.add(Search.builder().condition(AND).searchCriteriaList(criteriaList1).build());
 
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -577,23 +608,23 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_LegalLastNameFilterIgnoreCase_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.CONTAINS).value("b").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.CONTAINS).value("b").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -602,23 +633,23 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_LegalLastNameStartWith_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH).value("Ham").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH).value("Ham").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -627,23 +658,23 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_LegalLastNameStartWith2_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH).value("hem").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.STARTS_WITH).value("hem").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -652,24 +683,24 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_LegalLastNameStartWithIgnoreCase2_ShouldReturnStatusOk() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    val entitiesFromDB = repository.findAll();
-    SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    val entitiesFromDB = this.repository.findAll();
+    final SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(FilterOperation.EQUAL).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
-    MvcResult result = mockMvc
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -678,23 +709,23 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_LegalLastNameEndWith_ShouldReturnStatusOkAndRecord() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("ton").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("ton").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -703,23 +734,23 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_LegalLastNameEndWith_ShouldReturnStatusOkButNoRecord() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final File file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
-    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("son").valueType(ValueType.STRING).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    final SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.ENDS_WITH).value("son").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     System.out.println(criteriaJSON);
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    MvcResult result = mockMvc
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
             .contentType(APPLICATION_JSON))
         .andReturn();
@@ -728,31 +759,31 @@ public class StudentControllerTest {
 
   @Test
   public void testReadStudentPaginated_givenOperationTypeNull_ShouldReturnStatusBadRequest() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
-    var file = new File(
-        Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final var file = new File(
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
     );
-    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
     });
 
-    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
-    val entitiesFromDB = repository.findAll();
-    SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(null).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
-    List<SearchCriteria> criteriaList = new ArrayList<>();
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    val entitiesFromDB = this.repository.findAll();
+    final SearchCriteria criteria = SearchCriteria.builder().key("studentID").operation(null).value(entitiesFromDB.get(0).getStudentID().toString()).valueType(ValueType.UUID).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
-    List<Search> searches = new LinkedList<>();
+    final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
-    ObjectMapper objectMapper = new ObjectMapper();
-    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
     this.mockMvc.perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
         .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
   public void testReadStudentPaginated_givenInvalidSearchCriteria_ShouldReturnStatusBadRequest() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     this.mockMvc
         .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", "{test}")
             .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
@@ -760,46 +791,46 @@ public class StudentControllerTest {
 
   @Test
   public void testGetGenderCodes_ShouldReturnCodes() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     this.mockMvc.perform(get(STUDENT + GENDER_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].genderCode").value("M"));
   }
 
   @Test
   public void testGetSexCodes_ShouldReturnCodes() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     this.mockMvc.perform(get(STUDENT + SEX_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].sexCode").value("M"));
   }
 
   @Test
   public void testGetDemogCodes_ShouldReturnCodes() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     this.mockMvc.perform(get(STUDENT + DEMOG_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].demogCode").value("A"));
   }
 
   @Test
   public void testGetGradeCodes_ShouldReturnCodes() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     this.mockMvc.perform(get(STUDENT + GRADE_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].gradeCode").value("01"));
   }
 
   @Test
   public void testGetStatusCodes_ShouldReturnCodes() throws Exception {
-    GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
-    var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT_CODES";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     this.mockMvc.perform(get(STUDENT + STATUS_CODES).with(mockAuthority)).andDo(print()).andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$[0].statusCode").value("A"));
   }
 
   private StudentEntity createStudent() {
-    StudentEntity student = new StudentEntity();
+    final StudentEntity student = new StudentEntity();
     student.setPen("987654321");
     student.setLegalFirstName("John");
     student.setLegalMiddleNames("Duke");
@@ -817,9 +848,9 @@ public class StudentControllerTest {
     return student;
   }
 
-  private StudentCreate getStudentCreate(Optional<String> pen) {
-    var studentEntity = createStudent();
-    var studentCreate = new StudentCreate();
+  private StudentCreate getStudentCreate(final Optional<String> pen) {
+    final var studentEntity = this.createStudent();
+    final var studentCreate = new StudentCreate();
     BeanUtils.copyProperties(mapper.toStructure(studentEntity), studentCreate);
     studentCreate.setHistoryActivityCode("USEREDIT");
     pen.ifPresent(studentCreate::setPen);
@@ -827,13 +858,13 @@ public class StudentControllerTest {
   }
 
   private StudentCreate getStudentCreate() {
-    return getStudentCreate(Optional.empty());
+    return this.getStudentCreate(Optional.empty());
   }
 
   public static String asJsonString(final Object obj) {
     try {
       return new ObjectMapper().writeValueAsString(obj);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
   }
@@ -845,4 +876,13 @@ public class StudentControllerTest {
         .effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).displayOrder(1).label("label").createDate(LocalDateTime.now())
         .updateDate(LocalDateTime.now()).createUser("TEST").updateUser("TEST").build();
   }
+
+  @Test
+  public void getDocumentTypesTest() throws Exception {
+    this.mockMvc.perform(get(STUDENT+ DOC_TYPE_CODES)
+        .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_CODES")))
+        .accept(MediaType.APPLICATION_JSON)).andDo(print())
+      .andExpect(status().isOk()).andExpect(jsonPath("$.length()", is(17)));
+  }
+
 }
