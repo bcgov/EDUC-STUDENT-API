@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.mappers.v1;
 
+import ca.bc.gov.educ.api.student.mappers.LocalDateTimeMapper;
 import ca.bc.gov.educ.api.student.mappers.UUIDMapper;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryActivityCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
@@ -12,7 +13,7 @@ import org.mapstruct.factory.Mappers;
 /**
  * The interface Student history mapper.
  */
-@Mapper(uses = UUIDMapper.class)
+@Mapper(uses = {UUIDMapper.class, LocalDateTimeMapper.class})
 @SuppressWarnings("squid:S1214")
 public interface StudentHistoryMapper {
 

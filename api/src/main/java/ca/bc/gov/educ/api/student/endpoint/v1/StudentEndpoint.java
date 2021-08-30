@@ -160,4 +160,9 @@ public interface StudentEndpoint {
                                            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
                                            @RequestParam(name = "sort", defaultValue = "") String sortCriteriaJson,
                                            @RequestParam(name = "searchCriteriaList", required = false) String searchCriteriaListJson);
+
+  @PreAuthorize("hasAuthority('SCOPE_READ_STUDENT_CODES')")
+  @GetMapping(DOC_TYPE_CODES)
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK")})
+  List<DocTypeCode> getDocTypeCodes();
 }

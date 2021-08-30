@@ -6,15 +6,14 @@ import ca.bc.gov.educ.api.student.exception.errors.ApiError;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
 import ca.bc.gov.educ.api.student.messaging.jetstream.Publisher;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
-import ca.bc.gov.educ.api.student.service.v1.StudentWrapperService;
 import ca.bc.gov.educ.api.student.service.v1.StudentSearchService;
 import ca.bc.gov.educ.api.student.service.v1.StudentService;
+import ca.bc.gov.educ.api.student.service.v1.StudentWrapperService;
 import ca.bc.gov.educ.api.student.struct.v1.*;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import ca.bc.gov.educ.api.student.validator.StudentPayloadValidator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -146,6 +145,11 @@ public class StudentController implements StudentEndpoint {
     final List<Sort.Order> sorts = new ArrayList<>();
     Specification<StudentEntity> studentSpecs = studentSearchService.setSpecificationAndSortCriteria(sortCriteriaJson, searchCriteriaListJson, JsonUtil.mapper, sorts);
     return getService().findAll(studentSpecs, pageNumber, pageSize, sorts).thenApplyAsync(studentEntities -> studentEntities.map(mapper::toStructure));
+  }
+
+  @Override
+  public List<DocTypeCode> getDocTypeCodes() {
+    return getService().getAllDocTypeCodes().stream().map(mapper::toStructure).collect(Collectors.toList());
   }
 
 }

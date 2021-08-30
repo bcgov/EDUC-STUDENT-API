@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.validator;
 
+import ca.bc.gov.educ.api.student.model.v1.DocumentTypeCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.GenderCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.SexCodeEntity;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
@@ -9,6 +10,7 @@ import ca.bc.gov.educ.api.student.service.v1.CodeTableService;
 import ca.bc.gov.educ.api.student.service.v1.StudentHistoryService;
 import ca.bc.gov.educ.api.student.service.v1.StudentService;
 import ca.bc.gov.educ.api.student.struct.v1.Student;
+import lombok.val;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -150,6 +152,39 @@ public class StudentPayloadValidatorTest {
     assertEquals(1, errorList.size());
   }
 
+
+  @Test
+  public void testValidateDocumentTypeCode_WhenDocumentTypeCodeDoesNotExistInCodeTable_ShouldAddAnErrorTOTheReturnedList() {
+    final String pen = "123456789";
+    List<FieldError> errorList = new ArrayList<>();
+    studentPayloadValidator.validateDocumentTypeCode(Student.builder().documentTypeCode("M").pen(pen).build(), errorList);
+    assertEquals(1, errorList.size());
+  }
+
+  @Test
+  public void testValidateDocumentTypeCode_WhenDocumentTypeCodeExistInCodeTableButEffectiveDateIsFutureDate_ShouldAddAnErrorTOTheReturnedList() {
+    final String pen = "123456789";
+    List<FieldError> errorList = new ArrayList<>();
+    val code = documentTypeCode();
+    code.setEffectiveDate(LocalDateTime.MAX);
+    code.setDocumentTypeCode("CA");
+    when(studentService.findDocTypeCode("CA")).thenReturn(Optional.of(code));
+    studentPayloadValidator.validateDocumentTypeCode(Student.builder().documentTypeCode("CA").pen(pen).build(), errorList);
+    assertEquals(1, errorList.size());
+  }
+
+  @Test
+  public void testValidateDocumentTypeCode_WhenDocumentTypeCodeExistInCodeTableButExpiryDateIsPast_ShouldAddAnErrorTOTheReturnedList() {
+    final String pen = "123456789";
+    List<FieldError> errorList = new ArrayList<>();
+    val code = documentTypeCode();
+    code.setExpiryDate(LocalDateTime.MIN);
+    code.setDocumentTypeCode("CA");
+    when(studentService.findDocTypeCode("CA")).thenReturn(Optional.of(code));
+    studentPayloadValidator.validateDocumentTypeCode(Student.builder().documentTypeCode("CA").pen(pen).build(), errorList);
+    assertEquals(1, errorList.size());
+  }
+
   @Test
   public void testValidatePayload_WhenAllTheFieldsAreInvalidForCreate_ShouldAddAllTheErrorsTOTheReturnedList() {
     isCreateOperation = true;
@@ -161,6 +196,10 @@ public class StudentPayloadValidatorTest {
 
   private SexCodeEntity dummySexCode() {
     return SexCodeEntity.builder().sexCode("M").effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).build();
+  }
+
+  private DocumentTypeCodeEntity documentTypeCode() {
+    return DocumentTypeCodeEntity.builder().documentTypeCode("CA").effectiveDate(LocalDateTime.now()).expiryDate(LocalDateTime.MAX).build();
   }
 
   private GenderCodeEntity dummyGenderCode() {

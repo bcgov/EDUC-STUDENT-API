@@ -137,4 +137,9 @@ public abstract class BaseStudent extends BaseRequest {
    * The True student id.
    */
   String trueStudentID;
+
+  @Size(max = 10)
+  String documentTypeCode;
+
+  String dateOfConfirmation;
 }

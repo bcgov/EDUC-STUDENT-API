@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.mappers.v1;
 
+import ca.bc.gov.educ.api.student.mappers.LocalDateTimeMapper;
 import ca.bc.gov.educ.api.student.mappers.UUIDMapper;
 import ca.bc.gov.educ.api.student.model.v1.*;
 import ca.bc.gov.educ.api.student.struct.v1.*;
@@ -10,7 +11,7 @@ import org.mapstruct.factory.Mappers;
 /**
  * The interface Student mapper.
  */
-@Mapper(uses = UUIDMapper.class)
+@Mapper(uses = {UUIDMapper.class, LocalDateTimeMapper.class})
 @SuppressWarnings("squid:S1214")
 public interface StudentMapper {
 
@@ -154,4 +155,12 @@ public interface StudentMapper {
    * @return the grade code
    */
   GradeCode toStructure(GradeCodeEntity entity);
+
+  DocTypeCode toStructure(DocumentTypeCodeEntity entity);
+
+  @Mapping(target = "updateUser", ignore = true)
+  @Mapping(target = "updateDate", ignore = true)
+  @Mapping(target = "createUser", ignore = true)
+  @Mapping(target = "createDate", ignore = true)
+  DocumentTypeCodeEntity toModel(DocTypeCode struct);
 }
