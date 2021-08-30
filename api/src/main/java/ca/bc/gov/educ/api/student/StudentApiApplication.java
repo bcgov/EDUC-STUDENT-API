@@ -22,7 +22,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 /**
  * The type Student api application.
  */
-@SpringBootApplication(proxyBeanMethods = false)
+@SpringBootApplication
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableCaching
 @EnableScheduling
