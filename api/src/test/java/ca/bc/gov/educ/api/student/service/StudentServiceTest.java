@@ -10,6 +10,7 @@ import ca.bc.gov.educ.api.student.service.v1.StudentService;
 import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
 import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.val;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +19,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
@@ -29,10 +29,6 @@ import java.util.concurrent.ExecutionException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -77,6 +73,30 @@ public class StudentServiceTest {
     assertNotNull(student);
     assertNotNull(student.getStudentID());
 
+    var history = studentHistoryRepository.findByStudentID(student.getStudentID(), PageRequest.of(0, 10));
+    assertThat(history.getTotalElements()).isEqualTo(1);
+    assertThat(history.getContent().get(0).getHistoryActivityCode()).isEqualTo("USERNEW");
+    assertThat(history.getContent().get(0).getCreateUser()).isEqualTo(student.getCreateUser());
+    assertThat(history.getContent().get(0).getLegalFirstName()).isEqualTo(student.getLegalFirstName());
+  }
+  @Test
+  public void testCreateStudent_WhenPayloadIsValidAndContainsSpacesAtTheEnd_ShouldReturnSavedObjectTrimmed() throws JsonProcessingException {
+    val studentCreate = getStudentCreate();
+    studentCreate.setLegalFirstName("TEST SPACE AT THE END    ");
+    studentCreate.setLegalLastName("TEST SPACE AT THE END    ");
+    studentCreate.setUsualFirstName("TEST SPACE AT THE END    ");
+    studentCreate.setUsualLastName("TEST SPACE AT THE END    ");
+    studentCreate.setLegalMiddleNames("TEST SPACE AT THE END    ");
+    studentCreate.setUsualMiddleNames("TEST SPACE AT THE END    ");
+    StudentEntity student = service.createStudent(studentCreate).getLeft();
+    assertNotNull(student);
+    assertNotNull(student.getStudentID());
+    assertThat(student.getLegalFirstName()).isEqualTo("TEST SPACE AT THE END");
+    assertThat(student.getLegalLastName()).isEqualTo("TEST SPACE AT THE END");
+    assertThat(student.getUsualFirstName()).isEqualTo("TEST SPACE AT THE END");
+    assertThat(student.getUsualLastName()).isEqualTo("TEST SPACE AT THE END");
+    assertThat(student.getLegalMiddleNames()).isEqualTo("TEST SPACE AT THE END");
+    assertThat(student.getUsualMiddleNames()).isEqualTo("TEST SPACE AT THE END");
     var history = studentHistoryRepository.findByStudentID(student.getStudentID(), PageRequest.of(0, 10));
     assertThat(history.getTotalElements()).isEqualTo(1);
     assertThat(history.getContent().get(0).getHistoryActivityCode()).isEqualTo("USERNEW");
