@@ -92,6 +92,9 @@ public class FilterSpecifications<E, T extends Comparable<T>> {
     map.put(FilterOperation.STARTS_WITH, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
         .like(root.get(filterCriteria.getFieldName()), filterCriteria.getConvertedSingleValue() + "%"));
 
+    map.put(FilterOperation.NOT_STARTS_WITH, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
+            .notLike(root.get(filterCriteria.getFieldName()), filterCriteria.getConvertedSingleValue() + "%"));
+
     map.put(FilterOperation.ENDS_WITH, filterCriteria -> (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
         .like(root.get(filterCriteria.getFieldName()), "%" + filterCriteria.getConvertedSingleValue()));
 

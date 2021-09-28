@@ -163,6 +163,10 @@ public class StudentHistoryRepositoryCustomImpl implements StudentHistoryReposit
           parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
           whereClause.append(":").append(innerSearch.getKey());
           break;
+        case NOT_STARTS_WITH:
+          parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
+          whereClause.append(":").append(innerSearch.getKey());
+          break;
         case CONTAINS:
           parameterMap.put(innerSearch.getKey(), "%" + this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
           whereClause.append(":").append(innerSearch.getKey());

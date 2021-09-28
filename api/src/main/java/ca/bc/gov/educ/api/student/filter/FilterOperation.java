@@ -54,6 +54,10 @@ public enum FilterOperation {
    */
   STARTS_WITH("starts_with"),
   /**
+   * Not Starts with filter operation.
+   */
+  NOT_STARTS_WITH("not_starts_with"),
+  /**
    * Ends with filter operation.
    */
   ENDS_WITH("ends_with"),
