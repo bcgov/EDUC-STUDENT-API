@@ -63,6 +63,7 @@ public class StudentHistoryRepositoryCustomImpl implements StudentHistoryReposit
     this.symbolMap.put("btn", "BETWEEN");
     this.symbolMap.put("like", "LIKE");// %value%
     this.symbolMap.put("starts_with", "LIKE"); // value%
+    this.symbolMap.put("not_starts_with", "NOT LIKE"); // value%
   }
 
 
@@ -160,6 +161,10 @@ public class StudentHistoryRepositoryCustomImpl implements StudentHistoryReposit
           whereClause.append(":min").append(innerSearch.getKey()).append(" AND ").append(":max").append(innerSearch.getKey());
           break;
         case STARTS_WITH:
+          parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
+          whereClause.append(":").append(innerSearch.getKey());
+          break;
+        case NOT_STARTS_WITH:
           parameterMap.put(innerSearch.getKey(), this.getConvertedValue(innerSearch.getValue(), innerSearch.getValueType()) + "%");
           whereClause.append(":").append(innerSearch.getKey());
           break;

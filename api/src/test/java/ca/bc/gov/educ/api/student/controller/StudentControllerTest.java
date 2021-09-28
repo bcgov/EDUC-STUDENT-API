@@ -657,6 +657,31 @@ public class StudentControllerTest {
   }
 
   @Test
+  public void testReadStudentPaginated_LegalLastNameNotStartWith_ShouldReturnStatusOk() throws Exception {
+    final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
+    final var mockAuthority = oidcLogin().authorities(grantedAuthority);
+    final File file = new File(
+            Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    final List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    final SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.NOT_STARTS_WITH).value("Ham").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    final List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+    this.repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+    final MvcResult result = this.mockMvc
+            .perform(get(STUDENT + PAGINATED).with(mockAuthority).param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(5)));
+  }
+
+  @Test
   public void testReadStudentPaginated_LegalLastNameStartWith2_ShouldReturnStatusOk() throws Exception {
     final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
     final var mockAuthority = oidcLogin().authorities(grantedAuthority);
