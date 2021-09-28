@@ -63,7 +63,7 @@ public class StudentHistoryRepositoryCustomImpl implements StudentHistoryReposit
     this.symbolMap.put("btn", "BETWEEN");
     this.symbolMap.put("like", "LIKE");// %value%
     this.symbolMap.put("starts_with", "LIKE"); // value%
-    this.symbolMap.put("not_starts_with", "NOT_LIKE"); // value%
+    this.symbolMap.put("not_starts_with", "NOT LIKE"); // value%
   }
 
 
