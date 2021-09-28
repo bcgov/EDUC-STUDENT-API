@@ -344,6 +344,52 @@ public class StudentHistoryControllerTest {
   }
 
   @Test
+  public void testReadStudentHistoryPaginated_legalLastNotNameStartWith_ShouldReturnStatusOkAndRecord() throws Exception {
+    var file = new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
+    );
+    List<Student> entities = new ObjectMapper().readValue(file, new TypeReference<>() {
+    });
+    repository.saveAll(entities.stream().map(mapper::toModel).map(TransformUtil::uppercaseFields).collect(Collectors.toList()));
+
+    val entitiesFromDB = repository.findAll();
+    var studentHistoryEntities = entitiesFromDB.stream().flatMap(student ->
+            List.of(createStudentHistoryEntityWithLegalNameChange(student, "USEREDIT", 1,
+                            student.getLegalFirstName(), student.getLegalLastName() + "TEST2", student.getLegalMiddleNames()),
+                    createStudentHistoryEntityWithLegalNameChange(student, "USERNEW", 2,
+                            student.getLegalFirstName(), student.getLegalLastName() + "TEST1", student.getLegalMiddleNames())).stream()
+    ).collect(Collectors.toList());
+    studentHistoryRepo.saveAll(studentHistoryEntities);
+
+    Map<String, String> sortMap = new HashMap<>();
+    sortMap.put("legalLastName", "DESC");
+    String sort = new ObjectMapper().writeValueAsString(sortMap);
+
+    SearchCriteria criteria = SearchCriteria.builder().key("legalLastName").operation(FilterOperation.NOT_STARTS_WITH).value(entitiesFromDB.get(0).getLegalLastName()).valueType(ValueType.STRING).build();
+    List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    ObjectMapper objectMapper = new ObjectMapper();
+    String criteriaJSON = objectMapper.writeValueAsString(searches);
+    System.out.println(criteriaJSON);
+
+    MvcResult result = mockMvc
+            .perform(get(STUDENT + HISTORY+PAGINATED)
+                    .with(jwt().jwt((jwt) -> jwt.claim("scope", "READ_STUDENT_HISTORY")))
+                    .param("pageNumber", "0").param("pageSize", "5")
+                    .param("sort", sort)
+                    .param("searchCriteriaList", criteriaJSON)
+                    .contentType(APPLICATION_JSON))
+            .andReturn();
+
+    this.mockMvc.perform(asyncDispatch(result)).andDo(print()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.content", hasSize(5)))
+            .andExpect(jsonPath("$.content[0].historyActivityCode").value("USEREDIT"));
+  }
+
+
+  @Test
   public void testReadStudentHistoryPaginated_legalLastNameEndWith_ShouldReturnStatusOkAndRecord() throws Exception {
     var file = new File(
         Objects.requireNonNull(getClass().getClassLoader().getResource("mock_students.json")).getFile()
