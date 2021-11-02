@@ -31,31 +31,26 @@ public class FilterCriteria<T extends Comparable<T>> {
    * Holds the Function to convertString to <T>
    */
   private final Function<String, T> converterFunction;
-
-  /**
-   * Converted value
-   */
-  private T convertedSingleValue;
-
-  /**
-   * minimum value - application only for {@link FilterOperation#BETWEEN}
-   */
-  private T minValue;
-
-  /**
-   * maximum value - application only for {@link FilterOperation#BETWEEN}
-   */
-  private T maxValue;
-
   /**
    * Holds the filter criteria
    */
   private final Collection<String> originalValues;
-
   /**
    * Holds the filter criteria as type <T>
    */
   private final Collection<T> convertedValues;
+  /**
+   * Converted value
+   */
+  private T convertedSingleValue;
+  /**
+   * minimum value - application only for {@link FilterOperation#BETWEEN}
+   */
+  private T minValue;
+  /**
+   * maximum value - application only for {@link FilterOperation#BETWEEN}
+   */
+  private T maxValue;
 
   /**
    * Instantiates a new Filter criteria.
@@ -72,15 +67,18 @@ public class FilterCriteria<T extends Comparable<T>> {
 
     String[] operationValues;
 
-    if(fieldValue != null) {
-      // Split the fieldValue value as comma separated.
-      operationValues = StringUtils.split(fieldValue, ",");
-    }else{
-      operationValues = new String[]{null};
-    }
-
-    if (operationValues.length < 1) {
-      throw new IllegalArgumentException("field value can't be empty");
+    if (filterOperation == FilterOperation.BETWEEN || filterOperation == FilterOperation.IN || filterOperation == FilterOperation.NOT_IN) {
+      if (fieldValue != null) {
+        // Split the fieldValue value as comma separated.
+        operationValues = StringUtils.split(fieldValue, ",");
+      } else {
+        operationValues = new String[]{null};
+      }
+      if (operationValues.length < 1) {
+        throw new IllegalArgumentException("multiple values expected(comma separated) for IN, NOT IN and BETWEEN operations.");
+      }
+    } else {
+      operationValues = new String[]{fieldValue};
     }
     this.operation = filterOperation;
     this.originalValues = Arrays.asList(operationValues);
