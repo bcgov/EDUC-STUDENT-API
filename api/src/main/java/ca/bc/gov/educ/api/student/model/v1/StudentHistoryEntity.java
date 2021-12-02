@@ -34,7 +34,7 @@ public class StudentHistoryEntity {
    * The Student id.
    */
   @NotNull(message = "studentID cannot be null")
-  @Column(name = "STUDENT_ID")
+  @Column(name = "STUDENT_ID", columnDefinition = "BINARY(16)")
   UUID studentID;
   /**
    * The History activity code.
