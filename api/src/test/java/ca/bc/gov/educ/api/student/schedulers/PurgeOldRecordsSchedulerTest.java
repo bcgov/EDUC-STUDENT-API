@@ -30,7 +30,7 @@ public class PurgeOldRecordsSchedulerTest {
   PurgeOldRecordsScheduler purgeOldRecordsScheduler;
 
   @After
-  public void setUp() {
+  public void after() {
     this.eventRepository.deleteAll();
   }
 

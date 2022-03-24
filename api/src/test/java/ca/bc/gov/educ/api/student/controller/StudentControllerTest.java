@@ -107,6 +107,8 @@ public class StudentControllerTest {
   StudentHistoryActivityCodeTableRepository studentHistoryActivityCodeTableRepo;
   @Autowired
   StudentHistoryRepository studentHistoryRepo;
+  @Autowired
+  private StudentEventRepository studentEventRepository;
 
   @Before
   public void setUp() {
@@ -142,6 +144,7 @@ public class StudentControllerTest {
     this.gradeRepo.deleteAll();
     this.studentHistoryRepo.deleteAll();
     this.repository.deleteAll();
+    this.studentEventRepository.deleteAll();
   }
 
   private SexCodeEntity createSexCodeData() {
