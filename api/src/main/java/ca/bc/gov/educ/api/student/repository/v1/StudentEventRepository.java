@@ -2,7 +2,11 @@ package ca.bc.gov.educ.api.student.repository.v1;
 
 import ca.bc.gov.educ.api.student.model.v1.StudentEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,4 +39,9 @@ public interface StudentEventRepository extends JpaRepository<StudentEvent, UUID
    * @return the list
    */
   List<StudentEvent> findByEventStatus(String eventStatus);
+
+  @Transactional
+  @Modifying
+  @Query("delete from StudentEvent where createDate <= :createDate")
+  void deleteByCreateDateBefore(LocalDateTime createDate);
 }
