@@ -253,7 +253,7 @@ public class EventHandlerService {
       studentEntityList.addAll(getStudentRepository().findStudentEntityByStudentIDIn(list));
     }
     if (!studentEntityList.isEmpty() && studentEntityList.size() == studentIds.size()) {
-      var studentList = studentEntityList.stream().map(studentMapper::toStructure).collect(Collectors.toList());
+      var studentList = studentEntityList.stream().map(studentMapper::toStructure).toList();
       event.setEventPayload(JsonUtil.getJsonStringFromObject(studentList));
       event.setEventOutcome(EventOutcome.STUDENTS_FOUND);
     } else {
