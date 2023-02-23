@@ -26,8 +26,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 @SpringBootApplication
 @EnableCaching
 @EnableScheduling
-@EnableSchedulerLock(defaultLockAtMostFor = "1s")
 @EnableRetry
+@EnableSchedulerLock(defaultLockAtMostFor = "1s")
 public class StudentApiApplication {
 
   /**
@@ -39,6 +39,17 @@ public class StudentApiApplication {
     SpringApplication.run(StudentApiApplication.class, args);
   }
 
+  /**
+   * Lock provider lock provider.
+   *
+   * @param jdbcTemplate       the jdbc template
+   * @param transactionManager the transaction manager
+   * @return the lock provider
+   */
+  @Bean
+  public LockProvider lockProvider(@Autowired JdbcTemplate jdbcTemplate, @Autowired PlatformTransactionManager transactionManager) {
+    return new JdbcTemplateLockProvider(jdbcTemplate, transactionManager, "STUDENT_SHEDLOCK");
+  }
 
   /**
    * Add security exceptions for swagger UI and prometheus.
@@ -69,17 +80,5 @@ public class StudentApiApplication {
           .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
       return http.build();
     }
-  }
-
-  /**
-   * Lock provider lock provider.
-   *
-   * @param jdbcTemplate       the jdbc template
-   * @param transactionManager the transaction manager
-   * @return the lock provider
-   */
-  @Bean
-  public LockProvider lockProvider(@Autowired JdbcTemplate jdbcTemplate, @Autowired PlatformTransactionManager transactionManager) {
-    return new JdbcTemplateLockProvider(jdbcTemplate, transactionManager, "STUDENT_SHEDLOCK");
   }
 }
