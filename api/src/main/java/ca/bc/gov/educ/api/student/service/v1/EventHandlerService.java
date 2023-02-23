@@ -1,5 +1,8 @@
 package ca.bc.gov.educ.api.student.service.v1;
 
+import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
+import static lombok.AccessLevel.PRIVATE;
+
 import ca.bc.gov.educ.api.student.constant.EventOutcome;
 import ca.bc.gov.educ.api.student.constant.EventType;
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
@@ -11,7 +14,11 @@ import ca.bc.gov.educ.api.student.model.v1.StudentHistoryEntity;
 import ca.bc.gov.educ.api.student.repository.v1.StudentEventRepository;
 import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepository;
 import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
-import ca.bc.gov.educ.api.student.struct.v1.*;
+import ca.bc.gov.educ.api.student.struct.v1.Event;
+import ca.bc.gov.educ.api.student.struct.v1.Student;
+import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
+import ca.bc.gov.educ.api.student.struct.v1.StudentHistory;
+import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
 import ca.bc.gov.educ.api.student.util.JsonUtil;
 import ca.bc.gov.educ.api.student.util.RequestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,6 +26,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -30,19 +46,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
-import static ca.bc.gov.educ.api.student.constant.EventStatus.MESSAGE_PUBLISHED;
-import static lombok.AccessLevel.PRIVATE;
 
 /**
  * The type Event handler service.
@@ -289,7 +292,7 @@ public class EventHandlerService {
 
       if (studentList.isEmpty()) {
         event.setEventOutcome(EventOutcome.STUDENT_HISTORY_ALREADY_EXIST);
-        event.setEventPayload(JsonUtil.getJsonStringFromObject(audits.stream().map(StudentHistory::getStudentHistoryID)));
+        event.setEventPayload(JsonUtil.getJsonStringFromObject(audits.stream().map(StudentHistory::getStudentHistoryID).toList()));
       } else {
         event.setEventOutcome(EventOutcome.STUDENT_HISTORY_CREATED);
         event.setEventPayload(JsonUtil.getJsonStringFromObject(studentList));// need to convert to s
