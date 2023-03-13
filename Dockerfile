@@ -6,7 +6,7 @@ COPY api/src src
 RUN mvn clean package -DskipTests
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 
-FROM artifacts.developer.gov.bc.ca/docker-remote/openjdk:11-jdk
+FROM artifacts.developer.gov.bc.ca/docker-remote/openjdk:18.0.2.1-jdk-oracle
 RUN useradd -ms /bin/bash spring
 RUN mkdir -p /logs
 RUN chown -R spring:spring /logs
