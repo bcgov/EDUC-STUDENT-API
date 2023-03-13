@@ -1,15 +1,31 @@
 package ca.bc.gov.educ.api.student.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import ca.bc.gov.educ.api.student.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.mappers.v1.StudentMapper;
 import ca.bc.gov.educ.api.student.model.v1.StudentEntity;
-import ca.bc.gov.educ.api.student.repository.v1.*;
+import ca.bc.gov.educ.api.student.repository.v1.DemogCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.v1.GenderCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.v1.GradeCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.v1.SexCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StatusCodeTableRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentEventRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepository;
+import ca.bc.gov.educ.api.student.repository.v1.StudentRepository;
 import ca.bc.gov.educ.api.student.service.v1.CodeTableService;
 import ca.bc.gov.educ.api.student.service.v1.StudentHistoryService;
 import ca.bc.gov.educ.api.student.service.v1.StudentService;
 import ca.bc.gov.educ.api.student.struct.v1.StudentCreate;
 import ca.bc.gov.educ.api.student.struct.v1.StudentUpdate;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,21 +33,15 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 @RunWith(SpringRunner.class)
-@DataJpaTest
+@ActiveProfiles("test")
+@SpringBootTest
+@Slf4j
 public class StudentServiceTest {
   private static final StudentMapper mapper = StudentMapper.mapper;
 

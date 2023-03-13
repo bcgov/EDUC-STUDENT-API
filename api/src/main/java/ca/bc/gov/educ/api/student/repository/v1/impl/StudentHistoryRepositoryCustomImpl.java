@@ -6,22 +6,30 @@ import ca.bc.gov.educ.api.student.repository.v1.StudentHistoryRepositoryCustom;
 import ca.bc.gov.educ.api.student.struct.v1.Search;
 import ca.bc.gov.educ.api.student.struct.v1.SearchCriteria;
 import ca.bc.gov.educ.api.student.struct.v1.ValueType;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Repository;
-
-import javax.persistence.Column;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Repository;
 
 /**
  * This is special implementation to get paged unique students by searching the audit history of student.
@@ -37,6 +45,7 @@ public class StudentHistoryRepositoryCustomImpl implements StudentHistoryReposit
   private static final String END_QUERY = " ) ROW_   WHERE ROWNUM <=%d) WHERE ROWNUM_ > %d";
   private static final String START_COUNT_QUERY = "SELECT COUNT(STUDENT_DISTINCT_ID) FROM (SELECT DISTINCT (B.STUDENT_ID) AS STUDENT_DISTINCT_ID FROM STUDENT_HISTORY B INNER JOIN STUDENT A ON B.STUDENT_ID = A.STUDENT_ID WHERE ";
   private static final String END_COUNT_QUERY = ")";
+  @PersistenceContext
   private final EntityManager entityManager;
 
   private final Map<String, String> entityColumnMap = new HashMap<>();

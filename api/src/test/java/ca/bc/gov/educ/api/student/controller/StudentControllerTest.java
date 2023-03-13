@@ -200,7 +200,7 @@ public class StudentControllerTest {
     final GrantedAuthority grantedAuthority = () -> "SCOPE_READ_STUDENT";
     final var mockAuthority = oidcLogin().authorities(grantedAuthority);
     final StudentEntity entity = this.repository.save(this.createStudent());
-    this.mockMvc.perform(get(STUDENT + "/?pen=" + entity.getPen()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
+    this.mockMvc.perform(get(STUDENT + "?pen=" + entity.getPen()).with(mockAuthority)).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$[0].studentID").value(entity.getStudentID().toString()));
   }
 
   @Test
