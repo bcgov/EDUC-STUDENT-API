@@ -8,7 +8,7 @@ env:
   OPENSHIFT_TOKEN: ${{ secrets.OPENSHIFT_TOKEN }}
   OPENSHIFT_NAMESPACE: ${{ secrets.COMMON_NAMESPACE_NO_ENV }}-dev
 
-  REPO_NAME: "educ-macro-api"
+  REPO_NAME: "educ-student-api"
   BRANCH: "master"
   NAMESPACE: ${{ secrets.COMMON_NAMESPACE_NO_ENV }}
 
