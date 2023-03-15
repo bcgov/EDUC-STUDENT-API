@@ -17,7 +17,7 @@ import jakarta.validation.constraints.Size;
 @NoArgsConstructor
 public abstract class BaseRequest {
   /**
-   * The Create user.
+   * The Create user. Trigger Trivy
    */
   @Size(max = 32)
   public String createUser;
