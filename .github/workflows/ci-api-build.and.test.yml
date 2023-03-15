@@ -17,7 +17,7 @@ on:
 jobs:
   quality_profile:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     defaults:
       run:
@@ -33,23 +33,24 @@ jobs:
       - uses: actions/cache@v1
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-maven-5Jun-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-maven-
+            ${{ runner.os }}-maven-5Jun-
       - name: Run unit tests
-        run: mvn clean package
+        run: mvn -f pom.xml clean package
       - name: Run Trivy vulnerability scanner in repo mode
         uses: aquasecurity/trivy-action@0.2.5
         with:
-         scan-type: 'fs'
-         ignore-unfixed: true
-         format: 'sarif'
-         output: 'trivy-results.sarif'
-         severity: 'CRITICAL'
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL'
+
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
         with:
-         sarif_file: 'trivy-results.sarif'
+          sarif_file: 'trivy-results.sarif'
       - name: Cache SonarCloud packages
         uses: actions/cache@v1
         with:
