@@ -32,8 +32,8 @@ env:
   TARGET_ENV: "prod"
   MIN_REPLICAS: "3"
   MAX_REPLICAS: "4"
-  MIN_CPU: "40m"
-  MAX_CPU: "150m"
+  MIN_CPU: "1200m"
+  MAX_CPU: "800m"
   MIN_MEM: "400Mi"
   MAX_MEM: "800Mi"
 
