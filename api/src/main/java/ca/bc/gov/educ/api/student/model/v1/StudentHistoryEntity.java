@@ -162,7 +162,7 @@ public class StudentHistoryEntity {
   /**
    * The Create user.
    */
-  @Column(name = "CREATE_USER", updatable = false, length = 32)
+  @Column(name = "CREATE_USER", updatable = false, length = 100)
   String createUser;
   /**
    * The Create date.
@@ -173,7 +173,7 @@ public class StudentHistoryEntity {
   /**
    * The Update user.
    */
-  @Column(name = "UPDATE_USER", length = 32)
+  @Column(name = "UPDATE_USER", length = 100)
   String updateUser;
   /**
    * The Update date.
