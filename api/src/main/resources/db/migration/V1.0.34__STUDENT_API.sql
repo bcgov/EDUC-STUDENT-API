@@ -11,7 +11,7 @@ MODIFY (
        );
 
 ALTER TABLE STUDENT_HISTORY
-    MODIFY (
-               CREATE_USER VARCHAR2(100),
-               UPDATE_USER VARCHAR2(100)
-           );
+MODIFY (
+           CREATE_USER VARCHAR2(100),
+           UPDATE_USER VARCHAR2(100)
+       );
