@@ -72,6 +72,7 @@ FLB_CONFIG="[SERVICE]
    Exclude_Path *.gz,*.zip
    Parser docker
    Mem_Buf_Limit 20MB
+   Buffer_Max_Size 1MB
 [FILTER]
    Name record_modifier
    Match *
