@@ -15,7 +15,8 @@ objects:
     spec:
       replicas: ${{MIN_REPLICAS}}
       selector:
-        app: "${APP_NAME}-${BRANCH}"
+        matchLabels:
+          app: "${APP_NAME}-${BRANCH}"
       strategy:
         type: RollingUpdate
         rollingUpdate:
