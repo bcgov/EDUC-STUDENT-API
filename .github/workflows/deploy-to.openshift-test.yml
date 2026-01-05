@@ -38,8 +38,8 @@ env:
   MAX_REPLICAS_TEST: "6"
   MIN_CPU: "800m"
   MAX_CPU: "1200m"
-  MIN_MEM: "400Mi"
-  MAX_MEM: "800Mi"
+  MIN_MEM: "600Mi"
+  MAX_MEM: "1200Mi"
 
 on:
   workflow_dispatch:
