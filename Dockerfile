@@ -6,8 +6,9 @@ COPY api/src src
 RUN mvn clean package -DskipTests
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 
-FROM artifacts.developer.gov.bc.ca/docker-remote/openjdk:17.0.2-jdk-oracle
-RUN useradd -ms /bin/bash spring
+FROM artifacts.developer.gov.bc.ca/docker-remote/amazoncorretto:17.0.20-alpine3.23
+RUN apk add --no-cache tzdata
+RUN addgroup -S spring && adduser -S -G spring spring
 RUN mkdir -p /logs
 RUN chown -R spring:spring /logs
 RUN chmod 755 /logs
