@@ -50,6 +50,9 @@ on:
         required: true
         default: "latest"
 
+permissions:
+  contents: read
+
 jobs:
 
   deploy-test:
